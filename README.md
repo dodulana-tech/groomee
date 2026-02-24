@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Groomee — On-demand Grooming PWA
 
-## Getting Started
+> Professional grooming delivered to your door in Lagos. Available 24/7.
 
-First, run the development server:
+Built with Next.js 14 (App Router), Tailwind CSS, Prisma/PostgreSQL, Paystack payments, Termii WhatsApp dispatch. PWA-ready.
+
+## Tech Stack
+
+|               |                                       |
+| ------------- | ------------------------------------- |
+| Framework     | Next.js 14 App Router                 |
+| Styling       | Tailwind CSS + custom design tokens   |
+| Database      | PostgreSQL via Prisma                 |
+| Auth          | Phone OTP (Termii/SMS) + JWT sessions |
+| Payments      | Paystack (authorise → hold → capture) |
+| Notifications | WhatsApp + SMS via Termii             |
+| Deployment    | Vercel + Supabase/Neon                |
+
+## Quick Start
 
 ```bash
+# 1. Install
+npm install
+
+# 2. Configure
+cp .env.example .env.local
+# Fill in DATABASE_URL, JWT_SECRET, PAYSTACK_SECRET_KEY, TERMII_API_KEY
+
+# 3. Setup DB
+npm run db:push
+npm run db:seed   # optional — seeds services, zones, settings
+
+# 4. Dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy to Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Push to GitHub
+2. Import at vercel.com/new
+3. Add all env vars from `.env.example`
+4. Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example` for all required variables.
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── (customer)/     # Customer-facing pages
+│   │   ├── page.tsx    # Homepage
+│   │   ├── search/     # Groomer discovery
+│   │   ├── groomer/    # Groomer profile + booking
+│   │   ├── booking/    # Live tracking
+│   │   ├── bookings/   # History
+│   │   ├── profile/    # Account
+│   │   └── auth/       # Phone OTP login
+│   ├── (admin)/        # Admin dashboard
+│   │   └── admin/      # Ops, bookings, groomers, disputes, payouts
+│   └── api/            # REST API + webhooks
+├── components/         # UI components
+├── lib/                # Utils, data, db, auth
+└── prisma/             # Schema + seed
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## PWA
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `public/manifest.json` — App manifest
+- `public/sw.js` — Service worker (offline cache)
+- Install prompt shown after 2nd visit
+- Theme colour: #1A3A2A (forest green)
 
-## Deploy on Vercel
+## WhatsApp Commands (Groomers)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command      | Action              |
+| ------------ | ------------------- |
+| `ON` / `OFF` | Toggle availability |
+| `YES` / `NO` | Accept/decline job  |
+| `OTWAY`      | On the way          |
+| `ARRIVED`    | Arrived at location |
+| `DONE`       | Service complete    |
+| `BALANCE`    | Check earnings      |

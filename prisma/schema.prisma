@@ -1,0 +1,270 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum GroomerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum GroomerAvail {
+  ONLINE
+  BUSY
+  OFFLINE
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  DISPATCHING
+  NO_GROOMER
+  ACCEPTED
+  EN_ROUTE
+  ARRIVED
+  IN_SERVICE
+  COMPLETED
+  CONFIRMED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORISED
+  CAPTURED
+  REFUNDED
+  FAILED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum ServiceCategory {
+  HAIR
+  MAKEUP
+  NAILS
+  BARBING
+  LASHES
+  SKINCARE
+  OTHER
+}
+
+model User {
+  id        String    @id @default(cuid())
+  phone     String    @unique
+  name      String?
+  email     String?
+  role      UserRole  @default(CUSTOMER)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  @@map("users")
+}
+
+model Groomer {
+  id               String           @id @default(cuid())
+  name             String
+  phone            String           @unique
+  status           GroomerStatus    @default(PENDING)
+  availability     GroomerAvail     @default(OFFLINE)
+  currentBookingId String?
+  commission       Float            @default(0.20)
+  avgRating        Float            @default(0)
+  reviewCount      Int              @default(0)
+  totalJobs        Int              @default(0)
+  acceptanceRate   Float            @default(0)
+  strikes          Int              @default(0)
+  bankCode         String?
+  bankAccount      String?
+  bankName         String?
+  idVerified       Boolean          @default(false)
+  services         GroomerService[]
+  zones            GroomerZone[]
+  bookings         Booking[]
+  earnings         Earning[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  @@map("groomers")
+}
+
+model Service {
+  id           String           @id @default(cuid())
+  name         String
+  slug         String           @unique
+  category     ServiceCategory
+  basePrice    Float
+  minPrice     Float
+  maxPrice     Float
+  durationMins Int
+  description  String?
+  isActive     Boolean          @default(true)
+  sortOrder    Int              @default(0)
+  groomers     GroomerService[]
+  bookings     Booking[]
+  createdAt    DateTime         @default(now())
+  @@map("services")
+}
+
+model Zone {
+  id       String        @id @default(cuid())
+  name     String
+  slug     String        @unique
+  city     String        @default("Lagos")
+  groomers GroomerZone[]
+  bookings Booking[]
+  @@map("zones")
+}
+
+model GroomerService {
+  groomerId   String
+  serviceId   String
+  customPrice Float?
+  groomer     Groomer @relation(fields: [groomerId], references: [id])
+  service     Service @relation(fields: [serviceId], references: [id])
+  @@id([groomerId, serviceId])
+  @@map("groomer_services")
+}
+
+model GroomerZone {
+  groomerId String
+  zoneId    String
+  groomer   Groomer @relation(fields: [groomerId], references: [id])
+  zone      Zone    @relation(fields: [zoneId], references: [id])
+  @@id([groomerId, zoneId])
+  @@map("groomer_zones")
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  reference        String        @unique
+  customerId       String
+  groomerId        String?
+  serviceId        String
+  zoneId           String?
+  status           BookingStatus @default(PENDING_PAYMENT)
+  address          String
+  latitude         Float?
+  longitude        Float?
+  isAsap           Boolean       @default(false)
+  scheduledFor     DateTime?
+  customerNotes    String?
+  totalAmount      Float
+  baseAmount       Float
+  surchargeAmount  Float         @default(0)
+  surchargeType    String?
+  groomerEarning   Float         @default(0)
+  dispatchAttempts Int           @default(0)
+  acceptedAt       DateTime?
+  enRouteAt        DateTime?
+  arrivedAt        DateTime?
+  completedAt      DateTime?
+  confirmedAt      DateTime?
+  cancelledAt      DateTime?
+  customer         User          @relation(fields: [customerId], references: [id])
+  groomer          Groomer?      @relation(fields: [groomerId], references: [id])
+  service          Service       @relation(fields: [serviceId], references: [id])
+  zone             Zone?         @relation(fields: [zoneId], references: [id])
+  payment          Payment?
+  dispute          Dispute?
+  review           Review?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  @@map("bookings")
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  bookingId    String        @unique
+  reference    String        @unique
+  amount       Float
+  status       PaymentStatus @default(PENDING)
+  paystackRef  String?
+  authorisedAt DateTime?
+  capturedAt   DateTime?
+  refundedAt   DateTime?
+  refundAmount Float?
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+  createdAt    DateTime      @default(now())
+  @@map("payments")
+}
+
+model Dispute {
+  id           String        @id @default(cuid())
+  bookingId    String        @unique
+  status       DisputeStatus @default(OPEN)
+  reason       String
+  notes        String?
+  resolution   String?
+  refundAmount Float?
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+  createdAt    DateTime      @default(now())
+  resolvedAt   DateTime?
+  @@map("disputes")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  rating    Int
+  text      String?
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  createdAt DateTime @default(now())
+  @@map("reviews")
+}
+
+model Earning {
+  id        String   @id @default(cuid())
+  groomerId String
+  bookingId String   @unique
+  amount    Float
+  paid      Boolean  @default(false)
+  payoutId  String?
+  groomer   Groomer  @relation(fields: [groomerId], references: [id])
+  createdAt DateTime @default(now())
+  @@map("earnings")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  @@map("settings")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  recipient String
+  channel   String
+  message   String
+  status    String
+  sentAt    DateTime?
+  metadata  Json?
+  createdAt DateTime  @default(now())
+  @@map("notifications")
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
