@@ -55,8 +55,13 @@ export async function sendMessage(to: string, message: string, channel: 'whatsap
 // ─── OTP ─────────────────────────────────────────────────────────────────────
 
 export async function notifyCustomerOtp(phone: string, otp: string) {
-  const message = `Your Groomee verification code is: *${otp}*\n\nValid for 10 minutes. Do not share this code.`;
-  return sendMessage(phone, message, 'whatsapp');
+  const whatsappMsg = `Your Groomee verification code is: *${otp}*\n\nValid for 10 minutes. Do not share this code.`;
+  const smsMsg      = `Your Groomee verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`;
+  // Send both — SMS guaranteed delivery, WhatsApp for sandbox testers
+  await Promise.allSettled([
+    sendMessage(phone, whatsappMsg, 'whatsapp'),
+    sendMessage(phone, smsMsg, 'sms'),
+  ]);
 }
 
 // ─── CUSTOMER NOTIFICATIONS ───────────────────────────────────────────────────
