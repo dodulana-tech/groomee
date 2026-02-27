@@ -1,40 +1,48 @@
 import { db } from './db';
-import twilio from 'twilio';
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID!,
-  process.env.TWILIO_AUTH_TOKEN!
-);
-
-const FROM = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER ?? 'whatsapp:+14155238886'}`;
+const accountSid = process.env.TWILIO_ACCOUNT_SID!;
+const authToken  = process.env.TWILIO_AUTH_TOKEN!;
+const fromWA     = `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER ?? '+14155238886'}`;
+const fromSMS    = process.env.TWILIO_PHONE_NUMBER!;
 
 // ─── CORE SEND ────────────────────────────────────────────────────────────────
 
 export async function sendMessage(to: string, message: string, channel: 'whatsapp' | 'sms' = 'whatsapp') {
   const toFormatted = channel === 'whatsapp' ? `whatsapp:${to}` : to;
-  const from = channel === 'whatsapp' ? FROM : process.env.TWILIO_PHONE_NUMBER!;
+  const from        = channel === 'whatsapp' ? fromWA : fromSMS;
 
   try {
-    const msg = await client.messages.create({
-      body: message,
-      from,
-      to: toFormatted,
-    });
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method:  'POST',
+        headers: {
+          Authorization:  'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ To: toFormatted, From: from, Body: message }),
+      }
+    );
+
+    const data = await res.json();
+    const success = !!data.sid;
+
+    console.log(`[whatsapp] ${channel} → ${to}: ${success ? 'sent ' + data.sid : 'FAILED ' + JSON.stringify(data)}`);
 
     await db.notification.create({
       data: {
         recipient: to,
         channel,
         message,
-        status:   'sent',
-        metadata: { sid: msg.sid },
-        sentAt:   new Date(),
+        status:   success ? 'sent' : 'failed',
+        metadata: data,
+        sentAt:   success ? new Date() : undefined,
       },
     });
 
-    return { success: true, data: msg };
+    return { success, data };
   } catch (err: any) {
-    console.error('Twilio send error:', err.message);
+    console.error('[whatsapp] error:', err.message);
     try {
       await db.notification.create({
         data: { recipient: to, channel, message, status: 'failed', metadata: { error: err.message } },
@@ -53,16 +61,16 @@ export async function notifyCustomerOtp(phone: string, otp: string) {
 
 // ─── CUSTOMER NOTIFICATIONS ───────────────────────────────────────────────────
 
-export async function notifyCustomerBookingConfirmed(phone: string, groomerName: string, eta: string) {
-  return sendMessage(phone, `✅ Booking confirmed!\n\nYour groomer *${groomerName}* has accepted and will arrive in approximately ${eta}.\n\nYou'll get another message when they're on the way. 💚`);
+export async function notifyCustomerBookingConfirmed(phone: string, proName: string, eta: string) {
+  return sendMessage(phone, `✅ Booking confirmed!\n\nYour pro *${proName}* has accepted and will arrive in approximately ${eta}.\n\nYou'll get another message when they're on the way. 💚`);
 }
 
-export async function notifyCustomerGroomerEnRoute(phone: string, groomerName: string, etaMins: number) {
-  return sendMessage(phone, `🚗 *${groomerName}* is on the way!\n\nEstimated arrival: ~${etaMins} minutes.\n\nPlease be ready to receive them.`);
+export async function notifyCustomerGroomerEnRoute(phone: string, proName: string, etaMins: number) {
+  return sendMessage(phone, `🚗 *${proName}* is on the way!\n\nEstimated arrival: ~${etaMins} minutes.\n\nPlease be ready to receive them.`);
 }
 
-export async function notifyCustomerGroomerArrived(phone: string, groomerName: string) {
-  return sendMessage(phone, `📍 Your groomer *${groomerName}* has arrived!\n\nEnjoy your session. 💅`);
+export async function notifyCustomerGroomerArrived(phone: string, proName: string) {
+  return sendMessage(phone, `📍 Your pro *${proName}* has arrived!\n\nEnjoy your session. 💅`);
 }
 
 export async function notifyCustomerServiceComplete(phone: string, bookingRef: string, amount: number) {
@@ -71,7 +79,7 @@ export async function notifyCustomerServiceComplete(phone: string, bookingRef: s
 }
 
 export async function notifyCustomerNoGroomer(phone: string) {
-  return sendMessage(phone, `⚠️ We couldn't find an available groomer for your booking right now.\n\nYou have not been charged. Please try again or contact support.\n\nWe're sorry for the inconvenience!`);
+  return sendMessage(phone, `⚠️ We couldn't find an available pro for your booking right now.\n\nYou have not been charged. Please try again or contact support.`);
 }
 
 export async function notifyCustomerBookingCancelled(phone: string, reason: string) {
@@ -102,7 +110,7 @@ export async function sendGroomerStatusAck(phone: string, status: 'OTWAY' | 'ARR
     OTWAY:   `🚗 Got it! Customer has been notified you're on the way. Drive safe!`,
     ARRIVED: `📍 Arrival noted! Customer has been notified. Enjoy your session 💚`,
     DONE:    `✨ Great work! Customer has been prompted to confirm. Payment will be processed shortly.`,
-    CANCEL:  `❌ Booking cancelled. Admin has been notified and a replacement groomer will be found.`,
+    CANCEL:  `❌ Booking cancelled. Admin has been notified and a replacement pro will be found.`,
     ON:      `✅ You're now *online*! We'll start sending you bookings. Text *OFF* when you want to stop.`,
     OFF:     `⏸️ You're now *offline*. You won't receive new bookings until you text *ON*.`,
   };
