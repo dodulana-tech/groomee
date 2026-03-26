@@ -7,7 +7,7 @@ import {
   generatePaymentReference,
   initializeTransaction,
 } from "@/lib/paystack";
-import { tryNextGroomer } from "@/lib/dispatch";
+import { tryNextPro } from "@/lib/dispatch";
 import { z } from "zod";
 
 const createBookingSchema = z.object({
@@ -20,9 +20,11 @@ const createBookingSchema = z.object({
   scheduledFor: z.string().datetime().optional(),
   customerNotes: z.string().max(500).optional(),
   zoneId: z.string().optional(),
+  redeemPoints: z.boolean().optional(),
+  giftCode: z.string().optional(),
 });
 
-// GET /api/bookings — list customer's bookings
+// GET /api/bookings - list customer's bookings
 export async function GET() {
   try {
     const session = await getSession();
@@ -36,7 +38,7 @@ export async function GET() {
       where: { customerId: session.userId },
       include: {
         service: true,
-        groomer: true,
+        pro: true,
         zone: true,
         review: true,
         payment: { select: { status: true } },
@@ -47,13 +49,13 @@ export async function GET() {
     return NextResponse.json({ success: true, data: bookings });
   } catch {
     return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 },
+      { success: false, error: "Failed to fetch bookings." },
+      { status: 500 },
     );
   }
 }
 
-// POST /api/bookings — create booking
+// POST /api/bookings - create booking
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -94,7 +96,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const user = await db.user.findUnique({ where: { id: session.userId } });
+    const user = await db.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, phone: true, email: true, points: true },
+    });
     if (!user)
       return NextResponse.json(
         { success: false, error: "User not found." },
@@ -110,14 +115,43 @@ export async function POST(req: NextRequest) {
       service.basePrice,
     );
 
-    // Get groomer commission (default 20%)
+    // Get pro commission (default 20%)
     const commissionRate = 0.2;
-    const { totalAmount, platformFee, groomerEarning } = calculateEarnings({
+    const { totalAmount: rawTotal, proEarning } = calculateEarnings({
       baseAmount: service.basePrice,
       surchargeAmount: surcharge.amount,
       surchargeType: surcharge.type,
       commissionRate,
     });
+
+    // Points redemption: 100 pts → ₦500 discount
+    const POINTS_REQUIRED = 100;
+    const POINTS_DISCOUNT_VALUE = 500;
+    let pointsDiscount = 0;
+    const canRedeem =
+      input.redeemPoints === true && (user.points ?? 0) >= POINTS_REQUIRED;
+    if (canRedeem) {
+      pointsDiscount = Math.min(POINTS_DISCOUNT_VALUE, rawTotal);
+    }
+
+    // Gift card redemption
+    let giftDiscount = 0;
+    let appliedGiftCard: { id: string; amount: number } | null = null;
+    if (input.giftCode) {
+      const giftCard = await db.giftCard.findFirst({
+        where: {
+          code: input.giftCode.trim().toUpperCase(),
+          isRedeemed: false,
+          expiresAt: { gt: new Date() },
+        },
+      });
+      if (giftCard) {
+        giftDiscount = Math.min(giftCard.amount, rawTotal - pointsDiscount);
+        appliedGiftCard = { id: giftCard.id, amount: giftCard.amount };
+      }
+    }
+
+    const totalAmount = Math.max(0, rawTotal - pointsDiscount - giftDiscount);
 
     const reference = generateBookingReference();
     const paymentRef = generatePaymentReference(reference);
@@ -139,10 +173,36 @@ export async function POST(req: NextRequest) {
         surchargeType: surcharge.type,
         surchargeAmount: surcharge.amount,
         totalAmount,
-        groomerEarning,
+        proEarning,
         status: "PENDING_PAYMENT",
       },
     });
+
+    // Mark gift card as redeemed
+    if (appliedGiftCard) {
+      await db.giftCard.update({
+        where: { id: appliedGiftCard.id },
+        data: { isRedeemed: true, redeemedAt: new Date(), redeemedBy: session.userId, bookingId: booking.id },
+      });
+    }
+
+    // Deduct points and write ledger entry if redeemed
+    if (canRedeem) {
+      await db.$transaction([
+        db.user.update({
+          where: { id: session.userId },
+          data: { points: { decrement: POINTS_REQUIRED } },
+        }),
+        db.pointsLedger.create({
+          data: {
+            userId: session.userId,
+            amount: -POINTS_REQUIRED,
+            reason: "Redeemed for booking discount",
+            referenceId: booking.id,
+          },
+        }),
+      ]);
+    }
 
     // Initialize Paystack payment
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -176,6 +236,8 @@ export async function POST(req: NextRequest) {
           accessCode: paystack.access_code,
           totalAmount,
           surcharge,
+          ...(pointsDiscount > 0 && { pointsDiscount }),
+          ...(giftDiscount > 0 && { giftDiscount }),
         },
       },
       { status: 201 },

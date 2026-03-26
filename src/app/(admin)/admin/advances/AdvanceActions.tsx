@@ -6,13 +6,13 @@ import { formatNaira } from "@/lib/utils";
 
 interface Props {
   advanceId: string;
-  groomerName: string;
+  proName: string;
   amount: number;
 }
 
 export default function AdvanceActions({
   advanceId,
-  groomerName,
+  proName,
   amount,
 }: Props) {
   const router = useRouter();

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 const REASONS = [
-  "Groomer did not show up",
+  "Pro did not show up",
   "Service was not as described",
-  "Groomer was unprofessional",
+  "Pro was unprofessional",
   "Work quality was unacceptable",
   "Incorrect amount charged",
   "Other",

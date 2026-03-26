@@ -15,13 +15,13 @@ export default async function ProfilePage() {
   const [user, bookingCount, completedCount] = await Promise.all([
     db.user.findUnique({
       where:  { id: session.userId },
-      select: { id: true, name: true, phone: true, email: true, createdAt: true },
+      select: { id: true, name: true, phone: true, email: true, createdAt: true, points: true },
     }),
     db.booking.count({ where: { customerId: session.userId } }),
     db.booking.count({ where: { customerId: session.userId, status: 'CONFIRMED' } }),
   ]);
 
-  // These features are coming soon — stubbed until models are added
+  // These features are coming soon - stubbed until models are added
   const subscription = null;
   const referrals:    any[] = [];
   const squadCount   = 0;
@@ -30,7 +30,7 @@ export default async function ProfilePage() {
   const referralCode    = session.userId.slice(-8).toUpperCase();
   const appUrl          = process.env.NEXT_PUBLIC_APP_URL ?? 'https://groomee.ng';
   const whatsappMsg     = encodeURIComponent(
-    `Book professional beauty services at home in Lagos! Use my code ${referralCode} for ₦2,000 off your first booking 💅 → ${appUrl}/?ref=${referralCode}`
+    `Book professional beauty services at home in Lagos! Use my code ${referralCode} for ₦2,000 off your first booking 💅🏿 → ${appUrl}/?ref=${referralCode}`
   );
 
   return (
@@ -88,7 +88,7 @@ export default async function ProfilePage() {
           { href: '/profile/beauty', icon: '✨', label: 'Beauty profile',      badge: profileComplete ? '✓ Complete' : 'Incomplete', bc: profileComplete ? 'green' : 'orange' },
           { href: '/profile/squad',  icon: '💇', label: 'My Squad',            badge: `${squadCount}/3`, bc: squadCount > 0 ? 'green' : 'gray' },
           { href: '/subscriptions',  icon: '🌿', label: 'Subscription plans',  badge: 'Save 15%', bc: 'brand' },
-          { href: '/gift',           icon: '🎁', label: 'Gift a session',       badge: null, bc: 'gray' },
+          { href: '/gift',           icon: '🎁', label: 'Gift a Glow-up',       badge: null, bc: 'gray' },
         ].map(item => (
           <Link key={item.href} href={item.href}>
             <div className="card flex items-center justify-between p-4 hover:bg-gray-50/80 transition-colors">
@@ -110,6 +110,26 @@ export default async function ProfilePage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Points balance card */}
+      <div className="card p-4 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="font-semibold text-gray-900 text-sm">⭐ Loyalty Points</p>
+          <Link href="/profile/points" className="text-xs text-brand-600 font-medium hover:underline">
+            View history →
+          </Link>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <span className="text-3xl font-extrabold text-brand-600">{user?.points ?? 0}</span>
+            <span className="text-xs text-gray-400 mt-0.5">points</span>
+          </div>
+          <div className="flex-1 rounded-xl bg-brand-50 px-3 py-2.5">
+            <p className="text-xs font-medium text-brand-700">100 pts = ₦500 off your next booking</p>
+            <p className="text-xs text-gray-500 mt-0.5">Earn points by completing bookings & referrals.</p>
+          </div>
+        </div>
       </div>
 
       {/* Referral card */}

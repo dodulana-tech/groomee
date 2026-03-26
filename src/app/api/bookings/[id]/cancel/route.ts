@@ -22,7 +22,7 @@ export async function POST(
 
     const booking = await db.booking.findUnique({
       where: { id },
-      include: { customer: true, payment: true, groomer: true },
+      include: { customer: true, payment: true, pro: true },
     });
 
     if (!booking) {
@@ -69,7 +69,7 @@ export async function POST(
     await db.$transaction(async (tx) => {
       await tx.booking.update({
         where: { id: booking.id },
-        data: { status: "CANCELLED" },
+        data: { status: "CANCELLED", cancelledAt: new Date() },
       });
 
       if (booking.payment && refundAmount > 0) {
@@ -79,15 +79,15 @@ export async function POST(
         });
       }
 
-      if (booking.groomerId) {
-        await tx.groomer.update({
-          where: { id: booking.groomerId },
+      if (booking.proId) {
+        await tx.pro.update({
+          where: { id: booking.proId },
           data: { availability: "ONLINE", currentBookingId: null },
         });
       }
     });
 
-    // Paystack refund (outside transaction — network call)
+    // Paystack refund (outside transaction - network call)
     if (booking.payment?.paystackRef && refundAmount > 0) {
       try {
         await createRefund({
@@ -97,7 +97,7 @@ export async function POST(
         });
       } catch (refundErr) {
         console.error("Paystack refund failed:", refundErr);
-        // Don't fail the whole cancel if refund API errors — handle manually
+        // Don't fail the whole cancel if refund API errors - handle manually
       }
     }
 

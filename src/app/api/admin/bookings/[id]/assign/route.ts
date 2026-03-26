@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function PATCH(
@@ -9,43 +9,43 @@ export async function PATCH(
   try {
     const { id } = await params;
     const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
+    if (!hasPermission(session, "bookings.manage")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { groomerId } = await req.json();
-    if (!groomerId)
+    const { proId } = await req.json();
+    if (!proId)
       return NextResponse.json(
-        { error: "groomerId required" },
+        { error: "proId required" },
         { status: 400 },
       );
 
-    const [booking, groomer] = await Promise.all([
+    const [booking, pro] = await Promise.all([
       db.booking.findUnique({ where: { id } }),
-      db.groomer.findUnique({ where: { id: groomerId } }),
+      db.pro.findUnique({ where: { id: proId } }),
     ]);
 
     if (!booking)
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-    if (!groomer)
-      return NextResponse.json({ error: "Groomer not found" }, { status: 404 });
+    if (!pro)
+      return NextResponse.json({ error: "Pro not found" }, { status: 404 });
 
     await db.$transaction(async (tx) => {
       await tx.booking.update({
         where: { id },
-        data: { groomerId, status: "ACCEPTED", acceptedAt: new Date() },
+        data: { proId, status: "ACCEPTED", acceptedAt: new Date() },
       });
-      await tx.groomer.update({
-        where: { id: groomerId },
+      await tx.pro.update({
+        where: { id: proId },
         data: { availability: "BUSY", currentBookingId: id },
       });
     });
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("assign groomer error:", err);
+    console.error("assign pro error:", err);
     return NextResponse.json(
-      { error: "Failed to assign groomer" },
+      { error: "Failed to assign pro" },
       { status: 500 },
     );
   }

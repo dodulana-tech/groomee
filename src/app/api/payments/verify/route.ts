@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyTransaction } from "@/lib/paystack";
-import { tryNextGroomer } from "@/lib/dispatch";
+import { tryNextPro } from "@/lib/dispatch";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,14 +15,24 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const txData = await verifyTransaction(reference);
-
     const payment = await db.payment.findFirst({
       where: { paystackRef: reference },
     });
     if (!payment) {
       return NextResponse.redirect(`${appUrl}/?error=payment_not_found`);
     }
+
+    // SECURITY: Verify bookingId matches the payment record
+    if (payment.bookingId !== bookingId) {
+      return NextResponse.redirect(`${appUrl}/?error=payment_mismatch`);
+    }
+
+    // SECURITY: Idempotency — don't reprocess already-handled payments
+    if (payment.status !== "PENDING") {
+      return NextResponse.redirect(`${appUrl}/booking/${bookingId}`);
+    }
+
+    const txData = await verifyTransaction(reference);
 
     if (txData.status === "success") {
       await db.$transaction(async (tx) => {
@@ -40,8 +50,8 @@ export async function GET(req: NextRequest) {
         });
       });
 
-      // Kick off groomer dispatch
-      tryNextGroomer(bookingId).catch(console.error);
+      // Kick off pro dispatch
+      tryNextPro(bookingId).catch(console.error);
 
       return NextResponse.redirect(`${appUrl}/booking/${bookingId}`);
     } else {
@@ -49,7 +59,7 @@ export async function GET(req: NextRequest) {
         where: { id: payment.id },
         data: { status: "FAILED" },
       });
-      return NextResponse.redirect(`${appUrl}/?error=payment_failed`);
+      return NextResponse.redirect(`${appUrl}/booking/${bookingId}?error=payment_failed`);
     }
   } catch (err) {
     console.error("payment verify error:", err);

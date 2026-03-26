@@ -3,23 +3,33 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+// Ordered by prevalence in Lagos / West Africa, then rest of spectrum
 const HAIR_TYPES = [
-  { value: "1a", label: "1A — Straight fine" },
-  { value: "1b", label: "1B — Straight medium" },
-  { value: "2a", label: "2A — Wavy fine" },
-  { value: "2b", label: "2B — Wavy medium" },
-  { value: "3a", label: "3A — Curly loose" },
-  { value: "3b", label: "3B — Curly medium" },
-  { value: "3c", label: "3C — Curly tight" },
-  { value: "4a", label: "4A — Coily soft" },
-  { value: "4b", label: "4B — Coily wiry" },
-  { value: "4c", label: "4C — Coily tight" },
+  { value: "4c", label: "4C - Coily, tight shrinkage" },
+  { value: "4b", label: "4B - Coily, Z-pattern" },
+  { value: "4a", label: "4A - Coily, soft S-pattern" },
+  { value: "3c", label: "3C - Curly, tight corkscrews" },
+  { value: "3b", label: "3B - Curly, springy ringlets" },
+  { value: "3a", label: "3A - Curly, loose spirals" },
+  { value: "relaxed", label: "Relaxed / chemically straightened" },
+  { value: "texturised", label: "Texturised / texlaxed" },
+  { value: "loc", label: "Locs / sisterlocks / freeform" },
+  { value: "2c", label: "2C - Wavy, coarse" },
+  { value: "2b", label: "2B - Wavy, defined" },
+  { value: "2a", label: "2A - Wavy, loose" },
+  { value: "1c", label: "1C - Straight, coarse" },
+  { value: "1b", label: "1B - Straight, medium" },
+  { value: "1a", label: "1A - Straight, fine" },
+  { value: "shaved", label: "Shaved / bald / low cut" },
+  { value: "mixed", label: "Mixed textures" },
 ];
 const HAIR_LENGTHS = [
-  "Short (above ear)",
-  "Medium (to shoulder)",
+  "Shaved / TWA",
+  "Short (ear length)",
+  "Medium (shoulder length)",
   "Long (past shoulder)",
   "Extra long (waist+)",
+  "Varies (extensions / wigs)",
 ];
 const SCALP_CONDITIONS = [
   "Normal",
@@ -27,9 +37,22 @@ const SCALP_CONDITIONS = [
   "Oily",
   "Sensitive",
   "Dandruff-prone",
+  "Heat-damaged",
+  "Thinning edges",
+  "Alopecia / thinning",
 ];
-const SKIN_TONES = ["Fair", "Light", "Medium", "Tan", "Deep", "Rich"];
-const SKIN_TYPES = ["Normal", "Dry", "Oily", "Combination", "Sensitive"];
+const SKIN_TONES = [
+  "Deep ebony",
+  "Rich brown",
+  "Dark brown",
+  "Medium brown",
+  "Caramel",
+  "Light brown",
+  "Medium",
+  "Light",
+  "Fair",
+];
+const SKIN_TYPES = ["Normal", "Dry", "Oily", "Combination", "Sensitive", "Acne-prone", "Hyperpigmentation-prone"];
 const COMMON_ALLERGIES = [
   "Sulphates",
   "Parabens",
@@ -37,20 +60,67 @@ const COMMON_ALLERGIES = [
   "Fragrances",
   "Latex",
   "Formaldehyde",
+  "PPD (hair dye)",
+  "Acrylics / methacrylate",
+  "Glue / adhesive (lash/wig)",
+  "Relaxer / sodium hydroxide",
 ];
-const STYLE_TAGS = [
-  "Knotless braids",
-  "Box braids",
-  "Ghana braids",
-  "Natural twists",
-  "Weave",
-  "Full glam",
-  "Natural makeup",
-  "Gel nails",
-  "Acrylic nails",
-  "Skin fade",
-  "Low fade",
+// Grouped by service category - maps to platform services
+const STYLE_TAG_GROUPS: { label: string; emoji: string; tags: string[] }[] = [
+  {
+    label: "Hair",
+    emoji: "💇🏿‍♀️",
+    tags: [
+      "Knotless braids", "Box braids", "Ghana braids", "Cornrows",
+      "Twists / flat twists", "Bantu knots", "Crochet braids",
+      "Weave / sew-in", "Wig install", "Locs maintenance",
+      "Silk press", "Natural styling", "Relaxer touch-up",
+    ],
+  },
+  {
+    label: "Barbing",
+    emoji: "✂️",
+    tags: [
+      "Skin fade", "Low fade", "Mid fade", "High fade",
+      "Classic cut", "Shape-up / line-up", "Beard trim",
+      "Beard shaping", "Mohawk / design cut",
+    ],
+  },
+  {
+    label: "Makeup",
+    emoji: "💄",
+    tags: [
+      "Full glam", "Soft glam", "Natural / no-makeup look",
+      "Bridal makeup", "Editorial / creative", "Men's grooming makeup",
+    ],
+  },
+  {
+    label: "Nails",
+    emoji: "💅🏿",
+    tags: [
+      "Gel nails", "Acrylic nails", "Press-on nails",
+      "Classic manicure", "Classic pedicure", "Nail art",
+      "Nail repair / removal",
+    ],
+  },
+  {
+    label: "Lashes",
+    emoji: "👁️",
+    tags: [
+      "Classic lashes", "Volume lashes", "Mega volume",
+      "Lash lift & tint", "Strip lash application",
+    ],
+  },
+  {
+    label: "Skincare",
+    emoji: "✨",
+    tags: [
+      "Facial treatment", "Deep cleansing", "Glow facial",
+      "Exfoliation / peel", "Hydration treatment",
+    ],
+  },
 ];
+const ALL_STYLE_TAGS = STYLE_TAG_GROUPS.flatMap((g) => g.tags);
 
 export default function BeautyProfilePage() {
   const router = useRouter();
@@ -127,14 +197,14 @@ export default function BeautyProfilePage() {
           Your Beauty Profile
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          This profile is shared with every groomer you book, so they arrive
+          This profile is shared with every pro you book, so they arrive
           prepared. It lives only on Groomee.
         </p>
       </div>
 
       <div className="space-y-5">
         {/* Hair section */}
-        <Section title="💇‍♀️ Hair">
+        <Section title="✂️ Hair & Scalp">
           <div className="grid gap-4 sm:grid-cols-2">
             <Select
               label="Hair type"
@@ -171,7 +241,7 @@ export default function BeautyProfilePage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, colourTreated: e.target.checked }))
                 }
-                className="h-4 w-4 rounded border-gray-300 text-brand-600"
+                className="h-5 w-5 rounded border-gray-300 text-brand-600"
               />
               <label
                 htmlFor="coloured"
@@ -230,7 +300,7 @@ export default function BeautyProfilePage() {
         {/* Allergies */}
         <Section title="⚠️ Allergies & Sensitivities">
           <p className="mb-3 text-xs text-gray-500">
-            Groomers will see these before your appointment.
+            Pros will see these before your appointment.
           </p>
           <div className="flex flex-wrap gap-2 mb-3">
             {COMMON_ALLERGIES.map((a) => (
@@ -261,30 +331,37 @@ export default function BeautyProfilePage() {
           />
         </Section>
 
-        {/* Favourite styles */}
-        <Section title="💅 Favourite Styles">
-          <p className="mb-3 text-xs text-gray-500">
-            Helps groomers understand your preferences.
+        {/* Favourite styles - grouped by service category */}
+        <Section title="⭐ Services & Styles I Book">
+          <p className="mb-4 text-xs text-gray-500">
+            Select what you typically book. This helps us match you with the right pros.
           </p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {STYLE_TAGS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => toggleArr("favouriteStyles", s)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${form.favouriteStyles.includes(s) ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600"}`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+          {STYLE_TAG_GROUPS.map((group) => (
+            <div key={group.label} className="mb-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                {group.emoji} {group.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {group.tags.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleArr("favouriteStyles", s)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${form.favouriteStyles.includes(s) ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600"}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
           <textarea
             value={form.styleNotes}
             onChange={(e) =>
               setForm((f) => ({ ...f, styleNotes: e.target.value }))
             }
-            placeholder="Any other style notes or preferences your groomers should know…"
-            className="input resize-none text-sm"
+            placeholder="Any other style notes or preferences your pros should know..."
+            className="input resize-none text-sm mt-3"
             rows={3}
           />
         </Section>

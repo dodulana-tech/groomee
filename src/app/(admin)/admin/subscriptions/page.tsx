@@ -12,7 +12,7 @@ export default function AdminSubscriptionsPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 border-dashed p-16 text-center">
+      <div className="glass-card rounded-2xl border-dashed p-16 text-center">
         <p className="text-4xl mb-4">🌿</p>
         <p className="font-bold text-gray-700 text-lg mb-2">
           Subscriptions not yet set up

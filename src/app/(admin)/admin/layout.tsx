@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default async function AdminLayout({
@@ -7,15 +7,17 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  try {
-    await requireAdmin();
-  } catch {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") {
     redirect("/auth?redirect=/admin");
   }
 
   return (
     <div className="flex h-screen bg-gray-900">
-      <AdminSidebar />
+      <AdminSidebar
+        permissions={session.permissions ?? []}
+        roleName={session.adminRoleName ?? "Admin"}
+      />
       <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
     </div>
   );

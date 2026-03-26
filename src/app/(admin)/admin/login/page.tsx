@@ -1,14 +1,20 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+type Method = "phone" | "email";
+type Step = "choose" | "input" | "otp";
+
 export default function AdminLoginPage() {
   const router = useRouter();
+  const [method, setMethod] = useState<Method>("phone");
+  const [step, setStep] = useState<Step>("choose");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"phone" | "otp">("phone");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -17,13 +23,19 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/send-otp", {
+      const url =
+        method === "phone"
+          ? "/api/auth/send-otp"
+          : "/api/auth/send-email-otp";
+      const body =
+        method === "phone" ? { phone } : { email };
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to send OTP");
+      if (!res.ok) throw new Error(data.error ?? "Failed to send code");
       setStep("otp");
     } catch (err: any) {
       setError(err.message);
@@ -37,14 +49,20 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/verify-otp", {
+      const url =
+        method === "phone"
+          ? "/api/auth/verify-otp"
+          : "/api/auth/verify-email-otp";
+      const body =
+        method === "phone" ? { phone, otp } : { email, otp };
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, otp }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Invalid code");
-      if (data.role !== "ADMIN") {
+      if (data.data?.role !== "ADMIN") {
         throw new Error("You do not have admin access.");
       }
       router.push("/admin");
@@ -55,23 +73,26 @@ export default function AdminLoginPage() {
     }
   }
 
+  const inputStyle = {
+    background: "rgba(255,255,255,0.08)",
+    border: "1.5px solid rgba(255,255,255,0.12)",
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-4"
       style={{ background: "#0D1B12" }}
     >
       {/* Logo */}
-      <Link href="/" className="mb-10 flex items-center gap-2">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-base border border-white/20"
-          style={{
-            fontFamily: "Georgia, serif",
-            color: "#D4A853",
-            background: "rgba(255,255,255,0.08)",
-          }}
-        >
-          G
-        </div>
+      <Link href="/" className="mb-10 flex items-center gap-2.5">
+        <Image
+          src="/assets/logo/groomee-logo-teal.jpg"
+          alt="Groomee"
+          width={40}
+          height={40}
+          className="rounded-full"
+          priority
+        />
         <span
           className="text-xl font-black tracking-tight text-white"
           style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
@@ -86,6 +107,7 @@ export default function AdminLoginPage() {
         style={{
           background: "rgba(255,255,255,0.06)",
           border: "1px solid rgba(255,255,255,0.1)",
+          backdropFilter: "blur(16px)",
         }}
       >
         <div className="mb-6">
@@ -103,40 +125,100 @@ export default function AdminLoginPage() {
             className="text-2xl font-black text-white mb-1"
             style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
           >
-            {step === "phone" ? "Admin sign in" : "Verify identity"}
+            {step === "choose"
+              ? "Admin sign in"
+              : step === "input"
+                ? "Admin sign in"
+                : "Verify identity"}
           </h1>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
-            {step === "phone"
-              ? "Enter your registered admin phone number"
-              : `Enter the code sent to ${phone}`}
+            {step === "choose"
+              ? "Choose how to sign in"
+              : step === "input"
+                ? method === "phone"
+                  ? "Enter your registered admin phone number"
+                  : "Enter your registered admin email"
+                : `Enter the code sent to ${method === "phone" ? phone : email}`}
           </p>
         </div>
 
-        {step === "phone" ? (
+        {/* Choose method */}
+        {step === "choose" && (
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setMethod("phone");
+                setStep("input");
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left transition-all"
+              style={{ ...inputStyle }}
+            >
+              <span className="text-xl">📱</span>
+              <div>
+                <p className="text-sm font-bold text-white">Phone number</p>
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  Get a code via SMS
+                </p>
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setMethod("email");
+                setStep("input");
+              }}
+              className="flex w-full items-center gap-3 rounded-xl p-4 text-left transition-all"
+              style={{ ...inputStyle }}
+            >
+              <span className="text-xl">✉️</span>
+              <div>
+                <p className="text-sm font-bold text-white">Email</p>
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  Get a code to your inbox
+                </p>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Input step */}
+        {step === "input" && (
           <form onSubmit={sendOtp} className="space-y-4">
             <div>
               <label
                 className="block text-xs font-bold uppercase tracking-wider mb-2"
                 style={{ color: "rgba(255,255,255,0.4)" }}
               >
-                Phone number
+                {method === "phone" ? "Phone number" : "Email address"}
               </label>
-              <input
-                type="tel"
-                className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium outline-none transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1.5px solid rgba(255,255,255,0.12)",
-                }}
-                placeholder="+234 801 234 5678"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                autoFocus
-                onFocus={(e) => (e.target.style.borderColor = "#D4A853")}
-                onBlur={(e) =>
-                  (e.target.style.borderColor = "rgba(255,255,255,0.12)")
-                }
-              />
+              {method === "phone" ? (
+                <input
+                  type="tel"
+                  className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium outline-none transition-all"
+                  style={inputStyle}
+                  placeholder="+234 801 234 5678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoFocus
+                  onFocus={(e) => (e.target.style.borderColor = "#D4A853")}
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "rgba(255,255,255,0.12)")
+                  }
+                />
+              ) : (
+                <input
+                  type="email"
+                  className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium outline-none transition-all"
+                  style={inputStyle}
+                  placeholder="admin@groomee.ng"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoFocus
+                  onFocus={(e) => (e.target.style.borderColor = "#D4A853")}
+                  onBlur={(e) =>
+                    (e.target.style.borderColor = "rgba(255,255,255,0.12)")
+                  }
+                />
+              )}
             </div>
             {error && (
               <p className="text-sm font-medium" style={{ color: "#FF4D2E" }}>
@@ -155,16 +237,34 @@ export default function AdminLoginPage() {
             >
               {loading ? "Sending…" : "Send verification code →"}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep("choose");
+                setError("");
+              }}
+              className="w-full text-xs py-2"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            >
+              ← Other sign-in options
+            </button>
           </form>
-        ) : (
+        )}
+
+        {/* OTP step */}
+        {step === "otp" && (
           <form onSubmit={verifyOtp} className="space-y-4">
             <button
               type="button"
-              onClick={() => setStep("phone")}
+              onClick={() => {
+                setStep("input");
+                setOtp("");
+                setError("");
+              }}
               className="text-xs font-medium mb-2 flex items-center gap-1"
               style={{ color: "rgba(255,255,255,0.4)" }}
             >
-              ← Change number
+              ← Change {method === "phone" ? "number" : "email"}
             </button>
             <div>
               <label
@@ -177,11 +277,8 @@ export default function AdminLoginPage() {
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
-                className="w-full rounded-xl px-4 py-3 text-white text-xl font-bold tracking-[0.5em] text-center outline-none"
-                style={{
-                  background: "rgba(255,255,255,0.08)",
-                  border: "1.5px solid rgba(255,255,255,0.12)",
-                }}
+                className="w-full rounded-xl px-4 py-3 text-white text-xl font-bold tracking-[0.3em] sm:tracking-[0.5em] text-center outline-none"
+                style={inputStyle}
                 placeholder="· · · · · ·"
                 value={otp}
                 onChange={(e) =>

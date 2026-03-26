@@ -13,6 +13,19 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "My Bookings" };
 
+const STATUS_TOOLTIP: Record<string, string> = {
+  PENDING_PAYMENT: "Waiting for your payment to complete",
+  DISPATCHING: "We're finding a beauty pro near you",
+  ACCEPTED: "A pro has accepted your booking",
+  EN_ROUTE: "Your pro is on the way",
+  ARRIVED: "Your pro has arrived at your location",
+  IN_SERVICE: "Your service is in progress",
+  COMPLETED: "Service completed — please confirm",
+  CONFIRMED: "All done! Thanks for using Groomee",
+  CANCELLED: "This booking was cancelled",
+  NO_GROOMER: "We couldn't find a pro for this booking",
+};
+
 export default async function BookingsPage() {
   const session = await getSession();
   if (!session) redirect("/auth?redirect=/bookings");
@@ -21,7 +34,7 @@ export default async function BookingsPage() {
     where: { customerId: session.userId },
     include: {
       service: true,
-      groomer: true,
+      pro: true,
       zone: true,
       review: true,
     },
@@ -34,13 +47,13 @@ export default async function BookingsPage() {
 
       {bookings.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
-          <p className="text-4xl mb-3">💅</p>
+          <p className="text-4xl mb-3">💅🏿</p>
           <p className="font-semibold text-gray-700">No bookings yet</p>
           <p className="mt-1 text-sm text-gray-500">
-            Book your first grooming session today!
+            Time to book your first beauty pro!
           </p>
-          <Link href="/" className="btn-primary btn-md mt-6 inline-flex">
-            Find a groomer
+          <Link href="/search" className="btn-primary btn-md mt-6 inline-flex">
+            Find a pro
           </Link>
         </div>
       ) : (
@@ -56,6 +69,7 @@ export default async function BookingsPage() {
                           "status-pill text-xs",
                           getBookingStatusColor(b.status),
                         )}
+                        title={STATUS_TOOLTIP[b.status] ?? ""}
                       >
                         {getBookingStatusLabel(b.status)}
                       </span>
@@ -68,9 +82,9 @@ export default async function BookingsPage() {
                     <p className="font-semibold text-gray-900">
                       {b.service.name}
                     </p>
-                    {b.groomer && (
+                    {b.pro && (
                       <p className="text-sm text-gray-500">
-                        with {b.groomer.name}
+                        with {b.pro.name}
                       </p>
                     )}
                     <p className="mt-1 text-xs text-gray-400">

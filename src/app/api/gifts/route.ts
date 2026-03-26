@@ -23,7 +23,7 @@ const redeemSchema = z.object({
   bookingId: z.string(),
 });
 
-// GET /api/gifts — list sent/received gift cards
+// GET /api/gifts - list sent/received gift cards
 export async function GET() {
   try {
     const session = await requireSession();
@@ -41,7 +41,7 @@ export async function GET() {
   }
 }
 
-// POST /api/gifts — send a gift card
+// POST /api/gifts - send a gift card
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();

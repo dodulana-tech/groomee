@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { awardPoints, POINTS } from "@/lib/points";
 
 export async function POST(
   req: NextRequest,
@@ -14,7 +15,7 @@ export async function POST(
 
     const booking = await db.booking.findUnique({
       where: { id },
-      include: { payment: true, groomer: true },
+      include: { payment: true, pro: true },
     });
 
     if (!booking)
@@ -40,17 +41,17 @@ export async function POST(
         });
       }
 
-      if (booking.groomerId) {
+      if (booking.proId) {
         await tx.earning.create({
           data: {
-            groomerId: booking.groomerId,
+            proId: booking.proId,
             bookingId: id,
-            amount: booking.groomerEarning,
+            amount: booking.proEarning,
           },
         });
 
-        await tx.groomer.update({
-          where: { id: booking.groomerId },
+        await tx.pro.update({
+          where: { id: booking.proId },
           data: {
             availability: "ONLINE",
             currentBookingId: null,
@@ -59,6 +60,18 @@ export async function POST(
         });
       }
     });
+
+    // Award points for booking confirmation
+    await awardPoints(session.userId, POINTS.BOOKING_COMPLETION, "Booking confirmed", id).catch(() => {});
+
+    // Check for unpaid referral — award referrer on first confirmed booking
+    const referral = await db.referral.findFirst({
+      where: { referredUserId: session.userId, bonusPaid: false },
+    });
+    if (referral) {
+      await db.referral.update({ where: { id: referral.id }, data: { bonusPaid: true } });
+      await awardPoints(referral.referrerId, POINTS.REFERRAL, "Referral bonus", referral.id).catch(() => {});
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

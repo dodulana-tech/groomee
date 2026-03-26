@@ -58,9 +58,9 @@ export default function ServiceCategories({ services }: Props) {
             <br />
             <span className="text-brand-600">at your doorstep</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-base text-gray-500">
-            From last-minute touch-ups to full event glam — our vetted groomers
-            cover all your beauty needs.
+          <p className="mt-4 max-w-lg text-base text-gray-500">
+            From last-minute touch-ups to full event glam - our vetted pros
+            bring the salon to you.
           </p>
         </div>
 

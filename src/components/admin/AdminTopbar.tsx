@@ -1,16 +1,19 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 const PAGE_TITLES: Record<string, string> = {
   "/admin": "Overview",
   "/admin/bookings": "Bookings",
-  "/admin/groomers": "Groomers",
+  "/admin/pros": "Beauty Pros",
   "/admin/customers": "Customers",
   "/admin/disputes": "Disputes",
   "/admin/payouts": "Payouts",
   "/admin/catalog": "Service Catalog",
   "/admin/settings": "Settings",
+  "/admin/surveys": "Surveys",
+  "/admin/waitlist": "Waitlist",
 };
 
 export default function AdminTopbar() {
@@ -24,9 +27,9 @@ export default function AdminTopbar() {
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           Live
         </div>
-        <button className="bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-green-600 transition-colors">
-          + Add groomer
-        </button>
+        <Link href="/admin/pros/new" className="bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-green-600 transition-colors">
+          + Add pro
+        </Link>
       </div>
     </div>
   );

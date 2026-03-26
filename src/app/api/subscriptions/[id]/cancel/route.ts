@@ -10,7 +10,8 @@ export async function POST(
 
   try {
     const session = await requireSession();
-    const { reason } = await req.json();
+    let reason: string | undefined;
+    try { ({ reason } = await req.json()); } catch { /* empty body is fine */ }
 
     const sub = await db.subscription.findUnique({
       where: { id },

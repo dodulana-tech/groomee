@@ -103,16 +103,16 @@ export function calculateEarnings({
 }) {
   // Platform takes full commission on base
   const platformOnBase = baseAmount * commissionRate;
-  const groomerOnBase = baseAmount - platformOnBase;
+  const proOnBase = baseAmount - platformOnBase;
 
-  // Surcharge split: groomer gets 70%, platform 30%
-  const groomerOnSurcharge = surchargeAmount * 0.7;
+  // Surcharge split: pro gets 70%, platform 30%
+  const proOnSurcharge = surchargeAmount * 0.7;
   const platformOnSurcharge = surchargeAmount * 0.3;
 
   return {
     totalAmount: baseAmount + surchargeAmount,
     platformFee: platformOnBase + platformOnSurcharge,
-    groomerEarning: groomerOnBase + groomerOnSurcharge,
+    proEarning: proOnBase + proOnSurcharge,
   };
 }
 

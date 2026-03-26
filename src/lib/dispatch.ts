@@ -1,14 +1,14 @@
 import { db } from "./db";
-import { sendGroomerJobOffer } from "./whatsapp";
+import { sendProJobOffer } from "./whatsapp";
 import { format } from "date-fns";
 import type { DispatchAttempt } from "@/types";
 
 const DISPATCH_TIMEOUT =
   parseInt(process.env.DISPATCH_TIMEOUT_SECONDS ?? "180") * 1000;
 
-// ─── FIND AVAILABLE GROOMERS ─────────────────────────────────────────────────
+// ─── FIND AVAILABLE PROS ─────────────────────────────────────────────────────
 
-export async function findAvailableGroomers(bookingId: string) {
+export async function findAvailablePros(bookingId: string) {
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
     include: { service: true, zone: true, customer: true },
@@ -16,28 +16,28 @@ export async function findAvailableGroomers(bookingId: string) {
 
   if (!booking) throw new Error("Booking not found");
 
-  // Check if customer has a squad — squad members get priority
-  const squad = await db.favouriteGroomer.findMany({
+  // Check if customer has a squad - squad members get priority
+  const squad = await db.favouritePro.findMany({
     where: { userId: booking.customerId },
-    include: { groomer: true },
+    include: { pro: true },
     orderBy: { priority: "asc" },
   });
 
   const dispatchLog: DispatchAttempt[] = [];
-  const triedIds = dispatchLog.map((d) => d.groomerId);
+  const triedIds = dispatchLog.map((d) => d.proId);
 
-  // Squad groomers who are online, offer correct service, and haven't been tried
+  // Squad pros who are online, offer correct service, and haven't been tried
   const eligibleSquad = squad
-    .filter((f: any) => !triedIds.includes(f.groomerId))
+    .filter((f: any) => !triedIds.includes(f.proId))
     .filter(
       (f: any) =>
-        f.groomer.status === "ACTIVE" && f.groomer.availability === "ONLINE",
+        f.pro.status === "ACTIVE" && f.pro.availability === "ONLINE",
     );
 
   if (eligibleSquad.length > 0) {
-    // Verify squad groomers actually offer this service in this zone
-    const squadIds = eligibleSquad.map((f: any) => f.groomerId);
-    const qualifiedSquad = await db.groomer.findMany({
+    // Verify squad pros actually offer this service in this zone
+    const squadIds = eligibleSquad.map((f: any) => f.proId);
+    const qualifiedSquad = await db.pro.findMany({
       where: {
         id: { in: squadIds },
         services: { some: { serviceId: booking.serviceId } },
@@ -64,7 +64,7 @@ async function getWiderPool(
   booking: { serviceId: string; zoneId: string | null },
   excludeIds: string[],
 ) {
-  return db.groomer.findMany({
+  return db.pro.findMany({
     where: {
       status: "ACTIVE",
       availability: "ONLINE",
@@ -76,18 +76,18 @@ async function getWiderPool(
   });
 }
 
-// ─── OFFER JOB TO GROOMER ─────────────────────────────────────────────────────
+// ─── OFFER JOB TO PRO ────────────────────────────────────────────────────────
 
-export async function offerJobToGroomer(bookingId: string, groomerId: string) {
-  const [booking, groomer] = await Promise.all([
+export async function offerJobToPro(bookingId: string, proId: string) {
+  const [booking, pro] = await Promise.all([
     db.booking.findUnique({
       where: { id: bookingId },
       include: { service: true, zone: true, customer: true },
     }),
-    db.groomer.findUnique({ where: { id: groomerId } }),
+    db.pro.findUnique({ where: { id: proId } }),
   ]);
 
-  if (!booking || !groomer) throw new Error("Not found");
+  if (!booking || !pro) throw new Error("Not found");
 
   const serviceTime = booking.scheduledFor
     ? format(booking.scheduledFor, "EEE do MMM, h:mmaaa")
@@ -121,45 +121,45 @@ export async function offerJobToGroomer(bookingId: string, groomerId: string) {
   }
 
   // Check if this is a squad booking
-  const isSquadMember = await db.favouriteGroomer.findFirst({
-    where: { userId: booking.customerId, groomerId },
+  const isSquadMember = await db.favouritePro.findFirst({
+    where: { userId: booking.customerId, proId },
   });
   const squadNote = isSquadMember
-    ? "\n⭐ *This customer has you in their Groomer Squad!*"
+    ? "\n⭐ *This customer has you in their Favourite Pros!*"
     : "";
 
-  await sendGroomerJobOffer({
-    phone: groomer.phone,
-    groomerName: groomer.name.split(" ")[0],
+  await sendProJobOffer({
+    phone: pro.phone,
+    proName: pro.name.split(" ")[0],
     customerArea: area,
     serviceName: booking.service.name,
     bookingTime: serviceTime,
-    fee: booking.groomerEarning,
+    fee: booking.proEarning,
     profileBrief: profileBrief + squadNote,
   });
 
   // Log offer in dispatch log
   const dispatchLog: DispatchAttempt[] = [];
   const attempt: DispatchAttempt = {
-    groomerId: groomer.id,
-    groomerName: groomer.name,
+    proId: pro.id,
+    proName: pro.name,
     offeredAt: new Date().toISOString(),
     response: null,
   };
 
-  // Schedule timeout — in production this would use a queue (e.g. BullMQ)
+  // Schedule timeout - in production this would use a queue (e.g. BullMQ)
   // For MVP, we use a setTimeout-based approach
-  scheduleDispatchTimeout(bookingId, groomerId, DISPATCH_TIMEOUT);
+  scheduleDispatchTimeout(bookingId, proId, DISPATCH_TIMEOUT);
 }
 
-// ─── HANDLE GROOMER RESPONSE ─────────────────────────────────────────────────
+// ─── HANDLE PRO RESPONSE ─────────────────────────────────────────────────────
 
-export async function handleGroomerResponse(
-  groomerId: string,
+export async function handleProResponse(
+  proId: string,
   response: "YES" | "NO",
   bookingId?: string,
 ) {
-  // Find the active booking for this groomer (most recent unresolved offer)
+  // Find the active booking for this pro (most recent unresolved offer)
   let booking;
   if (bookingId) {
     booking = await db.booking.findUnique({ where: { id: bookingId } });
@@ -177,7 +177,7 @@ export async function handleGroomerResponse(
   // Update dispatch log
   const dispatchLog: DispatchAttempt[] = [];
   const updatedLog = dispatchLog.map((a) =>
-    a.groomerId === groomerId && a.response === null
+    a.proId === proId && a.response === null
       ? ({
           ...a,
           response: response === "YES" ? "accepted" : "declined",
@@ -190,29 +190,29 @@ export async function handleGroomerResponse(
     await db.booking.update({
       where: { id: booking.id },
       data: {
-        groomerId,
+        proId,
         status: "ACCEPTED",
         acceptedAt: new Date(),
       },
     });
 
-    // Mark groomer as busy
-    await db.groomer.update({
-      where: { id: groomerId },
+    // Mark pro as busy
+    await db.pro.update({
+      where: { id: proId },
       data: { availability: "BUSY", currentBookingId: booking.id },
     });
 
     return { found: true, accepted: true, bookingId: booking.id };
   } else {
-    // Declined — try next groomer
-    await tryNextGroomer(booking.id);
+    // Declined - try next pro
+    await tryNextPro(booking.id);
     return { found: true, accepted: false, bookingId: booking.id };
   }
 }
 
-// ─── TRY NEXT GROOMER ─────────────────────────────────────────────────────────
+// ─── TRY NEXT PRO ────────────────────────────────────────────────────────────
 
-export async function tryNextGroomer(bookingId: string) {
+export async function tryNextPro(bookingId: string) {
   const settings = await db.setting.findMany({
     where: { key: { in: ["DISPATCH_MAX_ATTEMPTS"] } },
   });
@@ -223,47 +223,47 @@ export async function tryNextGroomer(bookingId: string) {
   const booking = await db.booking.findUnique({ where: { id: bookingId } });
   if (!booking) return;
 
-  const dispatchCount = (booking as any).dispatchCount ?? 0;
+  const dispatchCount = booking.dispatchAttempts ?? 0;
   if (dispatchCount >= maxAttempts) {
-    // Give up — mark as no groomer
+    // Give up - mark as no pro
     await db.booking.update({
       where: { id: bookingId },
       data: { status: "NO_GROOMER" },
     });
-    return { noGroomer: true };
+    return { noPro: true };
   }
 
-  const available = await findAvailableGroomers(bookingId);
+  const available = await findAvailablePros(bookingId);
   if (available.length === 0) {
     await db.booking.update({
       where: { id: bookingId },
       data: { status: "NO_GROOMER" },
     });
-    return { noGroomer: true };
+    return { noPro: true };
   }
 
-  await offerJobToGroomer(bookingId, available[0].id);
-  return { dispatched: true, groomerId: available[0].id };
+  await offerJobToPro(bookingId, available[0].id);
+  return { dispatched: true, proId: available[0].id };
 }
 
 // ─── DISPATCH TIMEOUT ─────────────────────────────────────────────────────────
 
 function scheduleDispatchTimeout(
   bookingId: string,
-  groomerId: string,
+  proId: string,
   delay: number,
 ) {
   setTimeout(async () => {
     const booking = await db.booking.findUnique({ where: { id: bookingId } });
     if (!booking || booking.status !== "DISPATCHING") return; // Already resolved
-    await tryNextGroomer(bookingId);
+    await tryNextPro(bookingId);
   }, delay);
 }
 
 // ─── STRIKES ─────────────────────────────────────────────────────────────────
 
 export async function issueStrike(
-  groomerId: string,
+  proId: string,
   bookingId: string,
   reason:
     | "NO_RESPONSE"
@@ -273,30 +273,30 @@ export async function issueStrike(
     | "MISCONDUCT",
   notes?: string,
 ) {
-  const { sendGroomerStrikeNotice } = await import("./whatsapp");
+  const { sendProStrikeNotice } = await import("./whatsapp");
 
   await db.strike.create({
-    data: { groomerId, bookingId, reason, notes },
+    data: { proId, bookingId, reason, notes },
   });
 
-  const groomer = await db.groomer.update({
-    where: { id: groomerId },
-    data: { strikes: { increment: 1 } as any },
+  const pro = await db.pro.update({
+    where: { id: proId },
+    data: { strikeCount: { increment: 1 } },
   });
 
-  await sendGroomerStrikeNotice(
-    groomer.phone,
-    (groomer as any).strikes ?? 0,
+  await sendProStrikeNotice(
+    pro.phone,
+    pro.strikeCount,
     reason.replace(/_/g, " "),
   );
 
   // Auto-suspend at 3 strikes
-  if (((groomer as any).strikes ?? 0) >= 3) {
-    await db.groomer.update({
-      where: { id: groomerId },
+  if (pro.strikeCount >= 3) {
+    await db.pro.update({
+      where: { id: proId },
       data: { status: "SUSPENDED", availability: "OFFLINE" },
     });
   }
 
-  return (groomer as any).strikes ?? 0;
+  return pro.strikeCount;
 }

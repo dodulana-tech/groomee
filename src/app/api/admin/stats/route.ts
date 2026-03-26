@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { startOfDay, subDays } from "date-fns";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await getSession();
+    if (!hasPermission(session, "dashboard.view")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
 
     const today = startOfDay(new Date());
     const sevenDaysAgo = subDays(today, 6);
@@ -13,11 +16,11 @@ export async function GET() {
     const [
       todayRevenue,
       activeBookings,
-      groomersOnline,
+      prosOnline,
       openDisputes,
       weeklyData,
       recentBookings,
-      groomerAvailability,
+      proAvailability,
     ] = await Promise.all([
       // Today's captured revenue
       db.payment.aggregate({
@@ -39,8 +42,8 @@ export async function GET() {
           },
         },
       }),
-      // Groomers online
-      db.groomer.count({ where: { availability: "ONLINE", status: "ACTIVE" } }),
+      // Pros online
+      db.pro.count({ where: { availability: "ONLINE", status: "ACTIVE" } }),
       // Open disputes
       db.dispute.count({ where: { status: { in: ["OPEN", "UNDER_REVIEW"] } } }),
       // Weekly booking counts
@@ -56,7 +59,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         include: {
           customer: { select: { id: true, name: true, phone: true } },
-          groomer: true,
+          pro: true,
           service: true,
           zone: true,
           payment: true,
@@ -64,8 +67,8 @@ export async function GET() {
           review: true,
         },
       }),
-      // Groomer availability
-      db.groomer.findMany({
+      // Pro availability
+      db.pro.findMany({
         where: { status: "ACTIVE" },
         orderBy: [{ availability: "asc" }, { avgRating: "desc" }],
         take: 20,
@@ -96,12 +99,12 @@ export async function GET() {
       data: {
         todayRevenue: todayRevenue._sum.amount ?? 0,
         activeBookings,
-        groomersOnline,
+        prosOnline,
         openDisputes,
         weeklyBookings,
         recentBookings,
-        groomerAvailability: groomerAvailability.map((g) => ({
-          groomer: g,
+        proAvailability: proAvailability.map((g) => ({
+          pro: g,
           availability: g.availability,
           currentJob: g.currentBookingId,
         })),

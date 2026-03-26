@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await getSession();
+    if (!hasPermission(session, "bookings.view")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
     const take = parseInt(searchParams.get("take") ?? "50");
@@ -15,7 +18,7 @@ export async function GET(req: NextRequest) {
         where: status ? { status: status as never } : undefined,
         include: {
           customer: { select: { id: true, name: true, phone: true } },
-          groomer: true,
+          pro: true,
           service: true,
           zone: true,
           payment: true,

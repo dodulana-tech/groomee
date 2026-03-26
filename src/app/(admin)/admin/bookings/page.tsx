@@ -35,7 +35,7 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
       : undefined,
     include: {
       customer: { select: { name: true, phone: true } },
-      groomer: { select: { name: true } },
+      pro: { select: { name: true } },
       service: { select: { name: true } },
       zone: { select: { name: true } },
       payment: { select: { status: true } },
@@ -91,7 +91,7 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
                   Service
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Groomer
+                  Pro
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Zone
@@ -115,17 +115,17 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
                     {b.reference}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium">{b.customer.name ?? "—"}</p>
+                    <p className="font-medium">{b.customer.name ?? "-"}</p>
                     <p className="text-xs text-gray-400">{b.customer.phone}</p>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{b.service.name}</td>
                   <td className="px-4 py-3 text-gray-600">
-                    {b.groomer?.name ?? (
-                      <span className="text-gray-300">—</span>
+                    {b.pro?.name ?? (
+                      <span className="text-gray-300">-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
-                    {b.zone?.name ?? "—"}
+                    {b.zone?.name ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <span

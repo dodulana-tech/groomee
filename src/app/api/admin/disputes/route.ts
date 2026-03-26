@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createRefund } from "@/lib/paystack";
 import { z } from "zod";
@@ -7,13 +7,16 @@ import { z } from "zod";
 // GET /api/admin/disputes
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await getSession();
+    if (!hasPermission(session, "disputes.view")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
     const disputes = await db.dispute.findMany({
       include: {
         booking: {
           include: {
             customer: { select: { id: true, name: true, phone: true } },
-            groomer: true,
+            pro: true,
             service: true,
             payment: true,
           },

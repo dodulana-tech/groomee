@@ -10,19 +10,30 @@ datasource db {
 enum UserRole {
   CUSTOMER
   ADMIN
+  PRO
 }
 
-enum GroomerStatus {
+enum ProStatus {
   PENDING
   ACTIVE
   SUSPENDED
   REMOVED
+
+  @@map("GroomerStatus")
 }
 
-enum GroomerAvail {
+enum ProAvail {
   ONLINE
   BUSY
   OFFLINE
+
+  @@map("GroomerAvail")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
 }
 
 enum BookingStatus {
@@ -65,87 +76,174 @@ enum ServiceCategory {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  phone     String    @unique
-  name      String?
-  email     String?
-  role      UserRole  @default(CUSTOMER)
-  bookings  Booking[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                String         @id @default(cuid())
+  phone             String         @unique
+  name              String?
+  email             String?
+  role              UserRole       @default(CUSTOMER)
+  points            Int            @default(0)
+  adminRoleId       String?
+  adminRole         AdminRole?     @relation(fields: [adminRoleId], references: [id])
+  bookings          Booking[]
+  favouritePros     FavouritePro[]
+  beautyProfile     BeautyProfile?
+  subscriptions     Subscription[]
+  giftCardsSent     GiftCard[]     @relation("GiftSender")
+  giftCardsUsed     GiftCard[]     @relation("GiftRedeemer")
+  referralsMade     Referral[]     @relation("Referrer")
+  referralsReceived Referral[]     @relation("Referred")
+  notes             Note[]
+  activityLogs      ActivityLog[]
+  pointsLedger      PointsLedger[]
+  pro               Pro?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
   @@map("users")
 }
 
-model Groomer {
+model AdminRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  permissions String[] @default([])
+  isSystem    Boolean  @default(false)
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("admin_roles")
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@map("notes")
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  admin      User     @relation(fields: [adminId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([adminId])
+  @@map("activity_logs")
+}
+
+model Pro {
   id               String           @id @default(cuid())
+  userId           String?          @unique
+  user             User?            @relation(fields: [userId], references: [id])
   name             String
   phone            String           @unique
-  status           GroomerStatus    @default(PENDING)
-  availability     GroomerAvail     @default(OFFLINE)
+  status           ProStatus        @default(PENDING)
+  availability     ProAvail         @default(OFFLINE)
   currentBookingId String?
   commission       Float            @default(0.20)
   avgRating        Float            @default(0)
   reviewCount      Int              @default(0)
   totalJobs        Int              @default(0)
   acceptanceRate   Float            @default(0)
-  strikes          Int              @default(0)
+  strikeCount      Int              @default(0) @map("strikes")
   bankCode         String?
   bankAccount      String?
   bankName         String?
+  bankAccountNo    String?
   idVerified       Boolean          @default(false)
-  services         GroomerService[]
-  zones            GroomerZone[]
+  gender           Gender?
+  photo            String?
+  bio              String?
+  services         ProService[]
+  zones            ProZone[]
   bookings         Booking[]
   earnings         Earning[]
+  favouritedBy     FavouritePro[]
+  advances         ProAdvance[]
+  creditEvents     ProCreditEvent[]
+  strikes          Strike[]
+  payouts          Payout[]
+  schedule         ProSchedule[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
+
   @@map("groomers")
 }
 
+model FavouritePro {
+  id        String   @id @default(cuid())
+  userId    String
+  proId     String   @map("groomerId")
+  priority  Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id])
+  pro       Pro      @relation(fields: [proId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, proId])
+  @@map("favourite_pros")
+}
+
 model Service {
-  id           String           @id @default(cuid())
+  id           String          @id @default(cuid())
   name         String
-  slug         String           @unique
+  slug         String          @unique
   category     ServiceCategory
   basePrice    Float
   minPrice     Float
   maxPrice     Float
   durationMins Int
   description  String?
-  isActive     Boolean          @default(true)
-  sortOrder    Int              @default(0)
-  groomers     GroomerService[]
+  isActive     Boolean         @default(true)
+  sortOrder    Int             @default(0)
+  pros         ProService[]
   bookings     Booking[]
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime        @default(now())
+
   @@map("services")
 }
 
 model Zone {
-  id       String        @id @default(cuid())
+  id       String    @id @default(cuid())
   name     String
-  slug     String        @unique
-  city     String        @default("Lagos")
-  groomers GroomerZone[]
+  slug     String    @unique
+  city     String    @default("Lagos")
+  pros     ProZone[]
   bookings Booking[]
+
   @@map("zones")
 }
 
-model GroomerService {
-  groomerId   String
+model ProService {
+  proId       String  @map("groomerId")
   serviceId   String
   customPrice Float?
-  groomer     Groomer @relation(fields: [groomerId], references: [id])
+  pro         Pro     @relation(fields: [proId], references: [id])
   service     Service @relation(fields: [serviceId], references: [id])
-  @@id([groomerId, serviceId])
+
+  @@id([proId, serviceId])
   @@map("groomer_services")
 }
 
-model GroomerZone {
-  groomerId String
-  zoneId    String
-  groomer   Groomer @relation(fields: [groomerId], references: [id])
-  zone      Zone    @relation(fields: [zoneId], references: [id])
-  @@id([groomerId, zoneId])
+model ProZone {
+  proId  String @map("groomerId")
+  zoneId String
+  pro    Pro    @relation(fields: [proId], references: [id])
+  zone   Zone   @relation(fields: [zoneId], references: [id])
+
+  @@id([proId, zoneId])
   @@map("groomer_zones")
 }
 
@@ -153,7 +251,7 @@ model Booking {
   id               String        @id @default(cuid())
   reference        String        @unique
   customerId       String
-  groomerId        String?
+  proId            String?       @map("groomerId")
   serviceId        String
   zoneId           String?
   status           BookingStatus @default(PENDING_PAYMENT)
@@ -167,7 +265,7 @@ model Booking {
   baseAmount       Float
   surchargeAmount  Float         @default(0)
   surchargeType    String?
-  groomerEarning   Float         @default(0)
+  proEarning       Float         @default(0) @map("groomerEarning")
   dispatchAttempts Int           @default(0)
   acceptedAt       DateTime?
   enRouteAt        DateTime?
@@ -176,15 +274,31 @@ model Booking {
   confirmedAt      DateTime?
   cancelledAt      DateTime?
   customer         User          @relation(fields: [customerId], references: [id])
-  groomer          Groomer?      @relation(fields: [groomerId], references: [id])
+  pro              Pro?          @relation(fields: [proId], references: [id])
   service          Service       @relation(fields: [serviceId], references: [id])
   zone             Zone?         @relation(fields: [zoneId], references: [id])
   payment          Payment?
   dispute          Dispute?
   review           Review?
+  dispatchLog      DispatchLog[]
+  strikes          Strike[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+
   @@map("bookings")
+}
+
+model DispatchLog {
+  id        String    @id @default(cuid())
+  bookingId String
+  proId     String    @map("groomerId")
+  proName   String    @map("groomerName")
+  offeredAt DateTime  @default(now())
+  response  String?
+  respondAt DateTime?
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("dispatch_logs")
 }
 
 model Payment {
@@ -200,6 +314,7 @@ model Payment {
   refundAmount Float?
   booking      Booking       @relation(fields: [bookingId], references: [id])
   createdAt    DateTime      @default(now())
+
   @@map("payments")
 }
 
@@ -214,6 +329,7 @@ model Dispute {
   booking      Booking       @relation(fields: [bookingId], references: [id])
   createdAt    DateTime      @default(now())
   resolvedAt   DateTime?
+
   @@map("disputes")
 }
 
@@ -224,18 +340,20 @@ model Review {
   text      String?
   booking   Booking  @relation(fields: [bookingId], references: [id])
   createdAt DateTime @default(now())
+
   @@map("reviews")
 }
 
 model Earning {
+  proId     String   @map("groomerId")
   id        String   @id @default(cuid())
-  groomerId String
   bookingId String   @unique
   amount    Float
   paid      Boolean  @default(false)
   payoutId  String?
-  groomer   Groomer  @relation(fields: [groomerId], references: [id])
+  pro       Pro      @relation(fields: [proId], references: [id])
   createdAt DateTime @default(now())
+
   @@map("earnings")
 }
 
@@ -243,6 +361,7 @@ model Setting {
   id    String @id @default(cuid())
   key   String @unique
   value String
+
   @@map("settings")
 }
 
@@ -255,16 +374,225 @@ model Notification {
   sentAt    DateTime?
   metadata  Json?
   createdAt DateTime  @default(now())
+
   @@map("notifications")
 }
 
 model OtpCode {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   phone     String
   code      String
   usedAt    DateTime?
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([phone])
+}
+
+model SurveyResponse {
+  id        String   @id @default(cuid())
+  type      String
+  phone     String?
+  email     String?
+  answers   Json
+  createdAt DateTime @default(now())
+
+  @@map("survey_responses")
+}
+
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String?
+  phone     String?
+  name      String?
+  city      String   @default("Abuja")
+  area      String?
+  role      String   @default("customer")
+  createdAt DateTime @default(now())
+
+  @@map("waitlist")
+}
+
+model BeautyProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+  hairType          String?
+  hairLength        String?
+  hairTexture       String?
+  scalpCondition    String?
+  colourTreated     Boolean  @default(false)
+  skinTone          String?
+  skinType          String?
+  allergies         String[] @default([])
+  preferredProducts String[] @default([])
+  avoidProducts     String[] @default([])
+  favouriteStyles   String[] @default([])
+  styleNotes        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("beauty_profiles")
+}
+
+model SubscriptionPlan {
+  id               String         @id @default(cuid())
+  name             String
+  price            Float
+  credits          Int
+  discountRate     Float          @default(0)
+  priorityDispatch Boolean        @default(false)
+  description      String?
+  isActive         Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  subscriptions    Subscription[]
+  createdAt        DateTime       @default(now())
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                 String              @id @default(cuid())
+  userId             String
+  planId             String
+  status             String              @default("PENDING")
+  currentPeriodStart DateTime            @default(now())
+  currentPeriodEnd   DateTime
+  nextBillingDate    DateTime
+  creditsRemaining   Int
+  creditsTotal       Int
+  cancelledAt        DateTime?
+  cancelReason       String?
+  paystackAuthCode   String?
+  user               User                @relation(fields: [userId], references: [id])
+  plan               SubscriptionPlan    @relation(fields: [planId], references: [id])
+  usages             SubscriptionUsage[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@map("subscriptions")
+}
+
+model SubscriptionUsage {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  bookingId      String?
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@map("subscription_usages")
+}
+
+model GiftCard {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  senderId       String
+  recipientPhone String
+  recipientName  String?
+  message        String?
+  serviceId      String?
+  amount         Float
+  expiresAt      DateTime
+  isRedeemed     Boolean   @default(false)
+  redeemedAt     DateTime?
+  redeemedBy     String?
+  bookingId      String?
+  sender         User      @relation("GiftSender", fields: [senderId], references: [id])
+  redeemer       User?     @relation("GiftRedeemer", fields: [redeemedBy], references: [id])
+  createdAt      DateTime  @default(now())
+
+  @@map("gift_cards")
+}
+
+model ProAdvance {
+  id        String   @id @default(cuid())
+  proId     String   @map("groomerId")
+  amount    Float
+  reason    String
+  status    String   @default("PENDING")
+  pro       Pro      @relation(fields: [proId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("pro_advances")
+}
+
+model ProCreditEvent {
+  id          String   @id @default(cuid())
+  proId       String   @map("groomerId")
+  eventType   String
+  points      Int
+  description String
+  pro         Pro      @relation(fields: [proId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("pro_credit_events")
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  referrerId     String
+  referredPhone  String   @default("")
+  referredUserId String?
+  bonusAmount    Float    @default(2000)
+  bonusPaid      Boolean  @default(false)
+  referrer       User     @relation("Referrer", fields: [referrerId], references: [id])
+  referred       User?    @relation("Referred", fields: [referredUserId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@map("referrals")
+}
+
+model Strike {
+  id        String   @id @default(cuid())
+  proId     String   @map("groomerId")
+  bookingId String
+  reason    String
+  notes     String?
+  pro       Pro      @relation(fields: [proId], references: [id])
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("strikes")
+}
+
+model PointsLedger {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int
+  reason      String
+  referenceId String?
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("points_ledger")
+}
+
+model Payout {
+  id                 String    @id @default(cuid())
+  proId              String    @map("groomerId")
+  amount             Float
+  status             String    @default("PROCESSING")
+  paystackTransferId String?
+  recipientCode      String?
+  periodStart        DateTime
+  periodEnd          DateTime
+  processedAt        DateTime?
+  failureReason      String?
+  pro                Pro       @relation(fields: [proId], references: [id])
+  createdAt          DateTime  @default(now())
+
+  @@map("payouts")
+}
+
+model ProSchedule {
+  id        String  @id @default(cuid())
+  proId     String  @map("groomerId")
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  isActive  Boolean @default(true)
+  pro       Pro     @relation(fields: [proId], references: [id])
+
+  @@unique([proId, dayOfWeek])
+  @@map("pro_schedules")
 }

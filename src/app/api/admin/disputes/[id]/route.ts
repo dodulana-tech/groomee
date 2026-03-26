@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createRefund } from "@/lib/paystack";
 
@@ -13,24 +13,24 @@ export async function POST(
   // AUTHORIZATION
   // ─────────────────────────────────────────
   const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
+  if (!hasPermission(session, "disputes.manage")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const body = await req.json();
-    const { outcome, refundAmount, resolution, applyStrike } = body;
+    const { outcome, refundAmount, adminNote, applyStrikeToPro } = body;
 
     // ─────────────────────────────────────────
     // VALIDATION
     // ─────────────────────────────────────────
-    const allowedOutcomes = ["FULL_REFUND", "PARTIAL_REFUND", "NO_REFUND"];
+    const allowedOutcomes = ["FULL_REFUND", "PARTIAL_REFUND", "NO_REFUND", "CREDIT_ISSUED"];
 
     if (!allowedOutcomes.includes(outcome)) {
       return NextResponse.json({ error: "Invalid outcome" }, { status: 400 });
     }
 
-    if (!resolution?.trim()) {
+    if (!adminNote?.trim()) {
       return NextResponse.json(
         { error: "Resolution notes required" },
         { status: 400 },
@@ -46,7 +46,7 @@ export async function POST(
         booking: {
           include: {
             payment: true,
-            groomer: true,
+            pro: true,
           },
         },
       },
@@ -76,8 +76,8 @@ export async function POST(
         where: { id },
         data: {
           status: "RESOLVED",
-          resolution,
-          notes: resolution,
+          resolution: adminNote,
+          notes: adminNote,
           refundAmount: finalRefund || null,
           resolvedAt: new Date(),
         },
@@ -97,7 +97,7 @@ export async function POST(
         await createRefund({
           transaction: dispute.booking.payment.paystackRef,
           amount: finalRefund,
-          reason: `Dispute resolved: ${resolution}`,
+          reason: `Dispute resolved: ${adminNote}`,
         });
       } catch (err) {
         console.error("Refund failed:", err);
@@ -107,10 +107,10 @@ export async function POST(
     // ─────────────────────────────────────────
     // APPLY STRIKE (IF REQUIRED)
     // ─────────────────────────────────────────
-    if (applyStrike && dispute.booking.groomerId) {
-      await db.groomer.update({
-        where: { id: dispute.booking.groomerId },
-        data: { strikes: { increment: 1 } },
+    if (applyStrikeToPro && dispute.booking.proId) {
+      await db.pro.update({
+        where: { id: dispute.booking.proId },
+        data: { strikeCount: { increment: 1 } },
       });
     }
 

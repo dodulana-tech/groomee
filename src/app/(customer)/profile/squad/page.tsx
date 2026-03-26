@@ -6,16 +6,16 @@ import SquadActions from "./SquadActions";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "My Groomer Squad" };
+export const metadata: Metadata = { title: "My Favourite Pros" };
 
 export default async function SquadPage() {
   const session = await getSession();
   if (!session) redirect("/auth?redirect=/profile/squad");
 
-  const squad = await db.favouriteGroomer.findMany({
+  const squad = await db.favouritePro.findMany({
     where: { userId: session.userId },
     include: {
-      groomer: {
+      pro: {
         include: {
           services: {
             include: { service: { select: { name: true } } },
@@ -31,19 +31,17 @@ export default async function SquadPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 pb-24">
       <div className="mb-6">
-        <button onClick={undefined} className="mb-3">
-          <Link
-            href="/profile"
-            className="text-sm text-gray-400 hover:text-brand-600"
-          >
-            ← Back to profile
-          </Link>
-        </button>
+        <Link
+          href="/profile"
+          className="mb-3 inline-block text-sm text-gray-400 hover:text-brand-600"
+        >
+          ← Back to profile
+        </Link>
         <h1 className="font-display text-2xl font-bold text-gray-900">
-          My Groomer Squad
+          My Favourite Pros
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Up to 3 groomers. When you book, we try your squad first before
+          Up to 3 pros. When you book, we try your squad first before
           searching wider.
         </p>
       </div>
@@ -67,9 +65,9 @@ export default async function SquadPage() {
                     <span
                       className={cn(
                         "absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white",
-                        member.groomer.availability === "ONLINE"
+                        member.pro.availability === "ONLINE"
                           ? "bg-green-400"
-                          : member.groomer.availability === "BUSY"
+                          : member.pro.availability === "BUSY"
                             ? "bg-orange-400"
                             : "bg-gray-300",
                       )}
@@ -81,30 +79,30 @@ export default async function SquadPage() {
                         #{i + 1} priority
                       </span>
                       <p className="font-semibold text-gray-900 truncate">
-                        {member.groomer.name}
+                        {member.pro.name}
                       </p>
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5 truncate">
-                      {member.groomer.services
+                      {member.pro.services
                         .map((s: any) => s.service.name)
                         .join(" · ")}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      ★ {member.groomer.avgRating.toFixed(1)} ·{" "}
-                      {member.groomer.zones
+                      ★ {member.pro.avgRating.toFixed(1)} ·{" "}
+                      {member.pro.zones
                         .map((z: any) => z.zone.name)
                         .join(", ")}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 shrink-0">
                     <Link
-                      href={`/groomer/${member.groomer.id}`}
+                      href={`/pro/${member.pro.id}`}
                       className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white"
                     >
                       Book →
                     </Link>
                     <SquadActions
-                      groomerId={member.groomer.id}
+                      proId={member.pro.id}
                       action="remove"
                     />
                   </div>
@@ -116,17 +114,17 @@ export default async function SquadPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">
-                      Squad slot {i + 1} — empty
+                      Squad slot {i + 1} - empty
                     </p>
                     <p className="text-xs text-gray-400">
-                      Find a groomer and add them to your squad
+                      Find a pro and add them to your squad
                     </p>
                   </div>
                   <Link
                     href="/search"
                     className="ml-auto rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:border-brand-300 hover:text-brand-600"
                   >
-                    Find groomers
+                    Find pros
                   </Link>
                 </div>
               )}
@@ -143,14 +141,14 @@ export default async function SquadPage() {
         <ul className="space-y-2 text-sm text-brand-800">
           <li className="flex gap-2">
             <span className="text-brand-500 shrink-0">→</span> When you book, we
-            offer the job to your #1 groomer first.
+            offer the job to your #1 pro first.
           </li>
           <li className="flex gap-2">
             <span className="text-brand-500 shrink-0">→</span> If they can't
             make it, we try #2, then #3, then wider.
           </li>
           <li className="flex gap-2">
-            <span className="text-brand-500 shrink-0">→</span> Your groomers
+            <span className="text-brand-500 shrink-0">→</span> Your pros
             learn your beauty profile and preferences over time.
           </li>
           <li className="flex gap-2">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { awardPoints, POINTS } from "@/lib/points";
 
 const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -37,9 +38,9 @@ export async function POST(
       );
     if (booking.review)
       return NextResponse.json({ error: "Already reviewed" }, { status: 400 });
-    if (!booking.groomerId)
+    if (!booking.proId)
       return NextResponse.json(
-        { error: "No groomer to review" },
+        { error: "No pro to review" },
         { status: 400 },
       );
 
@@ -47,20 +48,23 @@ export async function POST(
       data: { bookingId: booking.id, rating, text: comment ?? null },
     });
 
-    // Recalculate groomer avg rating from all reviews via bookings
+    // Recalculate pro avg rating from all reviews via bookings
     const agg = await db.review.aggregate({
-      where: { booking: { groomerId: booking.groomerId } },
+      where: { booking: { proId: booking.proId } },
       _avg: { rating: true },
       _count: { id: true },
     });
 
-    await db.groomer.update({
-      where: { id: booking.groomerId },
+    await db.pro.update({
+      where: { id: booking.proId },
       data: {
         avgRating: agg._avg.rating ?? rating,
         reviewCount: agg._count.id,
       },
     });
+
+    // Award points for leaving a review
+    await awardPoints(session.userId, POINTS.LEAVE_REVIEW, "Left a review", review.id).catch(() => {});
 
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (err) {

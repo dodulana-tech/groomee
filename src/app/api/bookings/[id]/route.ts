@@ -10,6 +10,12 @@ export async function GET(
 
   try {
     const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
 
     const booking = await db.booking.findUnique({
       where: { id },
@@ -17,7 +23,7 @@ export async function GET(
         customer: {
           select: { id: true, name: true, phone: true },
         },
-        groomer: true,
+        pro: true,
         service: true,
         zone: true,
         payment: true,

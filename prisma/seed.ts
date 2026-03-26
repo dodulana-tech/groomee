@@ -1,14 +1,85 @@
 import {
   PrismaClient,
   ServiceCategory,
-  GroomerStatus,
-  GroomerAvail,
+  ProStatus,
+  ProAvail,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+const DEFAULT_ROLES = [
+  {
+    name: "Super Admin",
+    slug: "super-admin",
+    description: "Full platform access. Can manage team, roles, and all settings.",
+    permissions: ["*"],
+    isSystem: true,
+  },
+  {
+    name: "Ops Manager",
+    slug: "ops-manager",
+    description: "Manages bookings, disputes, pros, customers, and catalog.",
+    permissions: [
+      "dashboard.view", "bookings.view", "bookings.manage", "bookings.force_complete",
+      "disputes.view", "disputes.manage", "pros.view", "pros.manage",
+      "customers.view", "customers.manage", "catalog.view", "catalog.manage",
+      "settings.view", "settings.manage_ops", "notes.view", "notes.manage",
+    ],
+    isSystem: false,
+  },
+  {
+    name: "Pro Manager",
+    slug: "pro-manager",
+    description: "Onboards and manages beauty professionals.",
+    permissions: ["dashboard.view", "pros.view", "pros.manage", "notes.view", "notes.manage"],
+    isSystem: false,
+  },
+  {
+    name: "Support",
+    slug: "support",
+    description: "Handles customer queries and dispute escalation.",
+    permissions: [
+      "dashboard.view", "bookings.view", "disputes.view", "disputes.manage",
+      "customers.view", "notes.view", "notes.manage",
+    ],
+    isSystem: false,
+  },
+  {
+    name: "Finance",
+    slug: "finance",
+    description: "Manages payouts, earnings, and financial settings.",
+    permissions: [
+      "dashboard.view", "payouts.view", "payouts.manage", "analytics.view",
+      "analytics.export", "settings.view", "settings.manage_finance",
+      "advances.view", "advances.manage",
+    ],
+    isSystem: false,
+  },
+];
+
 async function main() {
   console.log("🌱 Seeding database...");
+
+  // ── ADMIN ROLES ────────────────────────────────────────────
+  const roles = [];
+  for (const role of DEFAULT_ROLES) {
+    const r = await prisma.adminRole.upsert({
+      where: { slug: role.slug },
+      update: { permissions: role.permissions, description: role.description },
+      create: role,
+    });
+    roles.push(r);
+  }
+  console.log(`✅ ${roles.length} admin roles`);
+
+  // Assign Super Admin role to any existing ADMIN users that don't have a role
+  const superAdminRole = roles.find((r) => r.slug === "super-admin");
+  if (superAdminRole) {
+    await prisma.user.updateMany({
+      where: { role: "ADMIN", adminRoleId: null },
+      data: { adminRoleId: superAdminRole.id },
+    });
+  }
 
   // ── ZONES ────────────────────────────────────────────────
   const zones = await Promise.all([
@@ -304,7 +375,7 @@ async function main() {
   }
   console.log(`✅ ${settings.length} settings`);
 
-  // ── GROOMERS ─────────────────────────────────────────────
+  // ── PROS ─────────────────────────────────────────────────
   const allServices = await prisma.service.findMany();
   const allZones = await prisma.zone.findMany();
 
@@ -313,12 +384,12 @@ async function main() {
   const getZoneIds = (...slugs: string[]) =>
     allZones.filter((z) => slugs.includes(z.slug)).map((z) => z.id);
 
-  const groomersData = [
+  const prosData = [
     {
       name: "Chidinma Adeyemi",
       phone: "+2348011111101",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.ONLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.ONLINE,
       avgRating: 4.9,
       reviewCount: 247,
       totalJobs: 312,
@@ -335,8 +406,8 @@ async function main() {
     {
       name: "Shade Martins",
       phone: "+2348011111102",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.ONLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.ONLINE,
       avgRating: 4.7,
       reviewCount: 183,
       totalJobs: 241,
@@ -353,8 +424,8 @@ async function main() {
     {
       name: "Ngozi Philips",
       phone: "+2348011111103",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.OFFLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.OFFLINE,
       avgRating: 4.8,
       reviewCount: 156,
       totalJobs: 198,
@@ -366,8 +437,8 @@ async function main() {
     {
       name: "Emeka Okafor",
       phone: "+2348011111104",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.ONLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.ONLINE,
       avgRating: 4.8,
       reviewCount: 198,
       totalJobs: 267,
@@ -379,8 +450,8 @@ async function main() {
     {
       name: "Tolu Bankole",
       phone: "+2348011111105",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.BUSY,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.BUSY,
       avgRating: 4.6,
       reviewCount: 124,
       totalJobs: 165,
@@ -392,8 +463,8 @@ async function main() {
     {
       name: "Kemi Adesanya",
       phone: "+2348011111106",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.ONLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.ONLINE,
       avgRating: 4.9,
       reviewCount: 89,
       totalJobs: 112,
@@ -405,8 +476,8 @@ async function main() {
     {
       name: "Bisi Olawale",
       phone: "+2348011111107",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.ONLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.ONLINE,
       avgRating: 4.7,
       reviewCount: 143,
       totalJobs: 189,
@@ -418,8 +489,8 @@ async function main() {
     {
       name: "Rotimi Adebayo",
       phone: "+2348011111108",
-      status: GroomerStatus.ACTIVE,
-      availability: GroomerAvail.OFFLINE,
+      status: ProStatus.ACTIVE,
+      availability: ProAvail.OFFLINE,
       avgRating: 4.5,
       reviewCount: 67,
       totalJobs: 89,
@@ -430,36 +501,77 @@ async function main() {
     },
   ];
 
-  for (const g of groomersData) {
-    const { serviceSlug, zoneSlug, ...groomerFields } = g;
+  for (const g of prosData) {
+    const { serviceSlug, zoneSlug, ...proFields } = g;
 
-    const groomer = await prisma.groomer.upsert({
-      where: { phone: groomerFields.phone },
+    const pro = await prisma.pro.upsert({
+      where: { phone: proFields.phone },
       update: {},
-      create: groomerFields,
+      create: proFields,
     });
 
     // Services
     for (const sid of getServiceIds(...serviceSlug)) {
-      await prisma.groomerService.upsert({
+      await prisma.proService.upsert({
         where: {
-          groomerId_serviceId: { groomerId: groomer.id, serviceId: sid },
+          proId_serviceId: { proId: pro.id, serviceId: sid },
         },
         update: {},
-        create: { groomerId: groomer.id, serviceId: sid },
+        create: { proId: pro.id, serviceId: sid },
       });
     }
 
     // Zones
     for (const zid of getZoneIds(...zoneSlug)) {
-      await prisma.groomerZone.upsert({
-        where: { groomerId_zoneId: { groomerId: groomer.id, zoneId: zid } },
+      await prisma.proZone.upsert({
+        where: { proId_zoneId: { proId: pro.id, zoneId: zid } },
         update: {},
-        create: { groomerId: groomer.id, zoneId: zid },
+        create: { proId: pro.id, zoneId: zid },
       });
     }
   }
-  console.log(`✅ ${groomersData.length} groomers`);
+  console.log(`✅ ${prosData.length} pros`);
+
+  // ── SUBSCRIPTION PLANS ──────────────────────────────────────────────────────
+  const subscriptionPlans = [
+    {
+      name: "Starter",
+      price: 15000,
+      credits: 2,
+      discountRate: 0.05,
+      priorityDispatch: false,
+      description: "2 sessions per month with 5% off base prices",
+      sortOrder: 0,
+    },
+    {
+      name: "Glow",
+      price: 25000,
+      credits: 4,
+      discountRate: 0.10,
+      priorityDispatch: true,
+      description: "4 sessions per month with 10% off + priority dispatch",
+      sortOrder: 1,
+    },
+    {
+      name: "Unlimited Glow",
+      price: 45000,
+      credits: 8,
+      discountRate: 0.15,
+      priorityDispatch: true,
+      description: "8 sessions per month with 15% off + priority + dedicated support",
+      sortOrder: 2,
+    },
+  ];
+
+  for (const plan of subscriptionPlans) {
+    await prisma.subscriptionPlan.upsert({
+      where: { id: plan.name.toLowerCase().replace(/\s+/g, "-") },
+      update: plan,
+      create: { id: plan.name.toLowerCase().replace(/\s+/g, "-"), ...plan },
+    });
+  }
+  console.log(`✅ ${subscriptionPlans.length} subscription plans`);
+
   console.log("🎉 Seeding complete!");
 }
 

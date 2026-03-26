@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  groomerId: string;
+  proId: string;
   action: "add" | "remove";
   onSuccess?: () => void;
 }
 
-export default function SquadActions({ groomerId, action, onSuccess }: Props) {
+export default function SquadActions({ proId, action, onSuccess }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -20,7 +20,7 @@ export default function SquadActions({ groomerId, action, onSuccess }: Props) {
       const res = await fetch("/api/profile/squad", {
         method: action === "add" ? "POST" : "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groomerId }),
+        body: JSON.stringify({ proId }),
       });
       const data = await res.json();
       if (!res.ok) {

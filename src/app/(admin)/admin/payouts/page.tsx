@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { formatNaira } from "@/lib/utils";
 
-interface GroomerPayoutSummary {
-  groomer: {
+interface ProPayoutSummary {
+  pro: {
     id: string;
     name: string;
     phone: string;
@@ -17,13 +17,13 @@ interface GroomerPayoutSummary {
 }
 
 export default function AdminPayoutsPage() {
-  const [summaries, setSummaries] = useState<GroomerPayoutSummary[]>([]);
+  const [summaries, setSummaries] = useState<ProPayoutSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [paying, setPaying] = useState(false);
   const [results, setResults] = useState<
     Array<{
-      groomerId: string;
+      proId: string;
       success: boolean;
       amount?: number;
       reason?: string;
@@ -47,19 +47,21 @@ export default function AdminPayoutsPage() {
   }
 
   function selectAll() {
-    const payable = summaries.filter((s) => s.canPay).map((s) => s.groomer.id);
-    setSelected(new Set(payable));
+    const payable = summaries.filter((s) => s.canPay).map((s) => s.pro.id);
+    setSelected((prev) =>
+      prev.size === payable.length ? new Set() : new Set(payable),
+    );
   }
 
   async function processPayouts() {
     if (selected.size === 0) return;
-    if (!confirm(`Process payouts for ${selected.size} groomer(s)?`)) return;
+    if (!confirm(`Process payouts for ${selected.size} pro(s)?`)) return;
     setPaying(true);
     try {
       const res = await fetch("/api/admin/payouts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groomerIds: Array.from(selected) }),
+        body: JSON.stringify({ proIds: Array.from(selected) }),
       });
       const data = await res.json();
       setResults(data.data ?? []);
@@ -73,7 +75,7 @@ export default function AdminPayoutsPage() {
   }
 
   const totalSelected = summaries
-    .filter((s) => selected.has(s.groomer.id))
+    .filter((s) => selected.has(s.pro.id))
     .reduce((sum, s) => sum + s.pendingAmount, 0);
 
   return (
@@ -82,7 +84,7 @@ export default function AdminPayoutsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Payouts</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {summaries.length} groomers with pending earnings
+            {summaries.length} pros with pending earnings
             {totalSelected > 0 && ` · ${formatNaira(totalSelected)} selected`}
           </p>
         </div>
@@ -97,7 +99,7 @@ export default function AdminPayoutsPage() {
           >
             {paying
               ? "Processing…"
-              : `Pay ${selected.size > 0 ? `${selected.size} groomer${selected.size > 1 ? "s" : ""}` : "selected"}`}
+              : `Pay ${selected.size > 0 ? `${selected.size} pro${selected.size > 1 ? "s" : ""}` : "selected"}`}
           </button>
         </div>
       </div>
@@ -108,7 +110,7 @@ export default function AdminPayoutsPage() {
           <p className="font-semibold text-brand-800 mb-2">Payout results:</p>
           <div className="space-y-1">
             {results.map((r) => (
-              <p key={r.groomerId} className="text-sm">
+              <p key={r.proId} className="text-sm">
                 {r.success ? (
                   <span className="text-brand-700">
                     ✓ {formatNaira(r.amount ?? 0)} sent
@@ -131,7 +133,7 @@ export default function AdminPayoutsPage() {
           <p className="text-3xl mb-2">💰</p>
           <p className="font-semibold text-gray-700">No pending payouts</p>
           <p className="text-sm text-gray-500 mt-1">
-            All groomer earnings have been paid out.
+            All pro earnings have been paid out.
           </p>
         </div>
       ) : (
@@ -150,7 +152,7 @@ export default function AdminPayoutsPage() {
                   />
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Groomer
+                  Pro
                 </th>
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Bank
@@ -168,25 +170,25 @@ export default function AdminPayoutsPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {summaries.map((s) => (
-                <tr key={s.groomer.id} className="hover:bg-gray-50/50">
+                <tr key={s.pro.id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selected.has(s.groomer.id)}
+                      checked={selected.has(s.pro.id)}
                       disabled={!s.canPay}
-                      onChange={() => toggleSelect(s.groomer.id)}
+                      onChange={() => toggleSelect(s.pro.id)}
                       className="rounded border-gray-300 text-brand-600 disabled:opacity-30"
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold">{s.groomer.name}</p>
-                    <p className="text-xs text-gray-400">{s.groomer.phone}</p>
+                    <p className="font-semibold">{s.pro.name}</p>
+                    <p className="text-xs text-gray-400">{s.pro.phone}</p>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {s.canPay ? (
                       <span>
-                        {s.groomer.bankName} ·{" "}
-                        {s.groomer.bankAccountNo?.slice(-4).padStart(10, "•")}
+                        {s.pro.bankName} ·{" "}
+                        {s.pro.bankAccountNo?.slice(-4).padStart(10, "•")}
                       </span>
                     ) : (
                       <span className="text-red-500 text-xs font-medium">

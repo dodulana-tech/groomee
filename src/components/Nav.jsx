@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -10,14 +11,21 @@ export default function Nav({ variant = "default", user = null }) {
 
   return (
     <nav className="nav">
-      <Link href="/" className="nav-logo">
+      <Link href="/" className="nav-logo" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <Image
+          src="/assets/logo/groomee-logo-teal.jpg"
+          alt="Groomee"
+          width={32}
+          height={32}
+          style={{ borderRadius: "50%" }}
+        />
         Groomee<em>.</em>
       </Link>
 
       <div className="nav-links">
         <Link href="/#how-it-works">How it works</Link>
         <Link href="/search">Services</Link>
-        <Link href="/#for-groomers">For Groomers</Link>
+        <Link href="/#survey">For Beauty Pros</Link>
       </div>
 
       <div className="nav-actions">

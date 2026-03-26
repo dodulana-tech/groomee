@@ -20,7 +20,7 @@ export default function GiftPage() {
   const [error, setError] = useState("");
 
   const finalAmount = form.customAmount
-    ? (parseInt(form.customAmount) * 100) / 100
+    ? parseInt(form.customAmount) || 0
     : form.amount;
 
   async function handleSend() {
@@ -56,7 +56,7 @@ export default function GiftPage() {
           router.push("/auth?redirect=/gift");
           return;
         }
-        setError(data.error ?? "Failed.");
+        setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
       window.location.href = data.data.authorizationUrl;
@@ -71,7 +71,7 @@ export default function GiftPage() {
         <p className="text-4xl mb-2">🎁</p>
         <h1 className="font-display text-4xl font-black">Gift a Glow-up</h1>
         <p className="mt-3 text-white/80">
-          Send a professional grooming session to someone special.
+          Send a professional beauty session to someone special.
         </p>
       </div>
 
@@ -132,7 +132,7 @@ export default function GiftPage() {
             <label className="mb-2 block text-sm font-semibold text-gray-700">
               Gift amount *
             </label>
-            <div className="grid grid-cols-3 gap-2 mb-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
               {GIFT_AMOUNTS.map((amt) => (
                 <button
                   key={amt}
@@ -168,6 +168,7 @@ export default function GiftPage() {
                 <span className="text-gray-500 font-medium">₦</span>
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={form.customAmount}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, customAmount: e.target.value }))
@@ -211,7 +212,7 @@ export default function GiftPage() {
           >
             {loading
               ? "Processing…"
-              : `🎁 Send Gift — ${formatNaira(finalAmount)}`}
+              : `🎁 Send Gift - ${formatNaira(finalAmount)}`}
           </button>
 
           <p className="text-center text-xs text-gray-400">

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   verifyOtp,
-  signToken,
+  signUserToken,
   setSessionCookie,
   formatPhone,
 } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { checkVerifyLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +17,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Invalid OTP." },
         { status: 400 },
+      );
+    }
+
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+    if (!checkVerifyLimit(phone, ip)) {
+      return NextResponse.json(
+        { success: false, error: "Too many attempts. Please try again in a few minutes." },
+        { status: 429 },
       );
     }
 
@@ -35,19 +44,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = await signToken({
-      userId: user.id,
-      phone: user.phone,
-      role: user.role,
-    });
-
+    const token = await signUserToken(user);
     await setSessionCookie(token);
+
+    // Refetch to get resolved role (signUserToken may upgrade CUSTOMER→PRO)
+    const updatedUser = await db.user.findUnique({ where: { id: user.id } });
 
     return NextResponse.json({
       success: true,
       data: {
         userId: user.id,
-        role: user.role,
+        role: updatedUser?.role ?? user.role,
         isNewUser: !user.name,
       },
     });

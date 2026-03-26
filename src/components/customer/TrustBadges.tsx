@@ -3,14 +3,14 @@ export default function TrustBadges() {
     {
       icon: "🛡️",
       title: "ID Verified",
-      desc: "Every groomer verified with govt ID",
+      desc: "Every pro verified with a government-issued ID before their first booking",
     },
     {
       icon: "💳",
       title: "Secure payments",
-      desc: "Powered by Paystack — held until complete",
+      desc: "Powered by Paystack - held until complete",
     },
-    { icon: "⭐", title: "4.8+ rated", desc: "Top-reviewed groomers only" },
+    { icon: "⭐", title: "4.8+ rated", desc: "Only top-reviewed, consistently reliable pros on the platform" },
     {
       icon: "📱",
       title: "Real-time updates",

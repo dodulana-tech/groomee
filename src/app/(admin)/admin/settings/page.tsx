@@ -59,12 +59,12 @@ const SETTING_META: Record<
   DISPATCH_TIMEOUT_SECONDS: {
     label: "Dispatch timeout (seconds)",
     description:
-      "How long to wait for a groomer to respond before trying the next",
+      "How long to wait for a pro to respond before trying the next",
     type: "number",
   },
   DISPATCH_MAX_ATTEMPTS: {
     label: "Max dispatch attempts",
-    description: "Maximum number of groomers to try per booking",
+    description: "Maximum number of pros to try per booking",
     type: "number",
   },
   AUTO_CAPTURE_HOURS: {

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { awardPoints, POINTS } from "@/lib/points";
 
-// GET /api/profile/referral — get referral link + stats
+// GET /api/profile/referral - get referral link + stats
 export async function GET() {
   try {
     const session = await requireSession();
@@ -29,7 +30,7 @@ export async function GET() {
       data: {
         referralCode,
         referralLink: `${appUrl}/?ref=${referralCode}`,
-        whatsappLink: `https://wa.me/?text=${encodeURIComponent(`Get professional grooming at home in Lagos! Use my code ${referralCode} for ₦2,000 off your first booking. Book at ${appUrl}/?ref=${referralCode}`)}`,
+        whatsappLink: `https://wa.me/?text=${encodeURIComponent(`Get professional beauty services at home in Lagos! Use my code ${referralCode} for ₦2,000 off your first booking. Book at ${appUrl}/?ref=${referralCode}`)}`,
         totalReferrals: referrals.length,
         converted: referrals.filter((r: any) => r.referredUserId).length,
         totalEarned,
@@ -45,13 +46,16 @@ export async function GET() {
   }
 }
 
-// POST /api/profile/referral — track a referral when someone signs up with ref code
+// POST /api/profile/referral - track a referral when someone signs up with ref code
 export async function POST(req: NextRequest) {
   try {
-    const { referralCode, newUserId } = await req.json();
-    if (!referralCode || !newUserId) {
+    const session = await requireSession();
+    const { referralCode } = await req.json();
+    const newUserId = session.userId;
+
+    if (!referralCode) {
       return NextResponse.json(
-        { success: false, error: "Missing fields." },
+        { success: false, error: "Missing referral code." },
         { status: 400 },
       );
     }
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
       });
       const bonus = parseFloat(settings?.value ?? "2000");
 
-      await db.referral.create({
+      const referral = await db.referral.create({
         data: {
           referrerId: referrer.id,
           referredPhone: "",
@@ -83,6 +87,9 @@ export async function POST(req: NextRequest) {
           bonusAmount: bonus,
         },
       });
+
+      // Award the referred user 400 pts (≈ ₦2,000 equivalent at 100 pts = ₦500)
+      await awardPoints(newUserId, 400, "Welcome bonus — referred by a friend", referral.id).catch(() => {});
     }
 
     return NextResponse.json({ success: true });

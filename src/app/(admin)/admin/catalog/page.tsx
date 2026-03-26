@@ -169,7 +169,7 @@ export default function AdminCatalogPage() {
               <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">
                 {cat}
               </h2>
-              <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="glass-card rounded-2xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100">
@@ -242,7 +242,7 @@ export default function AdminCatalogPage() {
           ))}
 
           {services.length === 0 && (
-            <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
+            <div className="glass-card rounded-2xl border-2 border-dashed border-gray-200 py-16 text-center">
               <p className="text-3xl mb-2">✂️</p>
               <p className="font-semibold text-gray-500 mb-4">
                 No services yet
@@ -265,7 +265,7 @@ export default function AdminCatalogPage() {
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: "rgba(0,0,0,0.5)" }}
         >
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="font-bold text-lg text-gray-900">
                 {editSvc ? "Edit service" : "Add new service"}
@@ -279,7 +279,7 @@ export default function AdminCatalogPage() {
             </div>
 
             <form onSubmit={handleSave} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-1 block">
                     Service name *

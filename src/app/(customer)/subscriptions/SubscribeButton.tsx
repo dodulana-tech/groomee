@@ -61,7 +61,7 @@ export default function SubscribeButton({
         isPopular ? "btn-primary" : "btn-outline",
       )}
     >
-      {loading ? "Processing…" : `Subscribe — ${formatNaira(price)}/mo`}
+      {loading ? "Processing…" : `Subscribe - ${formatNaira(price)}/mo`}
     </button>
   );
 }

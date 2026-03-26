@@ -7,7 +7,7 @@ import {
 } from "@/lib/paystack";
 import { addMonths, startOfDay } from "date-fns";
 
-// GET /api/subscriptions — get plans + current subscription
+// GET /api/subscriptions - get plans + current subscription
 export async function GET() {
   const session = await getSession();
 
@@ -33,7 +33,7 @@ export async function GET() {
   });
 }
 
-// POST /api/subscriptions — subscribe to a plan
+// POST /api/subscriptions - subscribe to a plan
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
@@ -81,16 +81,16 @@ export async function POST(req: NextRequest) {
     const periodEnd = addMonths(now, 1);
     const ref = generatePaymentReference(`SUB-${planId.slice(-6)}`);
 
-    // Create pending subscription
+    // Create subscription as PENDING — credits granted only after payment verification
     const subscription = await db.subscription.create({
       data: {
         userId: session.userId,
         planId,
-        status: "ACTIVE", // will be validated after payment
+        status: "PENDING",
         currentPeriodStart: now,
         currentPeriodEnd: periodEnd,
         nextBillingDate: periodEnd,
-        creditsRemaining: plan.credits,
+        creditsRemaining: 0,
         creditsTotal: plan.credits,
       },
     });

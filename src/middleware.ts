@@ -1,25 +1,46 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth";
 
-const PUBLIC_PATHS = [
-  "/",
-  "/search",
-  "/groomer",
-  "/auth",
+// Exact-match public paths
+const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login"]);
+// Prefix-match public paths (these use startsWith)
+const PUBLIC_PREFIX = [
+  "/pro/",      // /pro/[slug] pages — NOT /profile
+  "/groomer/",  // legacy redirect to /pro/[slug]
   "/api/auth",
   "/api/webhooks",
   "/api/services",
-  "/api/groomers",
+  "/api/pros",
+  "/api/zones",
+  "/api/surveys",
+  "/api/waitlist",
   "/favicon.ico",
   "/_next",
 ];
 const ADMIN_PATHS = ["/admin", "/api/admin"];
+const PRO_PATHS = ["/partner", "/api/partner"];
+
+// Redirect old groomer URLs to new pro URLs
+const REDIRECTS: Record<string, string> = {
+  "/admin/groomers": "/admin/pros",
+  "/api/admin/groomers": "/api/admin/pros",
+  "/api/groomers": "/api/pros",
+  "/api/groomer": "/api/pro",
+};
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  // Handle legacy URL redirects
+  for (const [from, to] of Object.entries(REDIRECTS)) {
+    if (pathname.startsWith(from)) {
+      const newPath = pathname.replace(from, to);
+      return NextResponse.redirect(new URL(newPath, request.url), 301);
+    }
+  }
+
+  // Allow public paths (exact match or prefix match)
+  if (PUBLIC_EXACT.has(pathname) || PUBLIC_PREFIX.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
@@ -33,7 +54,11 @@ export async function middleware(request: NextRequest) {
         { status: 401 },
       );
     }
-    const url = new URL("/auth", request.url);
+    // Redirect partner paths to partner login
+    const loginPath = PRO_PATHS.some((p) => pathname.startsWith(p))
+      ? "/partner/login"
+      : "/auth";
+    const url = new URL(loginPath, request.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
@@ -50,6 +75,21 @@ export async function middleware(request: NextRequest) {
       );
     }
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // Pro/partner-only paths
+  if (
+    PRO_PATHS.some((p) => pathname.startsWith(p)) &&
+    session.role !== "PRO" &&
+    session.role !== "ADMIN"
+  ) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 },
+      );
+    }
+    return NextResponse.redirect(new URL("/partner/login", request.url));
   }
 
   // Attach user info to headers for server components

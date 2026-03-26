@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { getSession, hasPermission, hasAnyPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invalidateSettingsCache } from "@/lib/surcharge";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await getSession();
+    if (!hasPermission(session, "settings.view")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
     const settings = await db.setting.findMany({ orderBy: { key: "asc" } });
     return NextResponse.json({ success: true, data: settings });
   } catch {
@@ -18,7 +21,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await getSession();
+    if (!hasAnyPermission(session, "settings.manage_ops", "settings.manage_finance")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
     const { settings } = (await req.json()) as {
       settings: Record<string, string>;
     };

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createOtp, formatPhone } from "@/lib/auth";
 import { notifyCustomerOtp } from "@/lib/whatsapp";
 import { isValidNigerianPhone } from "@/lib/utils";
+import { checkSendLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,6 +13,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Invalid Nigerian phone number." },
         { status: 400 },
+      );
+    }
+
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+    if (!checkSendLimit(phone, ip)) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests. Please try again in a few minutes." },
+        { status: 429 },
       );
     }
 

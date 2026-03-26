@@ -57,7 +57,7 @@ export async function sendMessage(to: string, message: string, channel: 'whatsap
 export async function notifyCustomerOtp(phone: string, otp: string) {
   const whatsappMsg = `Your Groomee verification code is: *${otp}*\n\nValid for 10 minutes. Do not share this code.`;
   const smsMsg      = `Your Groomee verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`;
-  // Send both — SMS guaranteed delivery, WhatsApp for sandbox testers
+  // Send both - SMS guaranteed delivery, WhatsApp for sandbox testers
   await Promise.allSettled([
     sendMessage(phone, whatsappMsg, 'whatsapp'),
     sendMessage(phone, smsMsg, 'sms'),
@@ -70,12 +70,12 @@ export async function notifyCustomerBookingConfirmed(phone: string, proName: str
   return sendMessage(phone, `✅ Booking confirmed!\n\nYour pro *${proName}* has accepted and will arrive in approximately ${eta}.\n\nYou'll get another message when they're on the way. 💚`);
 }
 
-export async function notifyCustomerGroomerEnRoute(phone: string, proName: string, etaMins: number) {
+export async function notifyCustomerProEnRoute(phone: string, proName: string, etaMins: number) {
   return sendMessage(phone, `🚗 *${proName}* is on the way!\n\nEstimated arrival: ~${etaMins} minutes.\n\nPlease be ready to receive them.`);
 }
 
-export async function notifyCustomerGroomerArrived(phone: string, proName: string) {
-  return sendMessage(phone, `📍 Your pro *${proName}* has arrived!\n\nEnjoy your session. 💅`);
+export async function notifyCustomerProArrived(phone: string, proName: string) {
+  return sendMessage(phone, `📍 Your pro *${proName}* has arrived!\n\nEnjoy your session. 💅🏿`);
 }
 
 export async function notifyCustomerServiceComplete(phone: string, bookingRef: string, amount: number) {
@@ -83,7 +83,7 @@ export async function notifyCustomerServiceComplete(phone: string, bookingRef: s
   return sendMessage(phone, `✨ Service complete!\n\nPlease confirm your service was completed to release payment of ₦${amount.toLocaleString()}.\n\nConfirm here: ${appUrl}/booking/${bookingRef}\n\nPayment auto-releases in 2 hours if not confirmed.`);
 }
 
-export async function notifyCustomerNoGroomer(phone: string) {
+export async function notifyCustomerNoPro(phone: string) {
   return sendMessage(phone, `⚠️ We couldn't find an available pro for your booking right now.\n\nYou have not been charged. Please try again or contact support.`);
 }
 
@@ -91,18 +91,18 @@ export async function notifyCustomerBookingCancelled(phone: string, reason: stri
   return sendMessage(phone, `❌ Your booking has been cancelled.\n\nReason: ${reason}\n\nAny payment will be refunded within 24–48 hours. Contact support if you need help.`);
 }
 
-// ─── GROOMER NOTIFICATIONS ────────────────────────────────────────────────────
+// ─── PRO NOTIFICATIONS ───────────────────────────────────────────────────────
 
-export async function sendGroomerJobOffer({
-  phone, groomerName, customerArea, serviceName, bookingTime, fee, timeoutMins = 3, profileBrief = '',
+export async function sendProJobOffer({
+  phone, proName, customerArea, serviceName, bookingTime, fee, timeoutMins = 3, profileBrief = '',
 }: {
-  phone: string; groomerName: string; customerArea: string; serviceName: string;
+  phone: string; proName: string; customerArea: string; serviceName: string;
   bookingTime: string; fee: number; timeoutMins?: number; profileBrief?: string;
 }) {
-  return sendMessage(phone, `Hi ${groomerName}! 👋 New booking request:\n\n📍 *${customerArea}*\n💅 *${serviceName}*\n🕙 *${bookingTime}*\n💰 *Your fee: ₦${fee.toLocaleString()}*${profileBrief}\n\nReply *YES* to accept or *NO* to decline.\n⏳ You have ${timeoutMins} minutes.`);
+  return sendMessage(phone, `Hi ${proName}! 👋 New booking request:\n\n📍 *${customerArea}*\n💅🏿 *${serviceName}*\n🕙 *${bookingTime}*\n💰 *Your fee: ₦${fee.toLocaleString()}*${profileBrief}\n\nReply *YES* to accept or *NO* to decline.\n⏳ You have ${timeoutMins} minutes.`);
 }
 
-export async function sendGroomerBookingDetails({
+export async function sendProBookingDetails({
   phone, customerName, address, mapsLink, maskedPhone,
 }: {
   phone: string; customerName: string; address: string; mapsLink: string; maskedPhone: string;
@@ -110,7 +110,7 @@ export async function sendGroomerBookingDetails({
   return sendMessage(phone, `✅ *Booking confirmed!*\n\n👤 Customer: ${customerName}\n📍 Address: ${address}\n🗺️ Maps: ${mapsLink}\n📞 Contact: ${maskedPhone}\n\nCommands:\n• Text *OTWAY* when you leave\n• Text *ARRIVED* when you get there\n• Text *DONE* when finished\n• Text *CANCEL* to cancel (penalty applies)\n• Text *HELP* for admin assistance`);
 }
 
-export async function sendGroomerStatusAck(phone: string, status: 'OTWAY' | 'ARRIVED' | 'DONE' | 'CANCEL' | 'ON' | 'OFF') {
+export async function sendProStatusAck(phone: string, status: 'OTWAY' | 'ARRIVED' | 'DONE' | 'CANCEL' | 'ON' | 'OFF') {
   const messages: Record<string, string> = {
     OTWAY:   `🚗 Got it! Customer has been notified you're on the way. Drive safe!`,
     ARRIVED: `📍 Arrival noted! Customer has been notified. Enjoy your session 💚`,
@@ -122,14 +122,14 @@ export async function sendGroomerStatusAck(phone: string, status: 'OTWAY' | 'ARR
   return sendMessage(phone, messages[status] ?? 'Command received.');
 }
 
-export async function sendGroomerWelcome(phone: string, groomerName: string) {
-  return sendMessage(phone, `🎉 Welcome to Groomee, ${groomerName}!\n\nYour account is now active.\n\n• Text *ON* to go online and receive bookings\n• Text *OFF* to go offline\n• Text *BALANCE* to check your earnings\n• Text *HELP* for admin assistance\n\nText *ON* now to start receiving jobs! 💚`);
+export async function sendProWelcome(phone: string, proName: string) {
+  return sendMessage(phone, `🎉 Welcome to Groomee, ${proName}!\n\nYour account is now active.\n\n• Text *ON* to go online and receive bookings\n• Text *OFF* to go offline\n• Text *BALANCE* to check your earnings\n• Text *HELP* for admin assistance\n\nText *ON* now to start receiving jobs! 💚`);
 }
 
-export async function sendGroomerStrikeNotice(phone: string, strikeCount: number, reason: string) {
+export async function sendProStrikeNotice(phone: string, strikeCount: number, reason: string) {
   return sendMessage(phone, `⚠️ *Strike Notice*\n\nYou've received a strike (${strikeCount}/3).\nReason: ${reason}\n\n${strikeCount >= 3 ? 'Your account has been suspended pending review. Contact admin.' : 'Please ensure you accept bookings promptly and fulfil all commitments.'}`);
 }
 
-export async function sendGroomerBalanceInfo(phone: string, pending: number, nextPayout: string) {
+export async function sendProBalanceInfo(phone: string, pending: number, nextPayout: string) {
   return sendMessage(phone, `💰 *Your Groomee Balance*\n\nPending earnings: ₦${pending.toLocaleString()}\nNext payout: ${nextPayout}\n\nPayouts are sent every Friday. Contact admin if you have questions.`);
 }

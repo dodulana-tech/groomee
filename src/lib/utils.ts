@@ -44,6 +44,7 @@ export function slugify(text: string): string {
 }
 
 export function getInitials(name: string): string {
+  if (!name || !name.trim()) return "";
   return name
     .split(" ")
     .map((n) => n[0])
@@ -65,11 +66,11 @@ export function getSurchargeLabel(type: string | null): string | null {
 export function getBookingStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     PENDING_PAYMENT: "Awaiting payment",
-    DISPATCHING: "Finding groomer…",
-    NO_GROOMER: "No groomer available",
-    ACCEPTED: "Groomer assigned",
+    DISPATCHING: "Finding your pro…",
+    NO_GROOMER: "No pro available",
+    ACCEPTED: "Pro assigned",
     EN_ROUTE: "En route",
-    ARRIVED: "Groomer arrived",
+    ARRIVED: "Pro arrived",
     IN_SERVICE: "In service",
     COMPLETED: "Awaiting confirmation",
     CONFIRMED: "Complete",
@@ -98,9 +99,9 @@ export function getBookingStatusColor(status: string): string {
 
 export function getServiceCategoryIcon(category: string): string {
   const icons: Record<string, string> = {
-    HAIR: "💇‍♀️",
+    HAIR: "💇🏿‍♀️",
     MAKEUP: "💄",
-    NAILS: "💅",
+    NAILS: "💅🏿",
     BARBING: "✂️",
     LASHES: "👁️",
     SKINCARE: "✨",

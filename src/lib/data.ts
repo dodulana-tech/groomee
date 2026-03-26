@@ -6,12 +6,12 @@ export const SERVICES = [
     name: "Knotless Braids",
     slug: "knotless-braids",
     category: "HAIR",
-    icon: "💇‍♀️",
+    icon: "💇🏿‍♀️",
     basePrice: 12000,
     minPrice: 10000,
     maxPrice: 25000,
     durationMins: 240,
-    description: "Knotless box braids — small, medium, or large.",
+    description: "Knotless box braids - small, medium, or large.",
     isPopular: true,
   },
   {
@@ -19,7 +19,7 @@ export const SERVICES = [
     name: "Box Braids",
     slug: "box-braids",
     category: "HAIR",
-    icon: "💇‍♀️",
+    icon: "💇🏿‍♀️",
     basePrice: 8500,
     minPrice: 7000,
     maxPrice: 18000,
@@ -32,12 +32,12 @@ export const SERVICES = [
     name: "Weave Installation",
     slug: "weave",
     category: "HAIR",
-    icon: "💇‍♀️",
+    icon: "💇🏿‍♀️",
     basePrice: 15000,
     minPrice: 12000,
     maxPrice: 35000,
     durationMins: 150,
-    description: "Full weave installation — sew-in or glue-in.",
+    description: "Full weave installation - sew-in or glue-in.",
     isPopular: false,
   },
   {
@@ -71,12 +71,12 @@ export const SERVICES = [
     name: "Gel Nails",
     slug: "gel-nails",
     category: "NAILS",
-    icon: "💅",
+    icon: "💅🏿",
     basePrice: 8000,
     minPrice: 6000,
     maxPrice: 15000,
     durationMins: 90,
-    description: "Gel overlay or tips — any design.",
+    description: "Gel overlay or tips - any design.",
     isPopular: true,
   },
   {
@@ -84,12 +84,12 @@ export const SERVICES = [
     name: "Acrylic Nails",
     slug: "acrylic-nails",
     category: "NAILS",
-    icon: "💅",
+    icon: "💅🏿",
     basePrice: 10000,
     minPrice: 8000,
     maxPrice: 20000,
     durationMins: 90,
-    description: "Full acrylic set — any design.",
+    description: "Full acrylic set - any design.",
     isPopular: false,
   },
   {
@@ -134,15 +134,15 @@ export const SERVICES = [
 ];
 
 export const CATEGORIES = [
-  { key: "HAIR", label: "Hair", icon: "💇‍♀️", count: 6 },
+  { key: "HAIR", label: "Hair", icon: "💇🏿‍♀️", count: 6 },
   { key: "MAKEUP", label: "Makeup", icon: "💄", count: 3 },
-  { key: "NAILS", label: "Nails", icon: "💅", count: 3 },
+  { key: "NAILS", label: "Nails", icon: "💅🏿", count: 3 },
   { key: "BARBING", label: "Barbing", icon: "✂️", count: 3 },
   { key: "LASHES", label: "Lashes", icon: "👁️", count: 3 },
   { key: "SKINCARE", label: "Skincare", icon: "✨", count: 2 },
 ];
 
-export const GROOMERS = [
+export const PROS = [
   {
     id: "g1",
     name: "Chidinma Adeyemi",
@@ -158,7 +158,7 @@ export const GROOMERS = [
     totalJobs: 389,
     isOnline: true,
     isVerified: true,
-    bio: "I specialise in protective styles and have been doing hair professionally since 2019. I bring all supplies — just give me your space and I'll transform your look.",
+    bio: "I specialise in protective styles and have been doing hair professionally since 2019. I bring all supplies - just give me your space and I'll transform your look.",
     baseRate: 12000,
     services: [
       { name: "Knotless Braids", price: 12000, duration: "3–4 hrs" },
@@ -270,7 +270,7 @@ export const GROOMERS = [
     totalJobs: 314,
     isOnline: true,
     isVerified: true,
-    bio: "Fresh cuts delivered to your door. I bring my full kit — clippers, razors, the works. No waiting, no traffic.",
+    bio: "Fresh cuts delivered to your door. I bring my full kit - clippers, razors, the works. No waiting, no traffic.",
     baseRate: 4000,
     services: [
       { name: "Haircut & Fade", price: 4000, duration: "45 min" },
@@ -326,7 +326,7 @@ export const ZONES = [
 ];
 
 export const TRUST_STATS = [
-  { value: "50+", label: "Vetted groomers" },
+  { value: "50+", label: "Vetted pros" },
   { value: "< 45 min", label: "Avg. arrival time" },
   { value: "24/7", label: "Always available" },
   { value: "4.8★", label: "Average rating" },

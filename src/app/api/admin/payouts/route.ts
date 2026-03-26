@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { initiateTransfer, createTransferRecipient } from "@/lib/paystack";
 import { startOfWeek, endOfWeek, subWeeks } from "date-fns";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const session = await getSession();
+    if (!hasPermission(session, "payouts.view")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
 
-    // Get all groomers with unpaid earnings
-    const groomersWithEarnings = await db.groomer.findMany({
+    // Get all pros with unpaid earnings
+    const prosWithEarnings = await db.pro.findMany({
       where: { earnings: { some: { paid: false } } },
       include: {
         earnings: {
@@ -20,14 +23,14 @@ export async function GET() {
     });
 
     const summary = await Promise.all(
-      groomersWithEarnings.map(async (g) => {
+      prosWithEarnings.map(async (g) => {
         const agg = await db.earning.aggregate({
-          where: { groomerId: g.id, paid: false },
+          where: { proId: g.id, paid: false },
           _sum: { amount: true },
           _count: { id: true },
         });
         return {
-          groomer: {
+          pro: {
             id: g.id,
             name: g.name,
             phone: g.phone,
@@ -50,11 +53,14 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/payouts — initiate payouts
+// POST /api/admin/payouts - initiate payouts
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin();
-    const { groomerIds } = await req.json(); // array of groomer IDs to pay
+    const session = await getSession();
+    if (!hasPermission(session, "payouts.manage")) {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+    const { proIds } = await req.json(); // array of pro IDs to pay
 
     const now = new Date();
     const periodStart = startOfWeek(subWeeks(now, 1));
@@ -62,11 +68,11 @@ export async function POST(req: NextRequest) {
 
     const results = [];
 
-    for (const groomerId of groomerIds) {
-      const groomer = await db.groomer.findUnique({ where: { id: groomerId } });
-      if (!groomer?.bankAccount || !groomer?.bankName) {
+    for (const proId of proIds) {
+      const pro = await db.pro.findUnique({ where: { id: proId } });
+      if (!pro?.bankAccount || !pro?.bankName) {
         results.push({
-          groomerId,
+          proId,
           success: false,
           reason: "Missing bank details",
         });
@@ -74,14 +80,14 @@ export async function POST(req: NextRequest) {
       }
 
       const agg = await db.earning.aggregate({
-        where: { groomerId, paid: false },
+        where: { proId, paid: false },
         _sum: { amount: true },
       });
 
       const amount = agg._sum.amount ?? 0;
       if (amount < 500) {
         results.push({
-          groomerId,
+          proId,
           success: false,
           reason: "Amount below minimum (₦500)",
         });
@@ -92,23 +98,23 @@ export async function POST(req: NextRequest) {
         // Get or create recipient code
         let recipientCode = "";
         recipientCode = await createTransferRecipient({
-          accountName: groomer.name,
-          accountNumber: groomer.bankAccount,
-          bankCode: groomer.bankName, // assumes bankName stores code
+          accountName: pro.name,
+          accountNumber: pro.bankAccount,
+          bankCode: pro.bankName, // assumes bankName stores code
         });
 
-        const transferRef = `PAY-${groomerId.slice(-8)}-${Date.now()}`;
+        const transferRef = `PAY-${proId.slice(-8)}-${Date.now()}`;
         const transfer = (await initiateTransfer({
           amount,
           recipientCode,
-          reason: `Groomee payout — week ending ${periodEnd.toDateString()}`,
+          reason: `Groomee payout - week ending ${periodEnd.toDateString()}`,
           reference: transferRef,
         })) as { data: { transfer_code: string } };
 
         // Create payout record
         const payout = await db.payout.create({
           data: {
-            groomerId,
+            proId,
             amount,
             status: "PROCESSING",
             paystackTransferId: transfer.data.transfer_code,
@@ -120,13 +126,14 @@ export async function POST(req: NextRequest) {
 
         // Mark earnings as paid
         await db.earning.updateMany({
-          where: { groomerId, paid: false },
+          where: { proId, paid: false },
           data: { paid: true, payoutId: payout.id },
         });
 
-        results.push({ groomerId, success: true, amount, payoutId: payout.id });
+        results.push({ proId, success: true, amount, payoutId: payout.id });
       } catch (err) {
-        results.push({ groomerId, success: false, reason: String(err) });
+        console.error(`Payout failed for pro ${proId}:`, err);
+        results.push({ proId, success: false, reason: "Payout processing failed" });
       }
     }
 

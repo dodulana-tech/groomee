@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { PaystackInitResponse, PaystackVerifyResponse } from "@/types";
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!;
@@ -27,7 +28,7 @@ async function paystackFetch<T>(
 export async function initializeTransaction({
   email,
   phone,
-  amount, // in kobo (NGN * 100)
+  amount, // in NGN (converted to kobo internally)
   reference,
   callbackUrl,
   metadata,
@@ -114,7 +115,7 @@ export async function createRefund({
   });
 }
 
-// ─── TRANSFER (groomer payouts) ───────────────────────────────────────────────
+// ─── TRANSFER (pro payouts) ───────────────────────────────────────────────
 
 export async function createTransferRecipient({
   accountName,
@@ -184,8 +185,6 @@ export async function listBanks() {
 
 // ─── WEBHOOK VALIDATION ───────────────────────────────────────────────────────
 
-import crypto from "crypto";
-
 export function validateWebhookSignature(
   body: string,
   signature: string,
@@ -194,7 +193,10 @@ export function validateWebhookSignature(
     .createHmac("sha512", process.env.PAYSTACK_WEBHOOK_SECRET!)
     .update(body)
     .digest("hex");
-  return hash === signature;
+  const hashBuf = Buffer.from(hash, "hex");
+  const sigBuf = Buffer.from(signature, "hex");
+  if (hashBuf.length !== sigBuf.length) return false;
+  return crypto.timingSafeEqual(hashBuf, sigBuf);
 }
 
 // ─── BOOKING REFERENCE ────────────────────────────────────────────────────────

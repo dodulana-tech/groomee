@@ -32,7 +32,9 @@ export async function GET(
 
     const expiryStr = format(new Date(giftCard.expiresAt), "do MMMM yyyy");
 
-    const msg = `🎁 *You've received a Groomee gift!*
+    // Idempotency: only send the notification once (isRedeemed doubles as "notification sent")
+    if (!giftCard.isRedeemed) {
+      const msg = `🎁 *You've received a Groomee gift!*
 
 ${giftCard.message ? `"${giftCard.message}"\n\n` : ""}Your gift code: *${giftCard.code}*
 Value: *${formatNaira(giftCard.amount)}*
@@ -40,9 +42,10 @@ Valid until: ${expiryStr}
 
 Redeem at: ${appUrl}
 
-Enjoy your glow-up! 💅`;
+Enjoy your glow-up! 💅🏿`;
 
-    await sendMessage(giftCard.recipientPhone, msg);
+      await sendMessage(giftCard.recipientPhone, msg);
+    }
 
     return NextResponse.redirect(
       `${appUrl}/gift?success=true&code=${giftCard.code}`,

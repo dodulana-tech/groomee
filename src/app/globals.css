@@ -35,6 +35,11 @@
   --color-ember-600: #e03518;
 
   --color-ink: #0d1b12;
+
+  /* ── Brand colors (from landing page north star) ── */
+  --color-brand-400: #53eb64;
+  --color-brand-deep: #014342;
+  --color-brand-yellow: #fffea1;
 }
 
 @keyframes fadeUp {
@@ -111,8 +116,8 @@ html {
 }
 
 body {
-  font-family: var(--font-sans);
-  background: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  background: #f7f5f0;
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -155,10 +160,10 @@ svg {
 
 /* ─── FONT HELPERS ────────────────────────────────────────── */
 .font-display {
-  font-family: var(--font-display) !important;
+  font-family: 'Playfair Display', Georgia, serif !important;
 }
 .font-sans {
-  font-family: var(--font-sans) !important;
+  font-family: 'DM Sans', sans-serif !important;
 }
 
 /* ─── LAYOUT ──────────────────────────────────────────────── */
@@ -184,6 +189,9 @@ svg {
 .section-sm {
   padding: 48px 0;
 }
+.section-header {
+  margin-bottom: 40px;
+}
 
 /* ─── BUTTONS ─────────────────────────────────────────────── */
 .btn {
@@ -194,7 +202,7 @@ svg {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: var(--font-sans);
+  font-family: 'DM Sans', sans-serif;
   border: none;
   white-space: nowrap;
   text-decoration: none;
@@ -256,6 +264,46 @@ svg {
   background: var(--color-forest-faint);
 }
 
+.btn-primary {
+  background: #53eb64;
+  color: #0a0a0a;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(83, 235, 100, 0.4);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #014342;
+  border: 1.5px solid #014342;
+  border-radius: 10px;
+  padding: 11px 24px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.btn-secondary:hover {
+  background: #e2fce5;
+}
+
+.btn-orange {
+  background: #FF6B35;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.btn-orange:hover {
+  background: #e84e18;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
 .btn-ghost {
   background: transparent;
   color: #4b5563;
@@ -290,28 +338,56 @@ svg {
 
 /* ─── CARDS ───────────────────────────────────────────────── */
 .card {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   transition:
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 .card:hover {
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.card-hover {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.25s;
+}
+.card-hover:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  border-color: #b4f5bb;
 }
 
 /* ─── INPUTS ──────────────────────────────────────────────── */
 .input {
   width: 100%;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-md);
   padding: 12px 16px;
   font-size: 15px;
   color: var(--color-ink);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
@@ -319,7 +395,8 @@ svg {
 }
 .input:focus {
   border-color: var(--color-forest);
-  box-shadow: 0 0 0 3px rgba(26, 58, 42, 0.08);
+  box-shadow: 0 0 0 3px rgba(83, 235, 100, 0.12);
+  background: rgba(255, 255, 255, 0.9);
 }
 .input::placeholder {
   color: #9ca3af;
@@ -465,8 +542,8 @@ svg {
 
 .glass {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* ─── ANIMATIONS ──────────────────────────────────────────── */

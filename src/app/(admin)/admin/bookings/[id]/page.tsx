@@ -3,7 +3,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { format } from "date-fns";
 import { formatNaira } from "@/lib/utils";
-import AssignGroomerButton from "./AssignGroomerButton";
+import AssignProButton from "./AssignProButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Booking Detail" };
@@ -18,7 +18,7 @@ const STATUS_STYLE: Record<
     color: "#854D0E",
     label: "Awaiting payment",
   },
-  DISPATCHING: { bg: "#FEF3C7", color: "#B45309", label: "Finding groomer" },
+  DISPATCHING: { bg: "#FEF3C7", color: "#B45309", label: "Finding pro" },
   ACCEPTED: { bg: "#DCFCE7", color: "#166534", label: "Accepted" },
   EN_ROUTE: { bg: "#DCFCE7", color: "#166534", label: "En route" },
   ARRIVED: { bg: "#EDE9FE", color: "#6D28D9", label: "Arrived" },
@@ -30,7 +30,7 @@ const STATUS_STYLE: Record<
   },
   CONFIRMED: { bg: "#DCFCE7", color: "#166534", label: "Confirmed ✓" },
   CANCELLED: { bg: "#FEF2F2", color: "#991B1B", label: "Cancelled" },
-  NO_GROOMER: { bg: "#FEF2F2", color: "#991B1B", label: "No groomer found" },
+  NO_GROOMER: { bg: "#FEF2F2", color: "#991B1B", label: "No pro found" },
   DISPUTED: { bg: "#FFF7ED", color: "#C2410C", label: "Disputed" },
 };
 
@@ -45,7 +45,7 @@ export default async function AdminBookingDetailPage({
     where: { id },
     include: {
       customer: true,
-      groomer: true,
+      pro: true,
       service: true,
       zone: true,
       payment: true,
@@ -56,8 +56,8 @@ export default async function AdminBookingDetailPage({
 
   if (!booking) notFound();
 
-  // Only groomers who can do THIS service AND cover THIS zone
-  const availableGroomers = await db.groomer.findMany({
+  // Only pros who can do THIS service AND cover THIS zone
+  const availablePros = await db.pro.findMany({
     where: {
       status: "ACTIVE",
       availability: { in: ["ONLINE", "BUSY"] },
@@ -129,14 +129,14 @@ export default async function AdminBookingDetailPage({
             {formatNaira(booking.totalAmount)}
           </p>
           <p className="text-xs text-gray-400 mt-1">
-            Groomer earns {formatNaira(booking.groomerEarning)}
+            Pro earns {formatNaira(booking.proEarning)}
           </p>
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Customer */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="glass-card rounded-2xl p-5">
           <h2 className="font-bold text-gray-900 mb-3">Customer</h2>
           <dl>
             <Row
@@ -170,41 +170,41 @@ export default async function AdminBookingDetailPage({
           </dl>
         </div>
 
-        {/* Groomer */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        {/* Pro */}
+        <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-gray-900">Groomer</h2>
-            {!booking.groomer &&
+            <h2 className="font-bold text-gray-900">Pro</h2>
+            {!booking.pro &&
               ["PENDING_PAYMENT", "DISPATCHING", "NO_GROOMER"].includes(
                 booking.status,
               ) && (
-                <AssignGroomerButton
+                <AssignProButton
                   bookingId={booking.id}
                   serviceName={booking.service.name}
-                  groomers={availableGroomers}
+                  pros={availablePros}
                 />
               )}
           </div>
-          {booking.groomer ? (
+          {booking.pro ? (
             <dl>
-              <Row label="Name" value={booking.groomer.name} />
+              <Row label="Name" value={booking.pro.name} />
               <Row
                 label="Phone"
                 value={
                   <span className="font-mono text-xs">
-                    {booking.groomer.phone}
+                    {booking.pro.phone}
                   </span>
                 }
               />
               <Row
                 label="Rating"
-                value={`★ ${booking.groomer.avgRating.toFixed(1)}`}
+                value={`★ ${booking.pro.avgRating.toFixed(1)}`}
               />
               <Row
                 label="Earning"
                 value={
                   <span className="font-bold">
-                    {formatNaira(booking.groomerEarning)}
+                    {formatNaira(booking.proEarning)}
                   </span>
                 }
               />
@@ -213,32 +213,32 @@ export default async function AdminBookingDetailPage({
                 value={
                   <span
                     className={
-                      booking.groomer.strikes > 0
+                      booking.pro.strikeCount > 0
                         ? "text-red-500 font-bold"
                         : "text-gray-400"
                     }
                   >
-                    {booking.groomer.strikes}/3
+                    {booking.pro.strikeCount}/3
                   </span>
                 }
               />
             </dl>
           ) : (
-            <p className="text-sm text-gray-400">No groomer assigned yet</p>
+            <p className="text-sm text-gray-400">No pro assigned yet</p>
           )}
-          {booking.groomer && (
+          {booking.pro && (
             <Link
-              href={`/admin/groomers/${booking.groomer.id}`}
+              href={`/admin/pros/${booking.pro.id}`}
               className="mt-3 inline-block text-xs font-bold"
               style={{ color: "#1A3A2A" }}
             >
-              View groomer profile →
+              View pro profile →
             </Link>
           )}
         </div>
 
         {/* Payment */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="glass-card rounded-2xl p-5">
           <h2 className="font-bold text-gray-900 mb-3">Payment</h2>
           {booking.payment ? (
             <dl>
@@ -313,7 +313,7 @@ export default async function AdminBookingDetailPage({
         </div>
 
         {/* Timeline */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+        <div className="glass-card rounded-2xl p-5">
           <h2 className="font-bold text-gray-900 mb-3">Timeline</h2>
           <dl>
             <Row
@@ -364,7 +364,7 @@ export default async function AdminBookingDetailPage({
       {/* Dispute */}
       {booking.dispute && (
         <div
-          className="bg-white rounded-2xl border mt-4 p-5"
+          className="glass-card rounded-2xl mt-4 p-5"
           style={{ borderColor: "#FECACA" }}
         >
           <h2 className="font-bold mb-3" style={{ color: "#991B1B" }}>
@@ -398,7 +398,7 @@ export default async function AdminBookingDetailPage({
 
       {/* Review */}
       {booking.review && (
-        <div className="bg-white rounded-2xl border border-gray-100 mt-4 p-5">
+        <div className="glass-card rounded-2xl mt-4 p-5">
           <h2 className="font-bold text-gray-900 mb-3">Customer Review</h2>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-yellow-400 text-lg">

@@ -5,27 +5,27 @@ import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/utils";
 import type { Service, Zone } from "@/types";
 
-interface GroomerService {
+interface ProServiceItem {
   service: Service;
   customPrice: number | null;
 }
 
 interface Props {
-  groomer: {
+  pro: {
     id: string;
     name: string;
     availability: string;
     commissionRate: number;
   };
   preSelectedService?: Service;
-  groomerServices: GroomerService[];
+  proServices: ProServiceItem[];
   zones: Zone[];
 }
 
 export default function BookingPanel({
-  groomer,
+  pro,
   preSelectedService,
-  groomerServices,
+  proServices,
   zones,
 }: Props) {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function BookingPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedGs = groomerServices.find(
+  const selectedGs = proServices.find(
     (gs) => gs.service.id === selectedServiceId,
   );
   const selectedService = selectedGs?.service;
@@ -103,7 +103,11 @@ export default function BookingPanel({
         setError(data.error ?? "Failed to create booking.");
         return;
       }
-      window.location.href = data.data.authorizationUrl;
+      if (data.data?.authorizationUrl) {
+        window.location.href = data.data.authorizationUrl;
+      } else {
+        router.push(`/booking/${data.data?.id}`);
+      }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -117,9 +121,9 @@ export default function BookingPanel({
       <div className="border-b border-gray-100 bg-gray-50 px-5 py-4">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-gray-900">
-            Book {groomer.name.split(" ")[0]}
+            Book {pro.name.split(" ")[0]}
           </h3>
-          {groomer.availability === "ONLINE" ? (
+          {pro.availability === "ONLINE" ? (
             <span className="pill pill-green">
               <span
                 className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-brand-500"
@@ -138,7 +142,7 @@ export default function BookingPanel({
         <div>
           <label className="input-label">Select service</label>
           <div className="space-y-2">
-            {groomerServices.map((gs) => {
+            {proServices.map((gs) => {
               const p = gs.customPrice ?? gs.service.basePrice;
               const isSelected = selectedServiceId === gs.service.id;
               return (

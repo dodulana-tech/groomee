@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatNaira } from "@/lib/utils";
 import SubscribeButton from "./SubscribeButton";
+import CancelSubButton from "./CancelSubButton";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -61,14 +62,7 @@ export default async function SubscriptionsPage() {
                   {formatNaira(currentSub.plan.price)}
                   <span className="text-sm font-normal">/mo</span>
                 </p>
-                <form
-                  action={`/api/subscriptions/${currentSub.id}/cancel`}
-                  method="POST"
-                >
-                  <button className="mt-2 text-xs text-red-500 hover:underline">
-                    Cancel plan
-                  </button>
-                </form>
+                <CancelSubButton subId={currentSub.id} />
               </div>
             </div>
             {/* Credit bar */}
@@ -77,7 +71,7 @@ export default async function SubscriptionsPage() {
                 <div
                   className="h-full rounded-full bg-brand-500 transition-all"
                   style={{
-                    width: `${(currentSub.creditsRemaining / currentSub.creditsTotal) * 100}%`,
+                    width: `${currentSub.creditsTotal > 0 ? (currentSub.creditsRemaining / currentSub.creditsTotal) * 100 : 0}%`,
                   }}
                 />
               </div>
@@ -185,7 +179,7 @@ export default async function SubscriptionsPage() {
             {[
               {
                 q: "How do session credits work?",
-                a: "Each completed booking deducts one credit. Credits reset at the start of your billing cycle. Unused credits expire — they don't roll over.",
+                a: "Each completed booking deducts one credit. Credits reset at the start of your billing cycle. Unused credits expire - they don't roll over.",
               },
               {
                 q: "Can I use credits on any service?",
@@ -197,7 +191,7 @@ export default async function SubscriptionsPage() {
               },
               {
                 q: "How do I cancel?",
-                a: "Cancel anytime from your profile page. Your plan stays active until the end of the billing period — we don't do partial refunds.",
+                a: "Cancel anytime from your profile page. Your plan stays active until the end of the billing period - we don't do partial refunds.",
               },
             ].map((faq) => (
               <details key={faq.q} className="group">

@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { Service } from "@/types";
-import { getServiceCategoryIcon } from "@/lib/utils";
 
 const CATEGORIES = [
-  { key: "HAIR", label: "Hair", emoji: "💇‍♀️" },
+  { key: "HAIR", label: "Hair", emoji: "💇🏿‍♀️" },
   { key: "MAKEUP", label: "Makeup", emoji: "💄" },
-  { key: "NAILS", label: "Nails", emoji: "💅" },
+  { key: "NAILS", label: "Nails", emoji: "💅🏿" },
   { key: "BARBING", label: "Barbing", emoji: "✂️" },
   { key: "LASHES", label: "Lashes", emoji: "👁️" },
   { key: "SKINCARE", label: "Skincare", emoji: "✨" },
@@ -34,146 +34,323 @@ export default function Hero({ services }: Props) {
   }
 
   return (
-    <section className="relative overflow-hidden bg-brand-600 pb-20 pt-10 sm:pb-24 sm:pt-16">
-      {/* Background decorations */}
-      <div className="absolute inset-0 bg-hero-pattern" />
-      <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-white/5" />
-      <div className="absolute -left-16 bottom-0 h-64 w-64 rounded-full bg-white/5" />
-      <div className="absolute right-1/4 top-1/3 h-48 w-48 rounded-full bg-brand-500/30" />
+    <section
+      className="grid grid-cols-1 lg:grid-cols-2"
+      style={{
+        minHeight: "100vh",
+        padding: "100px 5% 60px",
+        gap: "4rem",
+        alignItems: "center",
+        position: "relative",
+        overflow: "hidden",
+        background: "#f7f5f0",
+      }}
+    >
+      {/* Decorative gradients */}
+      <div
+        style={{
+          content: "''",
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse 70% 60% at 80% 20%, rgba(83,235,100,0.07) 0%, transparent 65%), radial-gradient(ellipse 50% 50% at 10% 80%, rgba(255,254,161,0.06) 0%, transparent 55%)",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          width: 500,
+          height: 500,
+          borderRadius: "50%",
+          border: "1.5px solid rgba(37,135,79,0.1)",
+          top: -80,
+          right: -80,
+          animation: "spin 30s linear infinite",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          width: 300,
+          height: 300,
+          borderRadius: "50%",
+          border: "1px solid rgba(200,135,26,0.1)",
+          bottom: 60,
+          left: -60,
+          pointerEvents: "none",
+        }}
+      />
 
-      <div className="container relative">
-        <div className="grid gap-10 lg:grid-cols-[1fr_480px] lg:items-center">
-          {/* LEFT: Headline */}
-          <div className="text-center lg:text-left">
-            {/* Kicker pill */}
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-semibold text-white/90 backdrop-blur-sm">
-              <span className="h-2 w-2 animate-pulse-dot rounded-full bg-green-400" />
-              Now live in Lagos
-            </div>
+      {/* LEFT */}
+      <div style={{ position: "relative", zIndex: 2 }}>
+        {/* Headline - exactly 3 lines */}
+        <h1
+          className="font-display"
+          style={{
+            fontSize: "clamp(1.8rem, 5vw, 5rem)",
+            fontWeight: 900,
+            lineHeight: 1.08,
+            letterSpacing: "-0.03em",
+            color: "#0a0a0a",
+            marginBottom: 24,
+          }}
+        >
+          Your <span style={{ color: "#016060", fontStyle: "italic" }}>beauty pro,</span>
+          <br />
+          at your door,
+          <br />
+          right now.
+        </h1>
 
-            <h1 className="font-display text-4xl font-black leading-[1.08] text-white sm:text-5xl lg:text-6xl">
-              Your groomer,
-              <br />
-              <em className="not-italic text-green-300">at your door</em>,
-              <br />
-              right now.
-            </h1>
+        <p
+          style={{
+            fontSize: "1.05rem",
+            fontWeight: 400,
+            color: "#3c4d3d",
+            lineHeight: 1.7,
+            maxWidth: 460,
+            marginBottom: 28,
+          }}
+        >
+          Vetted hair, makeup, nails, lashes &amp; barbing professionals
+          delivered to you in Lagos. No salon run. No traffic. Available late
+          nights, early mornings, and last-minute.
+        </p>
 
-            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white/75 lg:mx-0 lg:text-lg">
-              Professional hair, makeup, nails, lashes & barbing delivered to
-              you in Lagos. No salon. No traffic. Available late nights and
-              early mornings.
-            </p>
+        {/* Dual CTA */}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" as const, marginBottom: 28 }}>
+          <Link
+            href="/search"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "12px 24px",
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              color: "#0a0a0a",
+              background: "#53eb64",
+              border: "none",
+              borderRadius: 10,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              textDecoration: "none",
+            }}
+          >
+            🟢 Get started in Lagos
+          </Link>
+          <Link
+            href="#abuja-waitlist"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "12px 24px",
+              fontSize: "0.95rem",
+              fontWeight: 600,
+              color: "#7c3aed",
+              background: "#f5f0ff",
+              border: "1.5px solid #ddd0fa",
+              borderRadius: 10,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              textDecoration: "none",
+            }}
+          >
+            🟡 Join the Abuja waitlist
+          </Link>
+        </div>
 
-            {/* Stats */}
-            <div className="mt-8 flex justify-center gap-8 lg:justify-start">
-              {[
-                { val: "50+", label: "Vetted groomers" },
-                { val: "< 45 min", label: "Avg arrival time" },
-                { val: "24/7", label: "Emergency slots" },
-              ].map((s) => (
-                <div key={s.label} className="text-center lg:text-left">
-                  <p className="text-2xl font-extrabold text-white">{s.val}</p>
-                  <p className="mt-0.5 text-xs text-white/55">{s.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Trust badges — mobile only */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3 lg:hidden">
-              {["🛡️ ID Verified", "💳 Secure pay", "⭐ 4.8 rated"].map((b) => (
+        {/* Stats */}
+        <div style={{ display: "flex", alignItems: "center", gap: 32, flexWrap: "wrap" as const }}>
+          {[
+            { val: "50+", label: "Vetted pros" },
+            { val: "<45 min", label: "Avg arrival time" },
+            { val: "24/7", label: "Emergency slots" },
+          ].map((s, i) => (
+            <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 32 }}>
+              {i > 0 && (
+                <div style={{ width: 1, height: 36, background: "#b4f5bb", flexShrink: 0 }} />
+              )}
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 2 }}>
                 <span
-                  key={b}
-                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/85"
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: "1.4rem",
+                    fontWeight: 500,
+                    color: "#014342",
+                  }}
                 >
-                  {b}
+                  {s.val}
                 </span>
-              ))}
-            </div>
-          </div>
-
-          {/* RIGHT: Search card */}
-          <div className="mx-auto w-full max-w-md rounded-3xl bg-white p-6 shadow-[0_24px_64px_rgba(0,0,0,0.2)] lg:mx-0">
-            <h2 className="font-display text-xl font-bold text-gray-900">
-              Find a groomer near you
-            </h2>
-            <p className="mb-5 mt-1 text-sm text-gray-500">
-              Browse by service · Book in 60 seconds
-            </p>
-
-            {/* Category grid */}
-            <p className="input-label mb-2">What do you need?</p>
-            <div className="mb-5 grid grid-cols-3 gap-2">
-              {CATEGORIES.map((cat) => {
-                const isSelected = selected === cat.key;
-                return (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() =>
-                      setSelected((s) => (s === cat.key ? null : cat.key))
-                    }
-                    className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 py-3 px-2 text-xs font-semibold transition-all ${
-                      isSelected
-                        ? "border-brand-500 bg-brand-50 text-brand-700 scale-105 shadow-sm"
-                        : "border-gray-100 bg-gray-50 text-gray-600 hover:border-gray-200 hover:bg-gray-100"
-                    }`}
-                  >
-                    <span className="text-2xl">{cat.emoji}</span>
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* ASAP toggle */}
-            <button
-              type="button"
-              onClick={() => setIsAsap((v) => !v)}
-              className={`mb-4 flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-all ${
-                isAsap
-                  ? "border-accent bg-accent-50 shadow-sm"
-                  : "border-gray-200 bg-white hover:border-accent/30"
-              }`}
-            >
-              <span className="text-2xl">⚡</span>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-orange-600">
-                  Emergency / ASAP booking
-                </p>
-                <p className="text-[11px] text-gray-500">
-                  Groomers who can arrive within 45 minutes
-                </p>
+                <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#7a9a7c", letterSpacing: "0.04em" }}>
+                  {s.label}
+                </span>
               </div>
-              <div
-                className={`relative h-5 w-9 rounded-full transition-colors ${isAsap ? "bg-accent" : "bg-gray-200"}`}
-              >
-                <div
-                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${isAsap ? "left-[18px]" : "left-0.5"}`}
-                />
-              </div>
-            </button>
-
-            <button
-              onClick={handleSearch}
-              className="btn-primary btn-lg w-full text-base"
-            >
-              🔍 Find available groomers
-            </button>
-
-            <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-              <span className="text-brand-500">🛡️</span>
-              All groomers vetted & ID-verified · Payment secured
-            </p>
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Bottom wave */}
+      {/* RIGHT: Booking card */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-8 bg-white"
-        style={{ clipPath: "ellipse(55% 100% at 50% 100%)" }}
-      />
+        style={{
+          position: "relative",
+          zIndex: 2,
+          background: "#fff",
+          border: "1px solid rgba(13,61,38,0.08)",
+          borderRadius: 24,
+          padding: "2rem",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Top gradient accent */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: "linear-gradient(90deg, #53eb64, #fffea1)",
+          }}
+        />
+
+        <h2
+          className="font-display"
+          style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0a0a0a", marginBottom: 4 }}
+        >
+          Find a pro near you
+        </h2>
+        <p style={{ fontSize: "0.8rem", color: "#7a9a7c", marginBottom: 24, fontWeight: 500, letterSpacing: "0.03em" }}>
+          Browse by service · Book in 60 seconds
+        </p>
+
+        <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "#3c4d3d", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
+          What do you need?
+        </p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: 8, marginBottom: 20 }}>
+          {CATEGORIES.map((cat) => {
+            const on = selected === cat.key;
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => setSelected((s) => (s === cat.key ? null : cat.key))}
+                style={{
+                  display: "flex",
+                  flexDirection: "column" as const,
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "11px 8px",
+                  border: `1.5px solid ${on ? "#53eb64" : "#b4f5bb"}`,
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  background: on ? "#e2fce5" : "#f1fef2",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                  color: on ? "#014342" : "#3c4d3d",
+                  fontFamily: "inherit",
+                }}
+              >
+                <span style={{ fontSize: "1.1rem" }}>{cat.emoji}</span>
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ASAP toggle */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isAsap}
+          aria-label="Emergency ASAP booking"
+          onClick={() => setIsAsap((v) => !v)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "14px 16px",
+            background: "#fdf3e0",
+            border: "1.5px solid rgba(200,135,26,0.25)",
+            borderRadius: 10,
+            marginBottom: 20,
+            cursor: "pointer",
+            width: "100%",
+            textAlign: "left" as const,
+            fontFamily: "inherit",
+          }}
+        >
+          <span style={{ fontSize: "1.1rem" }}>⚡</span>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0a0a0a", display: "block" }}>
+              Emergency / ASAP booking
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "#3c4d3d", display: "block" }}>
+              Pros who can arrive within 45 minutes
+            </span>
+          </div>
+          <div
+            style={{
+              width: 36,
+              height: 20,
+              background: isAsap ? "#c8871a" : "#e8c274",
+              borderRadius: 100,
+              position: "relative",
+              flexShrink: 0,
+              transition: "background 0.2s",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 3,
+                left: isAsap ? 19 : 3,
+                width: 14,
+                height: 14,
+                background: "#fff",
+                borderRadius: "50%",
+                transition: "left 0.2s",
+              }}
+            />
+          </div>
+        </button>
+
+        <button
+          onClick={handleSearch}
+          style={{
+            width: "100%",
+            background: "#53eb64",
+            color: "#0a0a0a",
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: "1rem",
+            fontWeight: 600,
+            border: "none",
+            padding: 15,
+            borderRadius: 12,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            marginBottom: 16,
+            transition: "all 0.2s",
+            letterSpacing: "0.01em",
+          }}
+        >
+          🔍 Find available pros
+        </button>
+
+        <p style={{ textAlign: "center" as const, fontSize: "0.75rem", color: "#7a9a7c", fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          🛡️ All pros vetted &amp; ID-verified · Payment secured by Paystack
+        </p>
+      </div>
     </section>
   );
 }

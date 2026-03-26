@@ -4,18 +4,27 @@ import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchFilters from "@/components/customer/SearchFilters";
 import SearchHeader from "@/components/customer/SearchHeader";
-import GroomerGrid from "@/components/customer/GroomerGrid";
+import ProGrid from "@/components/customer/ProGrid";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-// Filter chip data
 const CATEGORY_CHIPS = [
   { label: "All services", value: null, emoji: "✨" },
-  { label: "Hair", value: "knotless-braids", emoji: "💇‍♀️" },
+  { label: "Hair", value: "knotless-braids", emoji: "💇🏿‍♀️" },
   { label: "Makeup", value: "full-glam-makeup", emoji: "💄" },
-  { label: "Nails", value: "gel-nails", emoji: "💅" },
+  { label: "Nails", value: "gel-nails", emoji: "💅🏿" },
   { label: "Barbing", value: "haircut-fade", emoji: "✂️" },
   { label: "Lashes", value: "classic-lashes", emoji: "👁️" },
+  { label: "Skincare", value: "facial-glow", emoji: "✨" },
+];
+
+const SORT_OPTIONS = [
+  { label: "Recommended", value: "recommended" },
+  { label: "Highest rated", value: "rating" },
+  { label: "Most reviewed", value: "reviews" },
+  { label: "Price: low to high", value: "price_asc" },
+  { label: "Price: high to low", value: "price_desc" },
 ];
 
 export default function SearchPage() {
@@ -28,17 +37,21 @@ export default function SearchPage() {
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
-  const [groomers, setGroomers] = useState<any[]>([]);
+  const [pros, setPros] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort] = useState("recommended");
+  const [city, setCity] = useState<"Lagos" | "Abuja">("Lagos");
 
   const params = {
     service: searchParams.get("service") ?? undefined,
     zone: searchParams.get("zone") ?? undefined,
     asap: searchParams.get("asap") ?? undefined,
     rating: searchParams.get("rating") ?? undefined,
+    minPrice: searchParams.get("minPrice") ?? undefined,
+    maxPrice: searchParams.get("maxPrice") ?? undefined,
   };
 
   const fetchData = useCallback(async () => {
@@ -47,18 +60,21 @@ function SearchPageContent() {
       const qp = new URLSearchParams(
         Object.entries(params).filter(([, v]) => v) as [string, string][],
       );
+      if (sort !== "recommended") qp.set("sort", sort);
       const [gr, sv, zn] = await Promise.all([
-        fetch(`/api/groomers?${qp}`).then((r) => r.json()),
+        fetch(`/api/pros?${qp}`).then((r) => r.json()),
         fetch("/api/services").then((r) => r.json()),
-        fetch("/api/admin/zones").then((r) => r.json()),
+        fetch("/api/zones").then((r) => r.json()),
       ]);
-      setGroomers(gr.data ?? []);
+      setPros(gr.data ?? []);
       setServices(sv.data ?? []);
-      setZones(zn.data ?? []);
+      // Filter zones by selected city
+      const allZones: any[] = zn.data ?? [];
+      setZones(allZones.filter((z: any) => z.city === city));
     } finally {
       setLoading(false);
     }
-  }, [searchParams.toString()]);
+  }, [searchParams.toString(), sort, city]);
 
   useEffect(() => {
     fetchData();
@@ -69,14 +85,48 @@ function SearchPageContent() {
     params.zone,
     params.asap,
     params.rating,
+    params.minPrice || params.maxPrice ? "price" : undefined,
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 lg:pb-8">
-      {/* Search hero bar */}
-      <div className="border-b border-gray-200 bg-white px-4 py-4 sm:px-6">
+    <div className="min-h-screen bg-cream-50 pb-24 lg:pb-8" style={{ paddingTop: 68 }}>
+      {/* Search hero bar - glassmorphism */}
+      <div className="border-b border-gray-200/50 bg-white/80 backdrop-blur-xl px-4 py-4 sm:px-6 sticky top-[68px] z-30">
         <div className="mx-auto max-w-7xl">
-          {/* Category chips — horizontal scroll */}
+          {/* City selector */}
+          <div className="flex items-center gap-2 mb-3">
+            {(["Lagos", "Abuja"] as const).map((c) => (
+              <button
+                key={c}
+                onClick={() => setCity(c)}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold border-2 transition-all ${
+                  city === c
+                    ? "border-brand-600 bg-brand-600 text-white shadow-sm"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-brand-200 hover:bg-brand-50"
+                }`}
+              >
+                📍 {c}
+              </button>
+            ))}
+          </div>
+
+          {/* Abuja coming-soon banner */}
+          {city === "Abuja" && (
+            <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center justify-between gap-3">
+              <span>
+                <span className="font-bold">Coming soon to Abuja!</span> We're
+                onboarding pros in FCT right now.
+              </span>
+              <Link
+                href="/#waitlist"
+                className="shrink-0 rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-700 transition-colors"
+              >
+                Join waitlist
+              </Link>
+            </div>
+          )}
+
+          {/* Category chips - horizontal scroll */}
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {CATEGORY_CHIPS.map((chip) => {
               const isActive =
@@ -90,8 +140,8 @@ function SearchPageContent() {
                   }
                   className={`flex shrink-0 items-center gap-1.5 rounded-full border-2 px-4 py-2 text-sm font-semibold transition-all ${
                     isActive
-                      ? "border-brand-600 bg-brand-600 text-white"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      ? "border-brand-600 bg-brand-600 text-white shadow-sm"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-brand-200 hover:bg-brand-50"
                   }`}
                 >
                   {chip.emoji} {chip.label}
@@ -100,7 +150,7 @@ function SearchPageContent() {
             })}
           </div>
 
-          {/* Filter bar */}
+          {/* Filter bar + sort */}
           <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
@@ -121,21 +171,34 @@ function SearchPageContent() {
               {params.asap && (
                 <div className="flex items-center gap-1.5 rounded-full bg-accent-50 border border-accent/30 px-3 py-1.5 text-xs font-bold text-accent">
                   <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-accent" />
-                  Emergency mode
+                  Emergency mode - showing available pros only
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-500">
-              {loading ? "..." : `${groomers.length} found`}
-            </p>
+            <div className="flex items-center gap-3">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 outline-none focus:border-brand-500 transition"
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-500 hidden sm:block">
+                {loading ? "..." : `${pros.length} found`}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:flex lg:gap-8">
-        {/* Sidebar filters — desktop */}
+        {/* Sidebar filters - desktop with glass effect */}
         <aside className="hidden w-64 shrink-0 lg:block">
-          <div className="sticky top-24 card p-5">
+          <div className="sticky top-40 glass rounded-2xl p-5 shadow-lg border border-white/20">
             <SearchFilters
               services={services}
               zones={zones}
@@ -148,7 +211,7 @@ function SearchPageContent() {
         <main className="flex-1 min-w-0">
           {/* Mobile filter drawer */}
           {showFilters && (
-            <div className="lg:hidden mb-4 card p-5 animate-fade-up">
+            <div className="lg:hidden mb-4 glass rounded-2xl p-5 shadow-lg border border-white/20 animate-fade-up">
               <SearchFilters
                 services={services}
                 zones={zones}
@@ -159,13 +222,13 @@ function SearchPageContent() {
           )}
 
           <div className="mb-5">
-            <SearchHeader total={groomers.length} isAsap={!!params.asap} />
+            <SearchHeader total={pros.length} isAsap={!!params.asap} />
           </div>
 
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="card overflow-hidden">
+                <div key={i} className="glass rounded-2xl overflow-hidden border border-white/20">
                   <div className="skeleton h-36 rounded-none" />
                   <div className="p-4 space-y-3">
                     <div className="skeleton h-4 w-2/3" />
@@ -180,7 +243,7 @@ function SearchPageContent() {
               ))}
             </div>
           ) : (
-            <GroomerGrid groomers={groomers} searchParams={params} />
+            <ProGrid pros={pros} searchParams={params} />
           )}
         </main>
       </div>

@@ -1,6 +1,6 @@
 import type {
   User,
-  Groomer,
+  Pro,
   Service,
   Zone,
   Booking,
@@ -10,8 +10,8 @@ import type {
   Earning,
   Notification,
   BookingStatus,
-  GroomerStatus,
-  GroomerAvail,
+  ProStatus,
+  ProAvail,
   PaymentStatus,
   DisputeStatus,
   ServiceCategory,
@@ -20,7 +20,7 @@ import type {
 // Re-export Prisma types
 export type {
   User,
-  Groomer,
+  Pro,
   Service,
   Zone,
   Booking,
@@ -30,8 +30,8 @@ export type {
   Earning,
   Notification,
   BookingStatus,
-  GroomerStatus,
-  GroomerAvail,
+  ProStatus,
+  ProAvail,
   PaymentStatus,
   DisputeStatus,
   ServiceCategory,
@@ -39,7 +39,7 @@ export type {
 
 // ─── ENRICHED TYPES ──────────────────────────────────────────────────────────
 
-export type GroomerWithServices = Groomer & {
+export type ProWithServices = Pro & {
   services: Array<{
     service: Service;
     customPrice: number | null;
@@ -47,11 +47,12 @@ export type GroomerWithServices = Groomer & {
   zones: Array<{
     zone: Zone;
   }>;
+  reviews?: Review[];
 };
 
 export type BookingWithRelations = Booking & {
   customer: Pick<User, "id" | "name" | "phone">;
-  groomer: Groomer | null;
+  pro: Pro | null;
   service: Service;
   zone: Zone | null;
   payment: Payment | null;
@@ -60,7 +61,7 @@ export type BookingWithRelations = Booking & {
 };
 
 export type BookingFull = BookingWithRelations & {
-  groomer: GroomerWithServices | null;
+  pro: ProWithServices | null;
 };
 
 // ─── SESSION / AUTH ───────────────────────────────────────────────────────────
@@ -68,7 +69,10 @@ export type BookingFull = BookingWithRelations & {
 export interface SessionPayload {
   userId: string;
   phone: string;
-  role: "CUSTOMER" | "ADMIN";
+  role: "CUSTOMER" | "ADMIN" | "PRO";
+  adminRoleId?: string;
+  adminRoleName?: string;
+  permissions?: string[];
   iat: number;
   exp: number;
 }
@@ -115,8 +119,8 @@ export interface SurchargeResult {
 // ─── DISPATCH ─────────────────────────────────────────────────────────────────
 
 export interface DispatchAttempt {
-  groomerId: string;
-  groomerName: string;
+  proId: string;
+  proName: string;
   offeredAt: string;
   response: "accepted" | "declined" | "timeout" | null;
   respondedAt?: string;
@@ -127,13 +131,13 @@ export interface DispatchAttempt {
 export interface DashboardStats {
   todayRevenue: number;
   activeBookings: number;
-  groomersOnline: number;
+  prosOnline: number;
   openDisputes: number;
   weeklyBookings: { day: string; count: number; revenue: number }[];
   recentBookings: BookingWithRelations[];
-  groomerAvailability: Array<{
-    groomer: Groomer;
-    availability: GroomerAvail;
+  proAvailability: Array<{
+    pro: Pro;
+    availability: ProAvail;
     currentJob: string | null;
   }>;
 }
@@ -170,7 +174,7 @@ export interface PaystackVerifyResponse {
   };
 }
 
-export interface GroomerCreditScore {
+export interface ProCreditScore {
   score: number; // 0–850
   tier: "bronze" | "silver" | "gold" | "platinum";
   completedJobs: number;

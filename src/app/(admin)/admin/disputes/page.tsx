@@ -20,7 +20,7 @@ interface Dispute {
     reference: string;
     totalAmount: number;
     customer: { name: string | null; phone: string };
-    groomer: { name: string } | null;
+    pro: { name: string } | null;
     service: { name: string };
     payment: { status: string; paystackRef: string } | null;
   };
@@ -35,7 +35,7 @@ export default function AdminDisputesPage() {
     outcome: "NO_REFUND",
     refundAmount: "",
     adminNote: "",
-    applyStrikeToGroomer: false,
+    applyStrikeToPro: false,
   });
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function AdminDisputesPage() {
             ? parseFloat(form.refundAmount)
             : undefined,
           adminNote: form.adminNote,
-          applyStrikeToGroomer: form.applyStrikeToGroomer,
+          applyStrikeToPro: form.applyStrikeToPro,
         }),
       });
       if (res.ok) {
@@ -146,8 +146,8 @@ export default function AdminDisputesPage() {
                     Customer:{" "}
                     {dispute.booking.customer.name ??
                       dispute.booking.customer.phone}
-                    {dispute.booking.groomer &&
-                      ` · Groomer: ${dispute.booking.groomer.name}`}
+                    {dispute.booking.pro &&
+                      ` · Pro: ${dispute.booking.pro.name}`}
                   </p>
                   <p className="mt-2 text-sm text-gray-700">
                     <strong>Reason:</strong> {dispute.reason}
@@ -181,7 +181,7 @@ export default function AdminDisputesPage() {
                           outcome: "NO_REFUND",
                           refundAmount: "",
                           adminNote: "",
-                          applyStrikeToGroomer: false,
+                          applyStrikeToPro: false,
                         });
                       }}
                       className="mt-3 btn-primary btn-sm"
@@ -261,20 +261,20 @@ export default function AdminDisputesPage() {
                 />
               </div>
 
-              {selected.booking.groomer && (
+              {selected.booking.pro && (
                 <label className="flex cursor-pointer items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={form.applyStrikeToGroomer}
+                    checked={form.applyStrikeToPro}
                     onChange={(e) =>
                       setForm((f) => ({
                         ...f,
-                        applyStrikeToGroomer: e.target.checked,
+                        applyStrikeToPro: e.target.checked,
                       }))
                     }
                     className="rounded border-gray-300 text-brand-600"
                   />
-                  Issue strike to groomer ({selected.booking.groomer.name})
+                  Issue strike to pro ({selected.booking.pro.name})
                 </label>
               )}
             </div>

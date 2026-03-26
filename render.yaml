@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: groomee
+    runtime: node
+    plan: starter
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: groomee-db
+          property: connectionString
+      - key: CRON_SECRET
+        generateValue: true
+
+  - type: cron
+    name: groomee-tick
+    runtime: node
+    schedule: "*/10 * * * *"
+    buildCommand: npm install
+    startCommand: |
+      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/tick"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: groomee
+          type: web
+          envVarKey: CRON_SECRET
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: groomee
+          type: web
+          property: url
+
+  - type: cron
+    name: groomee-renew-subs
+    runtime: node
+    schedule: "0 6 * * *"
+    buildCommand: npm install
+    startCommand: |
+      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/renew-subscriptions"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: groomee
+          type: web
+          envVarKey: CRON_SECRET
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: groomee
+          type: web
+          property: url
+
+databases:
+  - name: groomee-db
+    plan: starter
+    databaseName: groomee

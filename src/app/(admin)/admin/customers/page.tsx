@@ -37,7 +37,7 @@ export default async function AdminCustomersPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -92,7 +92,7 @@ export default async function AdminCustomersPage() {
                       {spend ? (
                         formatNaira(spend.total)
                       ) : (
-                        <span className="text-gray-300 font-normal">—</span>
+                        <span className="text-gray-300 font-normal">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400">
