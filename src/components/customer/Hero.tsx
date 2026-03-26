@@ -58,24 +58,6 @@ export default function Hero({ services }: Props) {
 
           {/* ── LEFT: Copy ── */}
           <div className="pt-16 lg:pt-0">
-            {/* Live badge */}
-            <div
-              className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-[#b4f5bb] bg-[#e2fce5] px-3.5 py-1.5 opacity-0"
-              style={{ animation: "fadeUp 0.6s ease forwards" }}
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-600" />
-              </span>
-              <span className="text-[11px] font-bold tracking-wide text-[#014342]">
-                Live in Lagos
-              </span>
-              <span className="text-[11px] text-[#7a9a7c]">·</span>
-              <span className="text-[11px] font-medium text-[#7a9a7c]">
-                Abuja soon
-              </span>
-            </div>
-
             {/* Headline */}
             <h1
               className="font-display opacity-0"
@@ -91,10 +73,24 @@ export default function Hero({ services }: Props) {
               Your{" "}
               <span className="relative inline-block">
                 <span className="relative z-10 italic text-[#014342]">beauty&nbsp;pro,</span>
-                <span
-                  className="absolute -bottom-0.5 left-0 h-2.5 rounded-full bg-[#53eb64]/20 sm:h-3"
-                  style={{ animation: "drawLine 0.8s ease 0.7s forwards", width: 0 }}
-                />
+                <svg
+                  className="absolute -bottom-1 left-0 w-full opacity-0"
+                  style={{ animation: "fadeIn 0.6s ease 0.7s forwards" }}
+                  viewBox="0 0 200 12"
+                  fill="none"
+                  preserveAspectRatio="none"
+                  height="10"
+                >
+                  <path
+                    d="M2 8c30-8 60-4 90 0s65 6 106-2"
+                    stroke="#53eb64"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeDasharray="200"
+                    strokeDashoffset="200"
+                    style={{ animation: "swooshDraw 0.8s ease 0.8s forwards" }}
+                  />
+                </svg>
               </span>
               <br />
               at your door,
@@ -147,7 +143,7 @@ export default function Hero({ services }: Props) {
                     <div className="h-8 w-px shrink-0 bg-[#b4f5bb]" />
                   )}
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-mono text-lg font-medium text-[#014342] sm:text-xl">
+                    <span className="text-lg font-medium text-[#014342] sm:text-xl" style={{ fontFamily: "'DM Mono', monospace" }}>
                       {s.val}
                     </span>
                     <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-[#7a9a7c] sm:text-[0.65rem]">

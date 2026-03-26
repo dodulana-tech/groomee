@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -40,8 +40,8 @@ export default function AdminSidebar({
   const brand = (
     <div className="border-b border-white/10 px-5 py-5">
       <Link href="/admin" className="flex items-center gap-2.5">
-        <Image
-          src="/assets/logo/groomee-logo-teal.jpg"
+        <img
+          src={LOGO_TEAL_BASE64}
           alt="Groomee"
           width={32}
           height={32}

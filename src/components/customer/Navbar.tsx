@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
+import { LOGO_BASE64 } from "@/lib/logo";
 import PointsBadge from "./PointsBadge";
 
 const linkStyle: React.CSSProperties = {
@@ -40,13 +40,12 @@ export default async function Navbar() {
       }}
     >
       <Link href="/" style={{ display: "flex", alignItems: "center", height: "100%" }}>
-        <Image
-          src="/assets/logo/groomee-wordmark-green.png"
+        <img
+          src={LOGO_BASE64}
           alt="Groomee"
           width={140}
           height={36}
           style={{ height: 32, width: "auto", display: "block" }}
-          priority
         />
       </Link>
 

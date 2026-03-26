@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 
 type Step = "info" | "services" | "zones" | "pricing" | "bank" | "terms";
 
@@ -115,8 +115,8 @@ export default function PartnerOnboardingPage() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-cream-50">
         <div className="max-w-md text-center">
           <div className="mb-4">
-            <Image
-              src="/assets/logo/groomee-logo-teal.jpg"
+            <img
+              src={LOGO_TEAL_BASE64}
               alt="Groomee"
               width={64}
               height={64}
@@ -168,8 +168,8 @@ export default function PartnerOnboardingPage() {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Image
-            src="/assets/logo/groomee-logo-teal.jpg"
+          <img
+            src={LOGO_TEAL_BASE64}
             alt="Groomee"
             width={48}
             height={48}

@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { Suspense, useState } from "react";
+import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatPhone, isValidNigerianPhone } from "@/lib/utils";
 
@@ -240,13 +240,12 @@ function AuthPageContent() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <Image
-            src="/assets/logo/groomee-logo-teal.jpg"
+          <img
+            src={LOGO_TEAL_BASE64}
             alt="Groomee"
             width={56}
             height={56}
             className="mb-3 rounded-full"
-            priority
           />
           <p className="text-sm text-gray-500">{getSubtitle()}</p>
         </div>

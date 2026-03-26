@@ -1,6 +1,6 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
+import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -12,8 +12,8 @@ export default function Nav({ variant = "default", user = null }) {
   return (
     <nav className="nav">
       <Link href="/" className="nav-logo" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <Image
-          src="/assets/logo/groomee-logo-teal.jpg"
+        <img
+          src={LOGO_TEAL_BASE64}
           alt="Groomee"
           width={32}
           height={32}

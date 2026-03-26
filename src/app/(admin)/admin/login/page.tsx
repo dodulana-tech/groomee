@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -85,13 +85,12 @@ export default function AdminLoginPage() {
     >
       {/* Logo */}
       <Link href="/" className="mb-10 flex items-center gap-2.5">
-        <Image
-          src="/assets/logo/groomee-logo-teal.jpg"
+        <img
+          src={LOGO_TEAL_BASE64}
           alt="Groomee"
           width={40}
           height={40}
           className="rounded-full"
-          priority
         />
         <span
           className="text-xl font-black tracking-tight text-white"
