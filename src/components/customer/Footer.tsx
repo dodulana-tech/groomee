@@ -68,40 +68,42 @@ const SOCIAL = [
 export default function Footer() {
   return (
     <footer className="bg-[#0a0f0b]">
-      {/* ── Top CTA band ── */}
+      {/* ── CTA Banner ── */}
       <div className="border-b border-white/[0.06]">
-        <div className="container flex flex-col items-center gap-6 py-12 text-center sm:flex-row sm:justify-between sm:text-left">
-          <div>
-            <h3 className="font-display text-xl font-bold text-white sm:text-2xl">
-              Ready to look your best?
-            </h3>
-            <p className="mt-1 text-sm text-white/40">
-              Book a vetted beauty professional in under 60 seconds.
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-wrap justify-center gap-3 sm:justify-start">
-            <Link
-              href="/search"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(83,235,100,0.3)]"
-            >
-              Book a pro
-            </Link>
-            <Link
-              href="/partner/onboarding"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/70 transition-all hover:border-white/20 hover:text-white"
-            >
-              Join as a pro
-            </Link>
+        <div className="mx-auto max-w-7xl px-6 sm:px-10">
+          <div className="flex flex-col items-center gap-6 py-14 text-center sm:flex-row sm:justify-between sm:text-left">
+            <div>
+              <h3 className="font-display text-2xl font-bold text-white sm:text-3xl">
+                Ready to look your best?
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/40">
+                Book a vetted beauty professional in under 60 seconds.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap justify-center gap-3 sm:justify-start">
+              <Link
+                href="/search"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-6 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(83,235,100,0.3)]"
+              >
+                Book a pro
+              </Link>
+              <Link
+                href="/partner/onboarding"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-white/60 transition-all hover:border-white/20 hover:text-white"
+              >
+                Join as a pro
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Main footer grid ── */}
-      <div className="container py-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
-          {/* Brand column — spans 2 on lg */}
-          <div className="lg:col-span-2">
-            <div className="mb-4 flex items-center gap-2.5">
+      {/* ── Main Grid ── */}
+      <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
+        <div className="grid gap-12 sm:gap-16 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+          {/* Brand */}
+          <div>
+            <div className="mb-5 flex items-center gap-2.5">
               <img
                 src={LOGO_TEAL_BASE64}
                 alt="Groomee"
@@ -113,13 +115,23 @@ export default function Footer() {
                 Groomee<span className="text-[#53eb64]">.</span>
               </span>
             </div>
-            <p className="mb-5 max-w-xs text-sm leading-relaxed text-white/35">
+            <p className="mb-6 max-w-sm text-sm leading-[1.8] text-white/30">
               On-demand beauty for Lagos. Vetted professionals delivered to your
               door &mdash; anytime, anywhere. Abuja launching soon.
             </p>
 
-            {/* Social icons */}
-            <div className="flex items-center gap-3">
+            {/* Contact */}
+            <div className="mb-8">
+              <a
+                href="mailto:hello@groomeeapp.com"
+                className="text-sm font-medium text-[#53eb64]/60 transition-colors hover:text-[#53eb64]"
+              >
+                hello@groomeeapp.com
+              </a>
+            </div>
+
+            {/* Social */}
+            <div className="flex items-center gap-2.5">
               {SOCIAL.map((s) => (
                 <a
                   key={s.label}
@@ -127,7 +139,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.03] text-white/40 transition-all hover:border-white/15 hover:bg-white/[0.06] hover:text-white/80"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-white/30 transition-all hover:border-white/12 hover:bg-white/[0.05] hover:text-white/70"
                 >
                   {s.icon}
                 </a>
@@ -137,15 +149,15 @@ export default function Footer() {
 
           {/* Services */}
           <div>
-            <h4 className="mb-4 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50">
+            <h4 className="mb-5 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/40">
               Services
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {SERVICES.map((l) => (
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-sm text-white/35 transition-colors hover:text-white/70"
+                    className="text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
                   >
                     {l.label}
                   </Link>
@@ -156,15 +168,15 @@ export default function Footer() {
 
           {/* Company */}
           <div>
-            <h4 className="mb-4 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50">
+            <h4 className="mb-5 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/40">
               Company
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {COMPANY.map((l) => (
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-sm text-white/35 transition-colors hover:text-white/70"
+                    className="text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
                   >
                     {l.label}
                   </Link>
@@ -175,48 +187,36 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="mb-4 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/50">
+            <h4 className="mb-5 text-[0.65rem] font-bold uppercase tracking-[0.15em] text-white/40">
               Support
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {SUPPORT.map((l) => (
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-sm text-white/35 transition-colors hover:text-white/70"
+                    className="text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
                   >
                     {l.label}
                   </Link>
                 </li>
               ))}
             </ul>
-
-            {/* Contact email */}
-            <div className="mt-6 pt-4 border-t border-white/[0.06]">
-              <p className="text-[0.6rem] font-bold uppercase tracking-[0.15em] text-white/30 mb-1.5">
-                Email us
-              </p>
-              <a
-                href="mailto:hello@groomeeapp.com"
-                className="text-sm font-medium text-[#53eb64]/70 transition-colors hover:text-[#53eb64]"
-              >
-                hello@groomeeapp.com
-              </a>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Bottom bar ── */}
+      {/* ── Bottom Bar ── */}
       <div className="border-t border-white/[0.04]">
-        <div className="container flex flex-col items-center justify-between gap-3 py-5 sm:flex-row">
-          <span className="text-xs text-white/20">
-            &copy; {new Date().getFullYear()} Groomee Technologies. All rights reserved.
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-6 sm:flex-row sm:px-10">
+          <span className="text-xs text-white/15">
+            &copy; {new Date().getFullYear()} Groomee Technologies. All rights
+            reserved.
           </span>
-          <div className="flex items-center gap-4 text-xs text-white/20">
+          <div className="flex items-center gap-4 text-xs text-white/15">
             <span>Lagos, Nigeria</span>
-            <span className="h-3 w-px bg-white/10" />
-            <span className="text-[#7c3aed]/50">Abuja coming soon</span>
+            <span className="h-3 w-px bg-white/[0.06]" />
+            <span className="text-[#7c3aed]/40">Abuja coming soon</span>
           </div>
         </div>
       </div>
