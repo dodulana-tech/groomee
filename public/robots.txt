@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /partner
+Disallow: /profile
+Disallow: /bookings
+Disallow: /booking/
+
+Sitemap: https://groomee.ng/sitemap.xml

@@ -34,322 +34,248 @@ export default function Hero({ services }: Props) {
   }
 
   return (
-    <section
-      className="grid grid-cols-1 lg:grid-cols-2"
-      style={{
-        minHeight: "100vh",
-        padding: "100px 5% 60px",
-        gap: "4rem",
-        alignItems: "center",
-        position: "relative",
-        overflow: "hidden",
-        background: "#f7f5f0",
-      }}
-    >
-      {/* Decorative gradients */}
-      <div
-        style={{
-          content: "''",
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse 70% 60% at 80% 20%, rgba(83,235,100,0.07) 0%, transparent 65%), radial-gradient(ellipse 50% 50% at 10% 80%, rgba(255,254,161,0.06) 0%, transparent 55%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: 500,
-          height: 500,
-          borderRadius: "50%",
-          border: "1.5px solid rgba(37,135,79,0.1)",
-          top: -80,
-          right: -80,
-          animation: "spin 30s linear infinite",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          border: "1px solid rgba(200,135,26,0.1)",
-          bottom: 60,
-          left: -60,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* LEFT */}
-      <div style={{ position: "relative", zIndex: 2 }}>
-        {/* Headline - exactly 3 lines */}
-        <h1
-          className="font-display"
+    <section className="relative overflow-hidden bg-[#f7f5f0]">
+      {/* ── Ambient background ── */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle,rgba(83,235,100,0.07)_0%,transparent_70%)]" />
+        <div className="absolute -left-20 bottom-0 h-[350px] w-[350px] rounded-full bg-[radial-gradient(circle,rgba(255,254,161,0.05)_0%,transparent_70%)]" />
+        <div
+          className="absolute -right-16 -top-16 h-[420px] w-[420px] rounded-full border border-[rgba(37,135,79,0.06)]"
+          style={{ animation: "spin 45s linear infinite" }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.015]"
           style={{
-            fontSize: "clamp(1.8rem, 5vw, 5rem)",
-            fontWeight: 900,
-            lineHeight: 1.08,
-            letterSpacing: "-0.03em",
-            color: "#0a0a0a",
-            marginBottom: 24,
+            backgroundImage: "linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
           }}
-        >
-          Your <span style={{ color: "#016060", fontStyle: "italic" }}>beauty pro,</span>
-          <br />
-          at your door,
-          <br />
-          right now.
-        </h1>
+        />
+      </div>
 
-        <p
-          style={{
-            fontSize: "1.05rem",
-            fontWeight: 400,
-            color: "#3c4d3d",
-            lineHeight: 1.7,
-            maxWidth: 460,
-            marginBottom: 28,
-          }}
-        >
-          Vetted hair, makeup, nails, lashes &amp; barbing professionals
-          delivered to you in Lagos. No salon run. No traffic. Available late
-          nights, early mornings, and last-minute.
-        </p>
+      {/* ── Content ── */}
+      <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
+        <div className="grid min-h-[calc(100dvh-68px)] grid-cols-1 items-center gap-10 py-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:py-0">
 
-        {/* Dual CTA */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" as const, marginBottom: 28 }}>
-          <Link
-            href="/search"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "12px 24px",
-              fontSize: "0.95rem",
-              fontWeight: 700,
-              color: "#0a0a0a",
-              background: "#53eb64",
-              border: "none",
-              borderRadius: 10,
-              cursor: "pointer",
-              transition: "all 0.2s",
-              textDecoration: "none",
-            }}
-          >
-            🟢 Get started in Lagos
-          </Link>
-          <Link
-            href="#abuja-waitlist"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "12px 24px",
-              fontSize: "0.95rem",
-              fontWeight: 600,
-              color: "#7c3aed",
-              background: "#f5f0ff",
-              border: "1.5px solid #ddd0fa",
-              borderRadius: 10,
-              cursor: "pointer",
-              transition: "all 0.2s",
-              textDecoration: "none",
-            }}
-          >
-            🟡 Join the Abuja waitlist
-          </Link>
-        </div>
+          {/* ── LEFT: Copy ── */}
+          <div className="pt-16 lg:pt-0">
+            {/* Live badge */}
+            <div
+              className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-[#b4f5bb] bg-[#e2fce5] px-3.5 py-1.5 opacity-0"
+              style={{ animation: "fadeUp 0.6s ease forwards" }}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-600" />
+              </span>
+              <span className="text-[11px] font-bold tracking-wide text-[#014342]">
+                Live in Lagos
+              </span>
+              <span className="text-[11px] text-[#7a9a7c]">·</span>
+              <span className="text-[11px] font-medium text-[#7a9a7c]">
+                Abuja soon
+              </span>
+            </div>
 
-        {/* Stats */}
-        <div style={{ display: "flex", alignItems: "center", gap: 32, flexWrap: "wrap" as const }}>
-          {[
-            { val: "50+", label: "Vetted pros" },
-            { val: "<45 min", label: "Avg arrival time" },
-            { val: "24/7", label: "Emergency slots" },
-          ].map((s, i) => (
-            <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 32 }}>
-              {i > 0 && (
-                <div style={{ width: 1, height: 36, background: "#b4f5bb", flexShrink: 0 }} />
-              )}
-              <div style={{ display: "flex", flexDirection: "column" as const, gap: 2 }}>
+            {/* Headline */}
+            <h1
+              className="font-display opacity-0"
+              style={{
+                fontSize: "clamp(2rem, 5vw, 4.2rem)",
+                fontWeight: 900,
+                lineHeight: 1.08,
+                letterSpacing: "-0.03em",
+                color: "#0a0a0a",
+                animation: "fadeUp 0.7s ease 0.08s forwards",
+              }}
+            >
+              Your{" "}
+              <span className="relative inline-block">
+                <span className="relative z-10 italic text-[#014342]">beauty&nbsp;pro,</span>
                 <span
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    fontSize: "1.4rem",
-                    fontWeight: 500,
-                    color: "#014342",
-                  }}
+                  className="absolute -bottom-0.5 left-0 h-2.5 rounded-full bg-[#53eb64]/20 sm:h-3"
+                  style={{ animation: "drawLine 0.8s ease 0.7s forwards", width: 0 }}
+                />
+              </span>
+              <br />
+              at your door,
+              <br />
+              <span className="text-[#014342]">right&nbsp;now.</span>
+            </h1>
+
+            {/* Subhead */}
+            <p
+              className="mt-5 max-w-[420px] text-[0.95rem] leading-[1.7] text-[#3c4d3d] opacity-0 sm:text-base"
+              style={{ animation: "fadeUp 0.7s ease 0.16s forwards" }}
+            >
+              Vetted hair, makeup, nails, lashes &amp; barbing professionals
+              delivered to you in Lagos. Late nights, early mornings,
+              last-minute&nbsp;&mdash; we&apos;ve got you.
+            </p>
+
+            {/* CTAs */}
+            <div
+              className="mt-7 flex flex-wrap gap-3 opacity-0"
+              style={{ animation: "fadeUp 0.7s ease 0.24s forwards" }}
+            >
+              <Link
+                href="/search"
+                className="group inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
+              >
+                <span className="inline-block transition-transform group-hover:scale-110">✦</span>
+                Book a pro in Lagos
+              </Link>
+              <Link
+                href="#waitlist"
+                className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#ddd0fa] bg-[#f5f0ff] px-5 py-3 text-sm font-semibold text-[#7c3aed] transition-all hover:-translate-y-0.5 hover:border-[#c4b0f5] hover:shadow-md sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
+              >
+                Join Abuja waitlist
+              </Link>
+            </div>
+
+            {/* Stats */}
+            <div
+              className="mt-8 flex items-center gap-6 opacity-0 sm:gap-8"
+              style={{ animation: "fadeUp 0.7s ease 0.32s forwards" }}
+            >
+              {[
+                { val: "50+", label: "Vetted pros" },
+                { val: "<45min", label: "Avg arrival" },
+                { val: "24/7", label: "Emergency slots" },
+              ].map((s, i) => (
+                <div key={s.label} className="flex items-center gap-6 sm:gap-8">
+                  {i > 0 && (
+                    <div className="h-8 w-px shrink-0 bg-[#b4f5bb]" />
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-mono text-lg font-medium text-[#014342] sm:text-xl">
+                      {s.val}
+                    </span>
+                    <span className="text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-[#7a9a7c] sm:text-[0.65rem]">
+                      {s.label}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── RIGHT: Booking card ── */}
+          <div
+            className="relative pb-8 opacity-0 lg:pb-0"
+            style={{ animation: "scaleIn 0.7s ease 0.2s forwards" }}
+          >
+            {/* Glow behind card */}
+            <div className="pointer-events-none absolute -inset-6 hidden rounded-3xl bg-[radial-gradient(ellipse_at_center,rgba(83,235,100,0.06)_0%,transparent_70%)] lg:block" />
+
+            <div className="relative overflow-hidden rounded-2xl border border-[rgba(13,61,38,0.08)] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.06),0_4px_12px_rgba(0,0,0,0.03)] sm:rounded-3xl">
+              {/* Top accent */}
+              <div className="h-1 bg-gradient-to-r from-[#53eb64] via-[#b4f5bb] to-[#fffea1]" />
+
+              <div className="p-5 sm:p-7">
+                <div className="mb-5">
+                  <h2 className="font-display text-lg font-bold text-[#0a0a0a] sm:text-xl">
+                    Find a pro near you
+                  </h2>
+                  <p className="mt-0.5 text-[0.8rem] font-medium tracking-wide text-[#7a9a7c]">
+                    Browse by service &middot; Book in 60 seconds
+                  </p>
+                </div>
+
+                <p className="mb-2.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-[#3c4d3d]">
+                  What do you need?
+                </p>
+
+                {/* Service chips */}
+                <div className="mb-4 grid grid-cols-3 gap-1.5 sm:gap-2">
+                  {CATEGORIES.map((cat) => {
+                    const on = selected === cat.key;
+                    return (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() =>
+                          setSelected((s) => (s === cat.key ? null : cat.key))
+                        }
+                        className={`flex flex-col items-center gap-1 rounded-xl border-[1.5px] px-2 py-2.5 text-xs font-medium transition-all sm:gap-1.5 sm:py-3 ${
+                          on
+                            ? "border-[#53eb64] bg-[#e2fce5] text-[#014342] shadow-sm"
+                            : "border-[#e8f5ea] bg-[#f7fef8] text-[#3c4d3d] hover:border-[#b4f5bb] hover:bg-[#eefcf0]"
+                        }`}
+                      >
+                        <span className="text-base sm:text-lg">{cat.emoji}</span>
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* ASAP toggle */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isAsap}
+                  aria-label="Emergency ASAP booking"
+                  onClick={() => setIsAsap((v) => !v)}
+                  className={`mb-4 flex w-full items-center gap-3 rounded-xl border-[1.5px] px-3.5 py-3 text-left transition-all sm:px-4 ${
+                    isAsap
+                      ? "border-[#c8871a] bg-[#fdf3e0]"
+                      : "border-[rgba(200,135,26,0.18)] bg-[#fdf8ee] hover:border-[rgba(200,135,26,0.35)]"
+                  }`}
                 >
-                  {s.val}
-                </span>
-                <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#7a9a7c", letterSpacing: "0.04em" }}>
-                  {s.label}
-                </span>
+                  <span className="text-base">⚡</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[0.8rem] font-semibold text-[#0a0a0a]">
+                      Emergency / ASAP
+                    </span>
+                    <span className="block text-[0.7rem] text-[#3c4d3d]">
+                      Pros who arrive within 45 min
+                    </span>
+                  </div>
+                  <div
+                    className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                      isAsap ? "bg-[#c8871a]" : "bg-[#e8c274]"
+                    }`}
+                  >
+                    <div
+                      className="absolute top-[3px] h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-all"
+                      style={{ left: isAsap ? 19 : 3 }}
+                    />
+                  </div>
+                </button>
+
+                {/* Search CTA */}
+                <button
+                  onClick={handleSearch}
+                  className="group mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] sm:text-[0.95rem]"
+                >
+                  <span className="transition-transform group-hover:scale-110">
+                    🔍
+                  </span>
+                  Find available pros
+                </button>
+
+                {/* Trust line */}
+                <p className="flex items-center justify-center gap-1.5 text-center text-[0.7rem] font-medium text-[#7a9a7c]">
+                  <span>🛡️</span>
+                  All pros vetted &amp; ID-verified &middot; Secured by Paystack
+                </p>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* RIGHT: Booking card */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          background: "#fff",
-          border: "1px solid rgba(13,61,38,0.08)",
-          borderRadius: 24,
-          padding: "2rem",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)",
-          overflow: "hidden",
-        }}
-      >
-        {/* Top gradient accent */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 4,
-            background: "linear-gradient(90deg, #53eb64, #fffea1)",
-          }}
-        />
-
-        <h2
-          className="font-display"
-          style={{ fontSize: "1.35rem", fontWeight: 700, color: "#0a0a0a", marginBottom: 4 }}
-        >
-          Find a pro near you
-        </h2>
-        <p style={{ fontSize: "0.8rem", color: "#7a9a7c", marginBottom: 24, fontWeight: 500, letterSpacing: "0.03em" }}>
-          Browse by service · Book in 60 seconds
-        </p>
-
-        <p style={{ fontSize: "0.75rem", fontWeight: 600, color: "#3c4d3d", letterSpacing: "0.06em", textTransform: "uppercase" as const, marginBottom: 10 }}>
-          What do you need?
-        </p>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3" style={{ gap: 8, marginBottom: 20 }}>
-          {CATEGORIES.map((cat) => {
-            const on = selected === cat.key;
-            return (
-              <button
-                key={cat.key}
-                type="button"
-                onClick={() => setSelected((s) => (s === cat.key ? null : cat.key))}
-                style={{
-                  display: "flex",
-                  flexDirection: "column" as const,
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "11px 8px",
-                  border: `1.5px solid ${on ? "#53eb64" : "#b4f5bb"}`,
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  background: on ? "#e2fce5" : "#f1fef2",
-                  fontSize: "0.75rem",
-                  fontWeight: 500,
-                  color: on ? "#014342" : "#3c4d3d",
-                  fontFamily: "inherit",
-                }}
-              >
-                <span style={{ fontSize: "1.1rem" }}>{cat.emoji}</span>
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ASAP toggle */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isAsap}
-          aria-label="Emergency ASAP booking"
-          onClick={() => setIsAsap((v) => !v)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "14px 16px",
-            background: "#fdf3e0",
-            border: "1.5px solid rgba(200,135,26,0.25)",
-            borderRadius: 10,
-            marginBottom: 20,
-            cursor: "pointer",
-            width: "100%",
-            textAlign: "left" as const,
-            fontFamily: "inherit",
-          }}
-        >
-          <span style={{ fontSize: "1.1rem" }}>⚡</span>
-          <div style={{ flex: 1 }}>
-            <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0a0a0a", display: "block" }}>
-              Emergency / ASAP booking
-            </span>
-            <span style={{ fontSize: "0.75rem", color: "#3c4d3d", display: "block" }}>
-              Pros who can arrive within 45 minutes
-            </span>
-          </div>
+      {/* ── Scroll indicator (desktop) ── */}
+      <div className="absolute bottom-5 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1.5 lg:flex">
+        <span className="text-[0.6rem] font-semibold uppercase tracking-[0.15em] text-[#7a9a7c]/60">
+          Scroll
+        </span>
+        <div className="h-7 w-[18px] rounded-full border-[1.5px] border-[#7a9a7c]/30 p-[3px]">
           <div
-            style={{
-              width: 36,
-              height: 20,
-              background: isAsap ? "#c8871a" : "#e8c274",
-              borderRadius: 100,
-              position: "relative",
-              flexShrink: 0,
-              transition: "background 0.2s",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: 3,
-                left: isAsap ? 19 : 3,
-                width: 14,
-                height: 14,
-                background: "#fff",
-                borderRadius: "50%",
-                transition: "left 0.2s",
-              }}
-            />
-          </div>
-        </button>
-
-        <button
-          onClick={handleSearch}
-          style={{
-            width: "100%",
-            background: "#53eb64",
-            color: "#0a0a0a",
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: "1rem",
-            fontWeight: 600,
-            border: "none",
-            padding: 15,
-            borderRadius: 12,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            marginBottom: 16,
-            transition: "all 0.2s",
-            letterSpacing: "0.01em",
-          }}
-        >
-          🔍 Find available pros
-        </button>
-
-        <p style={{ textAlign: "center" as const, fontSize: "0.75rem", color: "#7a9a7c", fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          🛡️ All pros vetted &amp; ID-verified · Payment secured by Paystack
-        </p>
+            className="h-1.5 w-1.5 rounded-full bg-[#7a9a7c]/50"
+            style={{ animation: "float 2s ease-in-out infinite" }}
+          />
+        </div>
       </div>
     </section>
   );

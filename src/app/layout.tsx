@@ -53,7 +53,7 @@ export const metadata: Metadata = {
       "Vetted beauty professionals delivered to your door in Lagos. Hair, makeup, nails, lashes & barbing. Book in 60 seconds.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Groomee - On-demand beauty professionals in Lagos",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     title: "Groomee - On-demand Beauty in Lagos",
     description:
       "Book a vetted beauty pro in 60 seconds. Delivered to your door in Lagos.",
-    images: ["/og-image.png"],
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
