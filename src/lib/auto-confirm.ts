@@ -9,41 +9,48 @@ export default async function autoConfirm(bookingId: string) {
   });
 
   if (!booking || booking.status !== "COMPLETED") return;
+  if (!booking.proId) return; // No pro assigned — can't confirm
 
-  await db.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
+  // Atomic: conditional update prevents double-confirm race
+  const confirmed = await db.$transaction(async (tx) => {
+    const updated = await tx.booking.updateMany({
+      where: { id: bookingId, status: "COMPLETED" },
       data: { status: "CONFIRMED", confirmedAt: new Date() },
     });
+    if (updated.count === 0) return false;
 
-    await tx.payment.update({
-      where: { bookingId },
-      data: { status: "CAPTURED", capturedAt: new Date() },
-    });
-
-    if (booking.proId) {
-      await tx.earning.upsert({
+    // Only update payment if it exists
+    if (booking.payment) {
+      await tx.payment.update({
         where: { bookingId },
-        update: {},
-        create: {
-          proId: booking.proId,
-          bookingId,
-          amount: booking.proEarning,
-        },
-      });
-
-      await tx.pro.update({
-        where: { id: booking.proId },
-        data: {
-          availability: "ONLINE",
-          currentBookingId: null,
-          totalJobs: { increment: 1 },
-        },
+        data: { status: "CAPTURED", capturedAt: new Date() },
       });
     }
+
+    await tx.earning.upsert({
+      where: { bookingId },
+      update: {},
+      create: {
+        proId: booking.proId!,
+        bookingId,
+        amount: booking.proEarning,
+      },
+    });
+
+    await tx.pro.update({
+      where: { id: booking.proId! },
+      data: {
+        availability: "ONLINE",
+        currentBookingId: null,
+        totalJobs: { increment: 1 },
+      },
+    });
+
+    return true;
   });
 
-  // Award booking completion points to the customer
+  if (!confirmed) return; // Already confirmed by another path
+
   await awardPoints(
     booking.customerId,
     POINTS.BOOKING_COMPLETION,
@@ -51,7 +58,6 @@ export default async function autoConfirm(bookingId: string) {
     bookingId,
   ).catch(console.error);
 
-  // Notify the customer via WhatsApp that their booking was auto-confirmed
   await sendMessage(
     booking.customer.phone,
     `✅ Your booking has been auto-confirmed and payment of ₦${booking.totalAmount.toLocaleString()} released.\n\nThank you for using Groomee! We hope you enjoyed your service. 💚\n\nYou've earned ${POINTS.BOOKING_COMPLETION} Groomee Points.`,

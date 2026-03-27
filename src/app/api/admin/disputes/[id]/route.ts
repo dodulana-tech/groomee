@@ -61,11 +61,21 @@ export async function POST(
     // ─────────────────────────────────────────
     // DETERMINE REFUND AMOUNT
     // ─────────────────────────────────────────
+    // Validate refund amount
+    if (outcome === "PARTIAL_REFUND") {
+      if (typeof refundAmount !== "number" || refundAmount <= 0) {
+        return NextResponse.json({ error: "Refund amount must be a positive number" }, { status: 400 });
+      }
+      if (refundAmount > dispute.booking.totalAmount) {
+        return NextResponse.json({ error: "Refund amount cannot exceed booking total" }, { status: 400 });
+      }
+    }
+
     const finalRefund =
       outcome === "FULL_REFUND"
         ? dispute.booking.totalAmount
         : outcome === "PARTIAL_REFUND"
-          ? (refundAmount ?? 0)
+          ? refundAmount
           : 0;
 
     // ─────────────────────────────────────────

@@ -188,8 +188,8 @@ model FavouritePro {
   userId    String
   proId     String   @map("groomerId")
   priority  Int      @default(0)
-  user      User     @relation(fields: [userId], references: [id])
-  pro       Pro      @relation(fields: [proId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pro       Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, proId])
@@ -230,8 +230,8 @@ model ProService {
   proId       String  @map("groomerId")
   serviceId   String
   customPrice Float?
-  pro         Pro     @relation(fields: [proId], references: [id])
-  service     Service @relation(fields: [serviceId], references: [id])
+  pro         Pro     @relation(fields: [proId], references: [id], onDelete: Cascade)
+  service     Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@id([proId, serviceId])
   @@map("groomer_services")
@@ -240,8 +240,8 @@ model ProService {
 model ProZone {
   proId  String @map("groomerId")
   zoneId String
-  pro    Pro    @relation(fields: [proId], references: [id])
-  zone   Zone   @relation(fields: [zoneId], references: [id])
+  pro    Pro    @relation(fields: [proId], references: [id], onDelete: Cascade)
+  zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
 
   @@id([proId, zoneId])
   @@map("groomer_zones")
@@ -299,7 +299,7 @@ model DispatchLog {
   offeredAt DateTime  @default(now())
   response  String?
   respondAt DateTime?
-  booking   Booking   @relation(fields: [bookingId], references: [id])
+  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
   @@index([proId])
@@ -317,7 +317,7 @@ model Payment {
   capturedAt   DateTime?
   refundedAt   DateTime?
   refundAmount Float?
-  booking      Booking       @relation(fields: [bookingId], references: [id])
+  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt    DateTime      @default(now())
 
   @@index([status, capturedAt])
@@ -332,7 +332,7 @@ model Dispute {
   notes        String?
   resolution   String?
   refundAmount Float?
-  booking      Booking       @relation(fields: [bookingId], references: [id])
+  booking      Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt    DateTime      @default(now())
   resolvedAt   DateTime?
 
@@ -344,7 +344,7 @@ model Review {
   bookingId String   @unique
   rating    Int
   text      String?
-  booking   Booking  @relation(fields: [bookingId], references: [id])
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@map("reviews")
@@ -357,7 +357,7 @@ model Earning {
   amount    Float
   paid      Boolean  @default(false)
   payoutId  String?
-  pro       Pro      @relation(fields: [proId], references: [id])
+  pro       Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@index([proId, paid])
@@ -518,7 +518,7 @@ model ProAdvance {
   amount    Float
   reason    String
   status    String   @default("PENDING")
-  pro       Pro      @relation(fields: [proId], references: [id])
+  pro       Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@map("pro_advances")
@@ -530,7 +530,7 @@ model ProCreditEvent {
   eventType   String
   points      Int
   description String
-  pro         Pro      @relation(fields: [proId], references: [id])
+  pro         Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
   @@map("pro_credit_events")
@@ -556,8 +556,8 @@ model Strike {
   bookingId String
   reason    String
   notes     String?
-  pro       Pro      @relation(fields: [proId], references: [id])
-  booking   Booking  @relation(fields: [bookingId], references: [id])
+  pro       Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@map("strikes")
@@ -569,9 +569,10 @@ model PointsLedger {
   amount      Int
   reason      String
   referenceId String?
-  user        User     @relation(fields: [userId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
+  @@index([userId])
   @@map("points_ledger")
 }
 
@@ -586,7 +587,7 @@ model Payout {
   periodEnd          DateTime
   processedAt        DateTime?
   failureReason      String?
-  pro                Pro       @relation(fields: [proId], references: [id])
+  pro                Pro       @relation(fields: [proId], references: [id], onDelete: Cascade)
   createdAt          DateTime  @default(now())
 
   @@map("payouts")
@@ -599,7 +600,7 @@ model ProSchedule {
   startTime String
   endTime   String
   isActive  Boolean @default(true)
-  pro       Pro     @relation(fields: [proId], references: [id])
+  pro       Pro     @relation(fields: [proId], references: [id], onDelete: Cascade)
 
   @@unique([proId, dayOfWeek])
   @@map("pro_schedules")

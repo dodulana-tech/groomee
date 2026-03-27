@@ -322,6 +322,10 @@ svg {
   font-size: 13px !important;
   border-radius: 10px !important;
 }
+.btn-md {
+  padding: 12px 20px;
+  font-size: 0.875rem;
+}
 .btn-lg {
   padding: 16px 32px !important;
   font-size: 16px !important;
@@ -383,7 +387,7 @@ svg {
   border: 1.5px solid rgba(0, 0, 0, 0.08);
   border-radius: var(--radius-md);
   padding: 12px 16px;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-ink);
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(8px);
@@ -482,7 +486,7 @@ svg {
   inset: 0;
   background: rgba(13, 27, 18, 0.7);
   backdrop-filter: blur(4px);
-  z-index: 40;
+  z-index: 55;
   animation: fadeIn 0.2s ease;
 }
 
@@ -494,7 +498,7 @@ svg {
   background: #ffffff;
   border-radius: 24px 24px 0 0;
   box-shadow: var(--shadow-sheet);
-  z-index: 50;
+  z-index: 60;
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   max-height: 92dvh;
   overflow-y: auto;

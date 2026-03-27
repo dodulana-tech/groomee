@@ -73,9 +73,10 @@ export async function POST(
       });
 
       if (booking.payment && refundAmount > 0) {
+        // Mark as REFUND_PENDING — actual REFUNDED status set by Paystack webhook
         await tx.payment.update({
           where: { bookingId: booking.id },
-          data: { status: "REFUNDED", refundedAt: new Date(), refundAmount },
+          data: { status: "REFUND_PENDING" as any, refundAmount },
         });
       }
 

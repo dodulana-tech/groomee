@@ -43,17 +43,19 @@ export async function PATCH(request: Request) {
         { status: 403 },
       );
     }
-    const allowedFields = ["name", "bio", "bankCode", "bankAccount", "bankName", "availability"];
-    const updateData: any = {};
-    for (const key of allowedFields) {
-      if (body[key] !== undefined) {
-        updateData[key] = body[key];
-      }
-    }
+    const profileSchema = (await import("zod")).z.object({
+      name: (await import("zod")).z.string().min(1).max(100).optional(),
+      bio: (await import("zod")).z.string().max(500).optional(),
+      bankCode: (await import("zod")).z.string().max(20).optional(),
+      bankAccount: (await import("zod")).z.string().max(20).optional(),
+      bankName: (await import("zod")).z.string().max(100).optional(),
+      availability: (await import("zod")).z.enum(["ONLINE", "BUSY", "OFFLINE"]).optional(),
+    });
+    const validated = profileSchema.parse(body);
 
     await db.pro.update({
       where: { id: pro.id },
-      data: updateData,
+      data: validated,
     });
 
     return NextResponse.json({ success: true });

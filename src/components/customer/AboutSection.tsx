@@ -1,6 +1,6 @@
 export default function AboutSection() {
   return (
-    <section id="about" className="section bg-cream-50">
+    <section id="about" className="section bg-cream-50 hidden md:block">
       <div className="container">
         <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr] lg:items-center">
           {/* Left: Quote card */}

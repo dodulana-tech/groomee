@@ -7,7 +7,22 @@ export default function CityRolloutBanner() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_120%_at_25%_50%,rgba(37,135,79,0.18),transparent_60%),radial-gradient(ellipse_40%_100%_at_80%_50%,rgba(124,58,237,0.12),transparent_60%)] pointer-events-none" />
 
       <div className="container relative z-10">
-        <div className="mx-auto max-w-3xl grid grid-cols-1 gap-0 rounded-2xl overflow-hidden border border-white/10 sm:grid-cols-[1fr_auto_1fr]">
+        {/* Mobile slim banner */}
+        <div className="md:hidden flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <p className="text-sm font-semibold text-white">
+            <span className="mr-1">🟢</span>
+            Live in Lagos · <span className="text-purple-300">Abuja coming soon</span>
+          </p>
+          <Link
+            href="#waitlist"
+            className="shrink-0 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-purple-500 transition-all"
+          >
+            Join waitlist
+          </Link>
+        </div>
+
+        {/* Full two-card layout on md+ */}
+        <div className="hidden md:grid mx-auto max-w-3xl grid-cols-1 gap-0 rounded-2xl overflow-hidden border border-white/10 sm:grid-cols-[1fr_auto_1fr]">
           {/* Lagos */}
           <div className="flex flex-col justify-between gap-4 bg-green-500/10 p-6 sm:p-8 border-b sm:border-b-0 sm:border-r border-white/10">
             <div>

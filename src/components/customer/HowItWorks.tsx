@@ -31,7 +31,7 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative overflow-hidden py-20 px-4 sm:py-24"
+      className="relative overflow-hidden py-12 px-4 sm:py-24"
       style={{ background: "#014342" }}
     >
       {/* Ambient gradients */}
@@ -41,7 +41,7 @@ export default function HowItWorks() {
       </div>
 
       <div className="container relative z-10">
-        <div className="mb-14 max-w-lg">
+        <div className="mb-8 md:mb-14 max-w-lg">
           <p className="mb-3 flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.15em] text-green-400">
             <span className="inline-block h-px w-6 bg-green-400" />
             How it works
@@ -55,8 +55,31 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        {/* Steps */}
-        <div className="grid gap-px sm:grid-cols-2 lg:grid-cols-4">
+        {/* Mobile compact steps — 4 circles in a row */}
+        <div className="md:hidden mb-8">
+          <div className="relative flex items-start justify-between">
+            {/* Connecting line */}
+            <div className="absolute top-4 left-[calc(12.5%)] right-[calc(12.5%)] h-px bg-green-400/30" />
+            {[
+              { num: "1", label: "Pick" },
+              { num: "2", label: "Book" },
+              { num: "3", label: "Pro arrives" },
+              { num: "4", label: "Glow" },
+            ].map((s) => (
+              <div key={s.num} className="relative z-10 flex flex-1 flex-col items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-green-400/40 bg-green-400/10 font-mono text-xs font-bold text-green-400">
+                  {s.num}
+                </span>
+                <span className="text-center text-[11px] font-semibold leading-tight text-white/60">
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Steps — full cards on md+ */}
+        <div className="hidden md:grid gap-px sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, i) => (
             <div
               key={i}

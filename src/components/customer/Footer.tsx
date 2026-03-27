@@ -157,7 +157,7 @@ export default function Footer() {
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
+                    className="inline-block py-1.5 text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
                   >
                     {l.label}
                   </Link>
@@ -176,7 +176,7 @@ export default function Footer() {
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
+                    className="inline-block py-1.5 text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
                   >
                     {l.label}
                   </Link>
@@ -195,7 +195,7 @@ export default function Footer() {
                 <li key={l.label}>
                   <Link
                     href={l.href}
-                    className="text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
+                    className="inline-block py-1.5 text-[0.85rem] text-white/30 transition-colors hover:text-white/60"
                   >
                     {l.label}
                   </Link>

@@ -54,10 +54,10 @@ export default function Hero({ services }: Props) {
 
       {/* ── Content ── */}
       <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid min-h-[calc(100dvh-68px)] grid-cols-1 items-center gap-10 py-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:py-0">
+        <div className="grid min-h-[calc(100dvh-56px)] lg:min-h-[calc(100dvh-68px)] grid-cols-1 items-center gap-10 py-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:py-0">
 
           {/* ── LEFT: Copy ── */}
-          <div className="pt-16 lg:pt-0">
+          <div className="pt-6 sm:pt-10 lg:pt-0">
             {/* Headline */}
             <h1
               className="font-display opacity-0"
@@ -130,7 +130,7 @@ export default function Hero({ services }: Props) {
 
             {/* Stats */}
             <div
-              className="mt-8 flex items-center gap-6 opacity-0 sm:gap-8"
+              className="mt-8 flex flex-wrap items-center gap-6 opacity-0 sm:gap-8"
               style={{ animation: "fadeUp 0.7s ease 0.32s forwards" }}
             >
               {[
@@ -192,7 +192,7 @@ export default function Hero({ services }: Props) {
                         onClick={() =>
                           setSelected((s) => (s === cat.key ? null : cat.key))
                         }
-                        className={`flex flex-col items-center gap-1 rounded-xl border-[1.5px] px-2 py-2.5 text-xs font-medium transition-all sm:gap-1.5 sm:py-3 ${
+                        className={`flex flex-col items-center gap-1 rounded-xl border-[1.5px] px-2 py-3 text-xs font-medium transition-all sm:gap-1.5 sm:py-3 ${
                           on
                             ? "border-[#53eb64] bg-[#e2fce5] text-[#014342] shadow-sm"
                             : "border-[#e8f5ea] bg-[#f7fef8] text-[#3c4d3d] hover:border-[#b4f5bb] hover:bg-[#eefcf0]"

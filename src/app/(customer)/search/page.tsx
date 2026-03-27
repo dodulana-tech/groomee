@@ -89,9 +89,9 @@ function SearchPageContent() {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-cream-50 pb-24 lg:pb-8" style={{ paddingTop: 68 }}>
+    <div className="min-h-screen bg-cream-50 pb-24 lg:pb-8 pt-14 lg:pt-[68px]">
       {/* Search hero bar - glassmorphism */}
-      <div className="border-b border-gray-200/50 bg-white/80 backdrop-blur-xl px-4 py-4 sm:px-6 sticky top-[68px] z-30">
+      <div className="border-b border-gray-200/50 bg-white/80 backdrop-blur-xl px-4 py-4 sm:px-6 sticky top-14 lg:top-[68px] z-30">
         <div className="mx-auto max-w-7xl">
           {/* City selector */}
           <div className="flex items-center gap-2 mb-3">

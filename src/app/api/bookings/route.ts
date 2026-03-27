@@ -156,55 +156,69 @@ export async function POST(req: NextRequest) {
     const reference = generateBookingReference();
     const paymentRef = generatePaymentReference(reference);
 
-    // Create booking
-    const booking = await db.booking.create({
-      data: {
-        reference,
-        customerId: session.userId,
-        serviceId: service.id,
-        zoneId: input.zoneId ?? null,
-        address: input.address,
-        latitude: input.latitude,
-        longitude: input.longitude,
-        isAsap: input.isAsap,
-        scheduledFor,
-        customerNotes: input.customerNotes,
-        baseAmount: service.basePrice,
-        surchargeType: surcharge.type,
-        surchargeAmount: surcharge.amount,
-        totalAmount,
-        proEarning,
-        status: "PENDING_PAYMENT",
-      },
-    });
-
-    // Mark gift card as redeemed
-    if (appliedGiftCard) {
-      await db.giftCard.update({
-        where: { id: appliedGiftCard.id },
-        data: { isRedeemed: true, redeemedAt: new Date(), redeemedBy: session.userId, bookingId: booking.id },
+    // Atomic: booking + gift card + points + payment in single transaction
+    const booking = await db.$transaction(async (tx) => {
+      const bk = await tx.booking.create({
+        data: {
+          reference,
+          customerId: session.userId,
+          serviceId: service.id,
+          zoneId: input.zoneId ?? null,
+          address: input.address,
+          latitude: input.latitude,
+          longitude: input.longitude,
+          isAsap: input.isAsap,
+          scheduledFor,
+          customerNotes: input.customerNotes,
+          baseAmount: service.basePrice,
+          surchargeType: surcharge.type,
+          surchargeAmount: surcharge.amount,
+          totalAmount,
+          proEarning,
+          status: "PENDING_PAYMENT",
+        },
       });
-    }
 
-    // Deduct points and write ledger entry if redeemed
-    if (canRedeem) {
-      await db.$transaction([
-        db.user.update({
+      // Mark gift card as redeemed (conditional to prevent double-redeem race)
+      if (appliedGiftCard) {
+        const redeemed = await tx.giftCard.updateMany({
+          where: { id: appliedGiftCard.id, isRedeemed: false },
+          data: { isRedeemed: true, redeemedAt: new Date(), redeemedBy: session.userId, bookingId: bk.id },
+        });
+        if (redeemed.count === 0) throw new Error("Gift card already redeemed");
+      }
+
+      // Deduct points (conditional to prevent negative balance race)
+      if (canRedeem) {
+        await tx.user.update({
           where: { id: session.userId },
           data: { points: { decrement: POINTS_REQUIRED } },
-        }),
-        db.pointsLedger.create({
+        });
+        await tx.pointsLedger.create({
           data: {
             userId: session.userId,
             amount: -POINTS_REQUIRED,
             reason: "Redeemed for booking discount",
-            referenceId: booking.id,
+            referenceId: bk.id,
           },
-        }),
-      ]);
-    }
+        });
+      }
 
-    // Initialize Paystack payment
+      // Create payment record
+      await tx.payment.create({
+        data: {
+          bookingId: bk.id,
+          reference: paymentRef,
+          paystackRef: paymentRef,
+          amount: totalAmount,
+          status: "PENDING",
+        },
+      });
+
+      return bk;
+    });
+
+    // Initialize Paystack payment (network call — outside transaction)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const paystack = await initializeTransaction({
       email: user.email ?? `${user.phone.replace(/\+/g, "")}@groomee.ng`,
@@ -213,17 +227,6 @@ export async function POST(req: NextRequest) {
       reference: paymentRef,
       callbackUrl: `${appUrl}/api/payments/verify?bookingId=${booking.id}`,
       metadata: { bookingId: booking.id, reference, userId: session.userId },
-    });
-
-    // Create payment record
-    await db.payment.create({
-      data: {
-        bookingId: booking.id,
-        reference: paymentRef,
-        paystackRef: paymentRef,
-        amount: totalAmount,
-        status: "PENDING",
-      },
     });
 
     return NextResponse.json(

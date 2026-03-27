@@ -27,8 +27,22 @@ export default function SurveySection() {
             </p>
           </div>
 
-          {/* Cards */}
-          <div className="mx-auto grid max-w-3xl gap-6 sm:grid-cols-2">
+          {/* Mobile compact banner */}
+          <div className="md:hidden mx-auto max-w-sm rounded-2xl border border-white/20 bg-amber-50/80 p-5 text-center shadow">
+            <p className="text-sm font-semibold text-gray-800 leading-snug mb-4">
+              Help us improve! Take a 2-min survey and earn{" "}
+              <span className="font-bold text-amber-600">10 Groomee Points</span> ✨
+            </p>
+            <button
+              onClick={() => setOpenModal("customer")}
+              className="btn-primary btn-md w-full"
+            >
+              Take the survey →
+            </button>
+          </div>
+
+          {/* Cards — full layout on md+ */}
+          <div className="hidden md:grid mx-auto max-w-3xl gap-6 sm:grid-cols-2">
             {/* Customer survey */}
             <div className="glass rounded-2xl border border-white/20 p-6 shadow-lg flex flex-col relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-800 to-brand-400" />

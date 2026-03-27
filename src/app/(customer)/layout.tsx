@@ -9,7 +9,7 @@ export default function CustomerLayout({
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-[68px] pb-16 lg:pb-0">{children}</main>
+      <main className="pt-14 lg:pt-[68px] pb-16 lg:pb-0">{children}</main>
       <MobileNav />
     </div>
   );
