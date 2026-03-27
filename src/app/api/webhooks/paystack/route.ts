@@ -28,8 +28,15 @@ export async function POST(req: NextRequest) {
           where: { paystackRef: ref },
         });
         if (payment && payment.status === "PENDING") {
-          await db.payment.update({
-            where: { id: payment.id },
+          // Verify amount matches (Paystack sends kobo)
+          const expectedKobo = Math.round(payment.amount * 100);
+          const actualKobo = event.data.amount as number;
+          if (actualKobo !== expectedKobo) {
+            console.error(`Webhook amount mismatch: expected ${expectedKobo}, got ${actualKobo}, ref ${ref}`);
+            break;
+          }
+          await db.payment.updateMany({
+            where: { id: payment.id, status: "PENDING" },
             data: { status: "AUTHORISED", authorisedAt: new Date() },
           });
         }
@@ -45,41 +52,28 @@ export async function POST(req: NextRequest) {
       }
 
       case "transfer.success": {
-        const payout = await db.payout.findFirst({
-          where: { paystackTransferId: event.data.transfer_code },
+        // Idempotent: only update PROCESSING payouts
+        await db.payout.updateMany({
+          where: { paystackTransferId: event.data.transfer_code, status: "PROCESSING" },
+          data: { status: "COMPLETED", processedAt: new Date() },
         });
-        if (payout) {
-          await db.payout.update({
-            where: { id: payout.id },
-            data: { status: "COMPLETED", processedAt: new Date() },
-          });
-        }
         break;
       }
 
       case "transfer.failed": {
-        const payout = await db.payout.findFirst({
-          where: { paystackTransferId: event.data.transfer_code },
+        await db.payout.updateMany({
+          where: { paystackTransferId: event.data.transfer_code, status: "PROCESSING" },
+          data: { status: "FAILED", failureReason: event.data.reason },
         });
-        if (payout) {
-          await db.payout.update({
-            where: { id: payout.id },
-            data: { status: "FAILED", failureReason: event.data.reason },
-          });
-        }
         break;
       }
 
       case "refund.processed": {
-        const payment = await db.payment.findFirst({
-          where: { paystackRef: event.data.transaction_reference },
+        // Idempotent: only update non-terminal payment statuses
+        await db.payment.updateMany({
+          where: { paystackRef: event.data.transaction_reference, status: { not: "REFUNDED" } },
+          data: { status: "REFUNDED", refundedAt: new Date() },
         });
-        if (payment) {
-          await db.payment.update({
-            where: { id: payment.id },
-            data: { status: "REFUNDED", refundedAt: new Date() },
-          });
-        }
         break;
       }
     }

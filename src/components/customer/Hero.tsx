@@ -120,12 +120,12 @@ export default function Hero({ services }: Props) {
                 <span className="inline-block transition-transform group-hover:scale-110">✦</span>
                 Book a pro in Lagos
               </Link>
-              <Link
-                href="#waitlist"
+              <button
+                onClick={() => document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" })}
                 className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#ddd0fa] bg-[#f5f0ff] px-5 py-3 text-sm font-semibold text-[#7c3aed] transition-all hover:-translate-y-0.5 hover:border-[#c4b0f5] hover:shadow-md sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
               >
                 Join Abuja waitlist
-              </Link>
+              </button>
             </div>
 
             {/* Stats */}

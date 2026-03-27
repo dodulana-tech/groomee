@@ -39,7 +39,7 @@ export default function AbujaWaitlist() {
 
   return (
     <section
-      id="abuja-waitlist"
+      id="waitlist"
       className="relative overflow-hidden py-20 px-4"
       style={{
         background:

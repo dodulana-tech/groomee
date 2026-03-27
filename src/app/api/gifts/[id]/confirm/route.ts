@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getSessionFromRequest } from "@/lib/auth";
 import { verifyTransaction } from "@/lib/paystack";
 import { sendMessage } from "@/lib/whatsapp";
 import { formatNaira } from "@/lib/utils";
@@ -18,6 +19,12 @@ export async function GET(
   if (!ref) return NextResponse.redirect(`${appUrl}/?error=gift_failed`);
 
   try {
+    // Auth: verify caller is the gift sender
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.redirect(`${appUrl}/auth`);
+    }
+
     const txData = await verifyTransaction(ref);
 
     if (txData.status !== "success") {
@@ -28,7 +35,9 @@ export async function GET(
       where: { id },
     });
 
-    if (!giftCard) return NextResponse.redirect(`${appUrl}/?error=not_found`);
+    if (!giftCard || giftCard.senderId !== session.userId) {
+      return NextResponse.redirect(`${appUrl}/?error=not_found`);
+    }
 
     const expiryStr = format(new Date(giftCard.expiresAt), "do MMMM yyyy");
 

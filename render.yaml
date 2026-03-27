@@ -3,8 +3,9 @@ services:
     name: groomee
     runtime: node
     plan: starter
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npx prisma db seed && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
     startCommand: node .next/standalone/server.js
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,12 +15,36 @@ services:
           property: connectionString
       - key: CRON_SECRET
         generateValue: true
+      - key: JWT_SECRET
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_WEBHOOK_SECRET
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_WHATSAPP_NUMBER
+        sync: false
+      - key: ADMIN_PHONES
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
 
   - type: cron
     name: groomee-tick
     runtime: node
     schedule: "*/10 * * * *"
-    buildCommand: npm install
+    buildCommand: echo "no build needed"
     startCommand: |
       curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/tick"
     envVars:
@@ -38,7 +63,7 @@ services:
     name: groomee-renew-subs
     runtime: node
     schedule: "0 6 * * *"
-    buildCommand: npm install
+    buildCommand: echo "no build needed"
     startCommand: |
       curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/renew-subscriptions"
     envVars:

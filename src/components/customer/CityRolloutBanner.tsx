@@ -50,7 +50,7 @@ export default function CityRolloutBanner() {
               </p>
             </div>
             <Link
-              href="#abuja-waitlist"
+              href="#waitlist"
               className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-purple-500 transition-all w-fit"
             >
               Join the Abuja waitlist →

@@ -67,7 +67,7 @@ export default async function Navbar() {
         <Link href="/#about" style={linkStyle}>
           Our story
         </Link>
-        <Link href="/#abuja-waitlist" style={vendorLinkStyle}>
+        <Link href="/#waitlist" style={vendorLinkStyle}>
           Abuja waitlist
         </Link>
         <Link href="/#survey" style={vendorLinkStyle}>

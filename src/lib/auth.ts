@@ -3,8 +3,12 @@ import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { db } from "./db";
 import type { SessionPayload } from "@/types";
+import "./env";
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const SESSION_DURATION = parseInt(process.env.SESSION_DURATION ?? "2592000");
 const COOKIE_NAME = "groomee_session";
 

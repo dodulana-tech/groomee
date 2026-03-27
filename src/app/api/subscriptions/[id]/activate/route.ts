@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getSessionFromRequest } from "@/lib/auth";
 import { verifyTransaction } from "@/lib/paystack";
 import { awardPoints } from "@/lib/points";
 
@@ -16,35 +17,35 @@ export async function GET(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   if (!ref || !id) {
-    return NextResponse.redirect(
-      `${appUrl}/subscriptions?error=payment_failed`,
-    );
+    return NextResponse.redirect(`${appUrl}/subscriptions?error=payment_failed`);
   }
 
   try {
+    // Auth: verify caller owns the subscription
+    const session = await getSessionFromRequest(req);
+    if (!session) {
+      return NextResponse.redirect(`${appUrl}/auth?redirect=/subscriptions`);
+    }
+
     const subscription = await db.subscription.findUnique({
       where: { id },
       include: { plan: true },
     });
 
-    if (!subscription) {
-      return NextResponse.redirect(
-        `${appUrl}/subscriptions?error=payment_failed`,
-      );
+    if (!subscription || subscription.userId !== session.userId) {
+      return NextResponse.redirect(`${appUrl}/subscriptions?error=payment_failed`);
     }
 
-    // Idempotency — don't reprocess an already-active subscription
     if (subscription.status === "ACTIVE") {
-      return NextResponse.redirect(
-        `${appUrl}/subscriptions?success=already_active`,
-      );
+      return NextResponse.redirect(`${appUrl}/subscriptions?success=already_active`);
     }
 
     const txData = await verifyTransaction(ref);
 
     if (txData.status === "success") {
-      await db.subscription.update({
-        where: { id },
+      // Atomic: only activate if still PENDING
+      const updated = await db.subscription.updateMany({
+        where: { id, status: "PENDING" },
         data: {
           status: "ACTIVE",
           creditsRemaining: subscription.plan.credits,
@@ -52,32 +53,26 @@ export async function GET(
         },
       });
 
-      // Award 5 Groomee Points for subscribing
-      await awardPoints(
-        subscription.userId,
-        SUBSCRIPTION_ACTIVATION_POINTS,
-        "Subscription activated",
-        id,
-      ).catch(console.error);
+      if (updated.count > 0) {
+        await awardPoints(
+          subscription.userId,
+          SUBSCRIPTION_ACTIVATION_POINTS,
+          "Subscription activated",
+          id,
+        ).catch(console.error);
+      }
 
-      return NextResponse.redirect(
-        `${appUrl}/subscriptions?success=subscribed`,
-      );
+      return NextResponse.redirect(`${appUrl}/subscriptions?success=subscribed`);
     } else {
-      // Payment failed or abandoned — clean up the pending subscription
-      await db.subscription.update({
-        where: { id },
+      await db.subscription.updateMany({
+        where: { id, status: "PENDING" },
         data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "Payment failed" },
       });
 
-      return NextResponse.redirect(
-        `${appUrl}/subscriptions?error=payment_failed`,
-      );
+      return NextResponse.redirect(`${appUrl}/subscriptions?error=payment_failed`);
     }
   } catch (err) {
     console.error("[subscription activate] error:", err);
-    return NextResponse.redirect(
-      `${appUrl}/subscriptions?error=payment_failed`,
-    );
+    return NextResponse.redirect(`${appUrl}/subscriptions?error=payment_failed`);
   }
 }
