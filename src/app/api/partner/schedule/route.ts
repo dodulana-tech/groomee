@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
   const pro = await db.pro.findFirst({ where: { phone: session.phone } });
   if (!pro) return NextResponse.json({ success: false, error: "Pro not found" }, { status: 404 });
@@ -20,6 +21,7 @@ export async function GET() {
 export async function PUT(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
   const pro = await db.pro.findFirst({ where: { phone: session.phone } });
   if (!pro) return NextResponse.json({ success: false, error: "Pro not found" }, { status: 404 });

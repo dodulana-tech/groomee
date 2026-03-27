@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
 import { addMonths } from "date-fns";
 
@@ -6,7 +7,11 @@ import { addMonths } from "date-fns";
 export async function GET(req: Request) {
   // Verify cron secret
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = (authHeader ?? "").replace("Bearer ", "");
+  const expected = process.env.CRON_SECRET ?? "";
+  const isValid = secret.length === expected.length &&
+    timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
+  if (!isValid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

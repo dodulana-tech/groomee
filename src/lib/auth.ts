@@ -118,23 +118,20 @@ export async function verifyOtp(
   role: "CUSTOMER" | "ADMIN" | "PRO";
   isNewUser: boolean;
 } | null> {
-  // Find valid OTP
+  // Atomic find + mark-used to prevent concurrent OTP consumption
   const otpRecord = await db.otpCode.findFirst({
-    where: {
-      phone,
-      code,
-      usedAt: null,
-      expiresAt: { gt: new Date() },
-    },
+    where: { phone, code, usedAt: null, expiresAt: { gt: new Date() } },
   });
 
   if (!otpRecord) return null;
 
-  // Mark OTP as used
-  await db.otpCode.update({
-    where: { id: otpRecord.id },
+  // Conditional update: only mark used if still unused (race-safe)
+  const consumed = await db.otpCode.updateMany({
+    where: { id: otpRecord.id, usedAt: null },
     data: { usedAt: new Date() },
   });
+
+  if (consumed.count === 0) return null; // Another request consumed it first
 
   // Find or create user
   const existingUser = await db.user.findUnique({ where: { phone } });

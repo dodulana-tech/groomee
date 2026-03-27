@@ -6,6 +6,7 @@ export async function GET() {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
     const pro = await db.pro.findFirst({ where: { phone: session.phone } });
     if (!pro) return NextResponse.json({ success: false, error: "Pro not found" }, { status: 404 });

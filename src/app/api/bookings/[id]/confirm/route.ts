@@ -27,12 +27,19 @@ export async function POST(
         { error: "Booking is not completed yet" },
         { status: 400 },
       );
+    if (!booking.proId)
+      return NextResponse.json(
+        { error: "No pro assigned to this booking" },
+        { status: 400 },
+      );
 
-    await db.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id },
+    // Atomic: conditional update prevents double-confirm race
+    const confirmed = await db.$transaction(async (tx) => {
+      const updated = await tx.booking.updateMany({
+        where: { id, status: "COMPLETED" },
         data: { status: "CONFIRMED", confirmedAt: new Date() },
       });
+      if (updated.count === 0) return false; // Already confirmed by concurrent request
 
       if (booking.payment) {
         await tx.payment.update({
@@ -41,25 +48,29 @@ export async function POST(
         });
       }
 
-      if (booking.proId) {
-        await tx.earning.create({
-          data: {
-            proId: booking.proId,
-            bookingId: id,
-            amount: booking.proEarning,
-          },
-        });
+      await tx.earning.create({
+        data: {
+          proId: booking.proId!,
+          bookingId: id,
+          amount: booking.proEarning,
+        },
+      });
 
-        await tx.pro.update({
-          where: { id: booking.proId },
-          data: {
-            availability: "ONLINE",
-            currentBookingId: null,
-            totalJobs: { increment: 1 },
-          },
-        });
-      }
+      await tx.pro.update({
+        where: { id: booking.proId! },
+        data: {
+          availability: "ONLINE",
+          currentBookingId: null,
+          totalJobs: { increment: 1 },
+        },
+      });
+
+      return true;
     });
+
+    if (!confirmed) {
+      return NextResponse.json({ success: true }); // Idempotent — already confirmed
+    }
 
     // Award points for booking confirmation
     await awardPoints(session.userId, POINTS.BOOKING_COMPLETION, "Booking confirmed", id).catch(() => {});

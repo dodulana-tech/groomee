@@ -11,6 +11,8 @@ import AboutSection from "@/components/customer/AboutSection";
 import AbujaWaitlist from "@/components/customer/AbujaWaitlist";
 import Footer from "@/components/customer/Footer";
 
+export const revalidate = 300;
+
 async function getHomeData() {
   const [services, pros] = await Promise.all([
     db.service.findMany({

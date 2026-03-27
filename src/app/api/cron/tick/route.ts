@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
 import autoConfirm from "@/lib/auto-confirm";
 
 // Called every 5 minutes by Vercel Cron
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secret = (authHeader ?? "").replace("Bearer ", "");
+  const expected = process.env.CRON_SECRET ?? "";
+  const isValid = secret.length === expected.length &&
+    timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
+  if (!isValid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

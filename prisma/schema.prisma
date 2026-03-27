@@ -285,6 +285,9 @@ model Booking {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
+  @@index([customerId, createdAt])
+  @@index([proId])
+  @@index([status, createdAt])
   @@map("bookings")
 }
 
@@ -298,6 +301,8 @@ model DispatchLog {
   respondAt DateTime?
   booking   Booking   @relation(fields: [bookingId], references: [id])
 
+  @@index([bookingId])
+  @@index([proId])
   @@map("dispatch_logs")
 }
 
@@ -315,6 +320,7 @@ model Payment {
   booking      Booking       @relation(fields: [bookingId], references: [id])
   createdAt    DateTime      @default(now())
 
+  @@index([status, capturedAt])
   @@map("payments")
 }
 
@@ -354,6 +360,7 @@ model Earning {
   pro       Pro      @relation(fields: [proId], references: [id])
   createdAt DateTime @default(now())
 
+  @@index([proId, paid])
   @@map("earnings")
 }
 
@@ -470,6 +477,7 @@ model Subscription {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
+  @@index([userId, status])
   @@map("subscriptions")
 }
 

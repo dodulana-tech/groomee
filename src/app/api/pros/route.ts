@@ -63,5 +63,7 @@ export async function GET(req: NextRequest) {
     take,
   });
 
-  return NextResponse.json({ success: true, data: pros });
+  return NextResponse.json({ success: true, data: pros }, {
+    headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
+  });
 }
