@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequest } from "@/lib/auth";
 
 // Exact-match public paths
-const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login"]);
+const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [
   "/pro/",      // /pro/[slug] pages — NOT /profile
