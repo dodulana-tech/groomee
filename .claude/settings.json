@@ -71,7 +71,8 @@
       "Bash(file /Users/debo/groomee/public/assets/logo/*)",
       "Bash(find /Users/debo/groomee -name *.html -path *brand* -o -name *.html -path *north* -o -name *.html -path *landing*)",
       "Bash(identify /Users/debo/groomee/public/assets/logo/groomee-wordmark-green.png)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/assets/logo/groomee-wordmark-green.png)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/assets/logo/groomee-wordmark-green.png)",
+      "Bash(ls /Users/debo/groomee/src/app/favicon*)"
     ],
     "additionalDirectories": [
       "/Users/debo/Downloads",
