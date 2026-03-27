@@ -1,4 +1,4 @@
-const ZEPTO_URL = "https://api.zeptomail.com/v1.1/email";
+import nodemailer from "nodemailer";
 
 export async function sendEmail({
   to,
@@ -9,36 +9,31 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
-  const token = process.env.ZEPTO_TOKEN;
-  const from = process.env.EMAIL_FROM ?? process.env.SMTP_USER ?? "noreply@groomee.ng";
-  const fromName = process.env.EMAIL_FROM_NAME ?? "Groomee";
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const host = process.env.SMTP_HOST ?? "smtp.zoho.com";
+  const port = parseInt(process.env.SMTP_PORT ?? "465");
+  const from = process.env.SMTP_FROM ?? user ?? "noreply@groomee.ng";
 
-  if (!token) {
-    console.warn("[email] No ZEPTO_TOKEN set — email not sent");
+  if (!user || !pass) {
+    console.warn("[email] SMTP_USER or SMTP_PASS not set — skipping email");
     return null;
   }
 
-  const res = await fetch(ZEPTO_URL, {
-    method: "POST",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: { address: from, name: fromName },
-      to: [{ email_address: { address: to } }],
-      subject,
-      htmlbody: html,
-    }),
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
   });
 
-  const data = await res.json();
+  const info = await transporter.sendMail({
+    from: `Groomee <${from}>`,
+    to,
+    subject,
+    html,
+  });
 
-  if (!res.ok) {
-    console.error("[email] ZeptoMail error:", JSON.stringify(data));
-    throw new Error(data.message ?? "Email send failed");
-  }
-
-  console.log(`[email] sent to ${to} via ZeptoMail`);
-  return data;
+  console.log(`[email] sent to ${to}: ${info.messageId}`);
+  return info;
 }
