@@ -8,7 +8,7 @@ export default async function Navbar() {
   const session = await getSession();
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-[100] h-14 border-b border-white/10 bg-brand-deep/97 backdrop-blur-xl lg:h-[68px]">
+    <nav className="fixed inset-x-0 top-0 z-[100] h-14 border-b border-white/10 bg-[rgba(1,67,66,0.97)] backdrop-blur-xl lg:h-[68px]">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center">
