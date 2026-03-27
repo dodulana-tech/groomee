@@ -26,7 +26,9 @@ export default async function ProfilePage() {
   const referrals:    any[] = [];
   const squadCount   = 0;
 
-  const profileComplete = !!(user?.name && user?.phone);
+  const isTempPhone = user?.phone?.startsWith("+234_email_") ?? false;
+  const profileComplete = !!(user?.name && !isTempPhone);
+  const displayPhone = isTempPhone ? user?.email ?? "Email login" : user?.phone;
   const referralCode    = session.userId.slice(-8).toUpperCase();
   const appUrl          = process.env.NEXT_PUBLIC_APP_URL ?? 'https://groomee.ng';
   const whatsappMsg     = encodeURIComponent(
@@ -37,6 +39,26 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-lg px-4 py-8 pb-24">
       <h1 className="mb-5 font-display text-2xl font-bold">My Profile</h1>
 
+      {/* Complete profile banner */}
+      {!profileComplete && (
+        <Link
+          href="/profile/edit"
+          className="mb-4 flex items-center gap-3 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4 transition-all hover:border-amber-300 hover:shadow-sm"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg">⚠️</span>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-900">Complete your profile</p>
+            <p className="text-xs text-amber-700">
+              {!user?.name ? "Add your name" : ""}
+              {!user?.name && isTempPhone ? " and " : ""}
+              {isTempPhone ? "link your phone number" : ""}
+              {" "}to book beauty pros.
+            </p>
+          </div>
+          <span className="text-amber-400">→</span>
+        </Link>
+      )}
+
       {/* Identity card */}
       <div className="card p-5 mb-4">
         <div className="flex items-center gap-4 mb-4 pb-4 border-b border-gray-100">
@@ -45,7 +67,7 @@ export default async function ProfilePage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-gray-900">{user?.name ?? 'Name not set'}</p>
-            <p className="text-sm text-gray-500">{user?.phone}</p>
+            <p className="text-sm text-gray-500">{displayPhone}</p>
             {subscription && (
               <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-bold text-brand-700">
                 🌿 {(subscription as any).plan.name}
