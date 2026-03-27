@@ -72,8 +72,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-dm-sans)", "system-ui", "sans-serif"],
-        display: ["var(--font-playfair)", "Georgia", "serif"],
+        sans: ["var(--font-body)", "DM Sans", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Playfair Display", "Georgia", "serif"],
+        mono: ["var(--font-mono)", "DM Mono", "monospace"],
       },
       borderRadius: {
         "2xl": "16px",
