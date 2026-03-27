@@ -23,10 +23,10 @@ export async function POST(req: NextRequest) {
 
     const { otp } = await createOtpByEmail(email.toLowerCase().trim());
 
-    // Send OTP via email (Zoho SMTP) or log in dev
+    // Send OTP via email (ZeptoMail) or log in dev
     if (process.env.NODE_ENV === "development") {
       console.log(`[DEV] Email OTP for ${email}: ${otp}`);
-    } else if (process.env.SMTP_USER) {
+    } else if (process.env.ZEPTO_TOKEN) {
       const { sendEmail } = await import("@/lib/email");
       await sendEmail({
         to: email,
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         html: `<p>Your verification code is: <strong>${otp}</strong></p><p>Valid for 10 minutes. Do not share this code.</p><p>— The Groomee Team 💚</p>`,
       }).catch((err) => console.error("Email send error:", err));
     } else {
-      console.warn(`[WARN] No SMTP_USER set — email OTP for ${email} not delivered`);
+      console.warn(`[WARN] No ZEPTO_TOKEN set — email OTP for ${email} not delivered`);
     }
 
     return NextResponse.json({
