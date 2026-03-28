@@ -27,20 +27,8 @@ export default function MobileNav() {
 
   return (
     <nav
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: "#ffffff",
-        borderTop: "1px solid #F3F4F6",
-        boxShadow: "0 -4px 24px rgba(0,0,0,0.06)",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-        display: "flex",
-        height: "64px",
-      }}
-      className="lg:hidden"
+      className="bottom-nav lg:hidden"
+      style={{ display: "flex", height: "64px" }}
     >
       {TABS.map((tab) => {
         const active = tab.match(pathname);
@@ -63,7 +51,7 @@ export default function MobileNav() {
             <TabIcon name={tab.label} active={!!active} />
             <span
               style={{
-                fontSize: "10px",
+                fontSize: "11px",
                 fontWeight: active ? 700 : 500,
                 letterSpacing: "0.3px",
               }}

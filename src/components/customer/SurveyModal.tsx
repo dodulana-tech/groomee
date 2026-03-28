@@ -155,7 +155,7 @@ export default function SurveyModal({ type, onClose }: Props) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden relative">
+      <div role="dialog" aria-modal="true" aria-label="Quick survey" className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden relative">
         {/* Top bar */}
         <div
           className={`h-1 ${

@@ -83,7 +83,7 @@ export default function Footer() {
             <div className="flex shrink-0 flex-wrap justify-center gap-3 sm:justify-start">
               <Link
                 href="/search"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-6 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(83,235,100,0.3)]"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-6 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(83,235,100,0.3)] active:scale-[0.97]"
               >
                 Book a pro
               </Link>

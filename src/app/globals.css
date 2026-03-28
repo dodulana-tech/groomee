@@ -138,11 +138,31 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-brand-400, #53eb64);
+  outline-offset: 2px;
 }
 img,
 svg {
   display: block;
+}
+
+/* ─── GLOBAL FOCUS RING ──────────────────────────────────── */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-brand-400, #53eb64);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* ─── SCROLLBAR ───────────────────────────────────────────── */
@@ -216,10 +236,12 @@ svg {
   font-size: 15px;
   font-weight: 600;
 }
-.btn-forest:hover {
-  background: var(--color-forest-mid);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(26, 58, 42, 0.25);
+@media (hover: hover) {
+  .btn-forest:hover {
+    background: var(--color-forest-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(26, 58, 42, 0.25);
+  }
 }
 .btn-forest:active {
   transform: translateY(0);
@@ -233,10 +255,15 @@ svg {
   font-size: 15px;
   font-weight: 700;
 }
-.btn-amber:hover {
-  background: var(--color-amber-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
+@media (hover: hover) {
+  .btn-amber:hover {
+    background: var(--color-amber-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(212, 168, 83, 0.3);
+  }
+}
+.btn-amber:active {
+  transform: translateY(0);
 }
 
 .btn-ember {
@@ -247,9 +274,14 @@ svg {
   font-size: 15px;
   font-weight: 700;
 }
-.btn-ember:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .btn-ember:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+.btn-ember:active {
+  transform: translateY(0);
 }
 
 .btn-outline {
@@ -272,9 +304,14 @@ svg {
   font-size: 15px;
   font-weight: 700;
 }
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(83, 235, 100, 0.4);
+@media (hover: hover) {
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(83, 235, 100, 0.4);
+  }
+}
+.btn-primary:active {
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -298,10 +335,15 @@ svg {
   font-size: 15px;
   font-weight: 700;
 }
-.btn-orange:hover {
-  background: #e84e18;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+@media (hover: hover) {
+  .btn-orange:hover {
+    background: #e84e18;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  }
+}
+.btn-orange:active {
+  transform: translateY(0);
 }
 
 .btn-ghost {
@@ -353,9 +395,14 @@ svg {
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
-.card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+}
+.card:active {
+  transform: translateY(-1px);
 }
 
 .glass-card {
@@ -375,9 +422,15 @@ svg {
   overflow: hidden;
   transition: all 0.25s;
 }
-.card-hover:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transform: translateY(-3px);
+@media (hover: hover) {
+  .card-hover:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    border-color: #b4f5bb;
+  }
+}
+.card-hover:active {
+  transform: translateY(-1px);
   border-color: #b4f5bb;
 }
 
@@ -399,8 +452,15 @@ svg {
 }
 .input:focus {
   border-color: var(--color-forest);
-  box-shadow: 0 0 0 3px rgba(83, 235, 100, 0.12);
+  box-shadow: 0 0 0 3px rgba(83, 235, 100, 0.25);
   background: rgba(255, 255, 255, 0.9);
+  outline: none;
+}
+.input:focus-visible {
+  border-color: var(--color-forest);
+  box-shadow: 0 0 0 3px rgba(83, 235, 100, 0.25);
+  background: rgba(255, 255, 255, 0.9);
+  outline: none;
 }
 .input::placeholder {
   color: #9ca3af;

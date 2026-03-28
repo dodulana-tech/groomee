@@ -27,7 +27,7 @@ export default function ProCard({
   return (
     <Link
       href={`/pro/${pro.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200 flex flex-col"
+      className="group bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-1 active:scale-[0.99] transition-all duration-200 flex flex-col"
     >
       {/* Avatar area */}
       <div className="relative h-40 bg-gradient-to-br from-forest-50 via-cream-100 to-amber-50 flex items-center justify-center">

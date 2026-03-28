@@ -51,7 +51,7 @@ export default function MobileMenu({ session }: Props) {
             className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-[95] w-72 overflow-y-auto bg-brand-deep border-l border-white/10 shadow-2xl">
+          <nav role="navigation" aria-label="Mobile menu" className="fixed inset-y-0 right-0 z-[95] w-72 overflow-y-auto bg-brand-deep border-l border-white/10 shadow-2xl" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
             {/* Close */}
             <div className="flex h-14 items-center justify-end px-4">
               <button
@@ -123,7 +123,7 @@ export default function MobileMenu({ session }: Props) {
                 </Link>
               )}
             </div>
-          </div>
+          </nav>
         </>,
         document.body
       )}

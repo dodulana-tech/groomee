@@ -82,14 +82,18 @@ export default function SearchFilters({
       <div>
         <p className="input-label mb-3">Availability</p>
         <label className="flex cursor-pointer items-center gap-3">
-          <div
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!!currentParams.asap}
+            aria-label="Available now filter"
             onClick={() => update("asap", currentParams.asap ? null : "true")}
             className={`relative h-5 w-9 rounded-full transition-colors cursor-pointer ${currentParams.asap ? "bg-brand-600" : "bg-gray-200"}`}
           >
-            <div
+            <span
               className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${currentParams.asap ? "left-[18px]" : "left-0.5"}`}
             />
-          </div>
+          </button>
           <div>
             <p className="font-semibold text-gray-800">Available now</p>
             <p className="text-xs text-gray-500">Online and ready to book</p>

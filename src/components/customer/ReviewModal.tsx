@@ -75,7 +75,12 @@ export default function ReviewModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl animate-up">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Rate your booking"
+        className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl animate-up"
+      >
         {done ? (
           <div className="text-center py-8">
             <div className="text-5xl mb-3 animate-bounce">🎉</div>

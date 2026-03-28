@@ -69,7 +69,7 @@ export default function ProGrid({ pros, searchParams }: Props) {
               textDecoration: "none",
               color: "inherit",
             }}
-            className="group hover:shadow-lg hover:-translate-y-1 hover:border-[#b4f5bb]"
+            className="group hover:shadow-lg hover:-translate-y-1 hover:border-[#b4f5bb] active:scale-[0.99] active:border-[#b4f5bb]"
           >
             {/* Photo area */}
             <div

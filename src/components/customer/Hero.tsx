@@ -105,7 +105,7 @@ export default function Hero({ services }: Props) {
             >
               Vetted hair, makeup, nails, lashes &amp; barbing professionals
               delivered to you in Lagos. Late nights, early mornings,
-              last-minute&nbsp;&mdash; we&apos;ve got you.
+              last-minute, we&apos;ve got you.
             </p>
 
             {/* CTAs */}
@@ -115,14 +115,14 @@ export default function Hero({ services }: Props) {
             >
               <Link
                 href="/search"
-                className="group inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
+                className="group inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] active:scale-[0.97] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
               >
                 <span className="inline-block transition-transform group-hover:scale-110">✦</span>
                 Book a pro in Lagos
               </Link>
               <button
                 onClick={() => document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" })}
-                className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#ddd0fa] bg-[#f5f0ff] px-5 py-3 text-sm font-semibold text-[#7c3aed] transition-all hover:-translate-y-0.5 hover:border-[#c4b0f5] hover:shadow-md sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
+                className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#ddd0fa] bg-[#f5f0ff] px-5 py-3 text-sm font-semibold text-[#7c3aed] transition-all hover:-translate-y-0.5 hover:border-[#c4b0f5] hover:shadow-md active:scale-[0.97] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
               >
                 Join Abuja waitlist
               </button>
@@ -242,7 +242,7 @@ export default function Hero({ services }: Props) {
                 {/* Search CTA */}
                 <button
                   onClick={handleSearch}
-                  className="group mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] sm:text-[0.95rem]"
+                  className="group mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] active:scale-[0.97] sm:text-[0.95rem]"
                 >
                   <span className="transition-transform group-hover:scale-110">
                     🔍

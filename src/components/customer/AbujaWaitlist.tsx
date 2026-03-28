@@ -127,7 +127,7 @@ export default function AbujaWaitlist() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Your name"
-                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 transition"
+                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition"
                       required
                     />
                   </div>
@@ -140,7 +140,7 @@ export default function AbujaWaitlist() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="0801 234 5678"
-                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 transition"
+                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition"
                       required
                     />
                   </div>
@@ -154,7 +154,7 @@ export default function AbujaWaitlist() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@email.com"
-                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 transition"
+                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition"
                     />
                   </div>
                   {/* Role — hidden on mobile */}
