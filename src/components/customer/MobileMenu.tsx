@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 
 interface Props {
@@ -43,8 +44,8 @@ export default function MobileMenu({ session }: Props) {
         )}
       </button>
 
-      {/* Overlay + drawer */}
-      {open && (
+      {/* Overlay + drawer — portaled to body to escape navbar's backdrop-filter containing block */}
+      {open && createPortal(
         <>
           <div
             className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm"
@@ -123,7 +124,8 @@ export default function MobileMenu({ session }: Props) {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
