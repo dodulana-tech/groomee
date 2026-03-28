@@ -281,20 +281,24 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
                       </div>
                     </div>
                     <div className="flex-1">
-                      {[5, 4, 3, 2, 1].map((n) => (
-                        <div key={n} className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-gray-400 w-3">{n}</span>
-                          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${n === 5 ? 80 : n === 4 ? 15 : 5}%`,
-                                background: "#D4A853",
-                              }}
-                            />
+                      {[5, 4, 3, 2, 1].map((n) => {
+                        const count = pro.reviews.filter((r: any) => r.rating === n).length;
+                        const pct = pro.reviews.length > 0 ? Math.round((count / pro.reviews.length) * 100) : 0;
+                        return (
+                          <div key={n} className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-gray-400 w-3">{n}</span>
+                            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${pct}%`,
+                                  background: "#D4A853",
+                                }}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                   {pro.reviews.length > 0 ? (

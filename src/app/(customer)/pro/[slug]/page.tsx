@@ -62,7 +62,24 @@ export default async function ProPage({
     })),
     // Full zone objects for BookingPanel dropdown
     allZones,
-    reviews: [],
+    reviews: await db.review.findMany({
+      where: { booking: { proId: pro.id } },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        rating: true,
+        text: true,
+        createdAt: true,
+        booking: { select: { customer: { select: { name: true } } } },
+      },
+    }).then((reviews) =>
+      reviews.map((r) => ({
+        author: r.booking.customer.name ?? "Customer",
+        rating: r.rating,
+        text: r.text ?? "",
+        date: r.createdAt.toLocaleDateString("en-NG", { month: "short", year: "numeric" }),
+      })),
+    ),
   };
 
   return <ProProfileView pro={viewData} />;

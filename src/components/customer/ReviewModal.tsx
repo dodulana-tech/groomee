@@ -30,6 +30,7 @@ export default function ReviewModal({
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
@@ -55,7 +56,7 @@ export default function ReviewModal({
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error ?? "Something went wrong");
+        setError(data.error ?? "Something went wrong");
         setSubmitting(false);
         return;
       }
@@ -111,11 +112,13 @@ export default function ReviewModal({
                   aria-label={`Rate ${star} out of 5`}
                   onMouseEnter={() => setHovered(star)}
                   onMouseLeave={() => setHovered(0)}
+                  onTouchStart={() => setHovered(star)}
+                  onTouchEnd={() => { setRating(star); setHovered(0); }}
                   onClick={() => setRating(star)}
-                  className={`text-4xl transition-all ${
+                  className={`text-4xl p-1 transition-all ${
                     star <= activeRating
                       ? "text-amber-400 scale-110"
-                      : "text-gray-200 hover:text-gray-300"
+                      : "text-gray-200 hover:text-gray-300 active:text-gray-300"
                   }`}
                 >
                   ★
@@ -163,9 +166,15 @@ export default function ReviewModal({
               </>
             )}
 
+            {error && (
+              <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 mb-3">
+                {error}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
-                onClick={handleSubmit}
+                onClick={() => { setError(""); handleSubmit(); }}
                 disabled={!rating || submitting}
                 className="btn-primary btn-lg flex-1"
               >

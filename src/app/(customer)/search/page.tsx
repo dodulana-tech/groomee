@@ -54,15 +54,21 @@ function SearchPageContent() {
     maxPrice: searchParams.get("maxPrice") ?? undefined,
   };
 
+  const [searchError, setSearchError] = useState("");
+
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setSearchError("");
     try {
       const qp = new URLSearchParams(
         Object.entries(params).filter(([, v]) => v) as [string, string][],
       );
       if (sort !== "recommended") qp.set("sort", sort);
       const [gr, sv, zn] = await Promise.all([
-        fetch(`/api/pros?${qp}`).then((r) => r.json()),
+        fetch(`/api/pros?${qp}`).then((r) => {
+          if (!r.ok) throw new Error("fetch failed");
+          return r.json();
+        }),
         fetch("/api/services").then((r) => r.json()),
         fetch("/api/zones").then((r) => r.json()),
       ]);
@@ -71,6 +77,8 @@ function SearchPageContent() {
       // Filter zones by selected city
       const allZones: any[] = zn.data ?? [];
       setZones(allZones.filter((z: any) => z.city === city));
+    } catch {
+      setSearchError("Could not load results. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -241,6 +249,13 @@ function SearchPageContent() {
                   </div>
                 </div>
               ))}
+            </div>
+          ) : searchError ? (
+            <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-red-200 py-16 text-center">
+              <span className="mb-4 text-4xl">⚠️</span>
+              <p className="font-bold text-gray-700 text-lg mb-2">Something went wrong</p>
+              <p className="text-sm text-gray-500 max-w-xs mb-4">{searchError}</p>
+              <button onClick={() => fetchData()} className="btn-primary btn-sm">Retry</button>
             </div>
           ) : (
             <ProGrid pros={pros} searchParams={params} />

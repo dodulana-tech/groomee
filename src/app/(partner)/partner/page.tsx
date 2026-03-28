@@ -47,19 +47,25 @@ const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; ne
 export default function PartnerDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [fetchError, setFetchError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
 
   function fetchDashboard() {
     fetch("/api/partner/dashboard")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load");
+        return r.json();
+      })
       .then((d) => {
         if (d.success) {
           setData(d.data);
           setLastUpdated(new Date());
           setSecondsAgo(0);
+          setFetchError("");
         }
-      });
+      })
+      .catch(() => setFetchError("Could not load dashboard. Pull down to retry."));
   }
 
   // Initial fetch + poll every 30 seconds
@@ -80,6 +86,8 @@ export default function PartnerDashboard() {
 
   async function toggleAvailability() {
     if (!data) return;
+    const action = data.isOnline ? "go offline" : "go online";
+    if (!confirm(`Are you sure you want to ${action}?`)) return;
     setToggling(true);
     try {
       await fetch("/api/partner/profile", {
@@ -98,15 +106,26 @@ export default function PartnerDashboard() {
   if (!data) {
     return (
       <div className="p-8 space-y-6">
-        <div className="skeleton h-8 w-48" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="glass rounded-2xl border border-white/20 p-5">
-              <div className="skeleton h-4 w-20 mb-2" />
-              <div className="skeleton h-8 w-32" />
+        {fetchError ? (
+          <div className="rounded-2xl bg-red-50 border border-red-100 p-6 text-center">
+            <p className="text-red-600 font-semibold mb-2">{fetchError}</p>
+            <button onClick={fetchDashboard} className="btn-primary btn-sm">
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="skeleton h-8 w-48" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="glass rounded-2xl border border-white/20 p-5">
+                  <div className="skeleton h-4 w-20 mb-2" />
+                  <div className="skeleton h-8 w-32" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     );
   }

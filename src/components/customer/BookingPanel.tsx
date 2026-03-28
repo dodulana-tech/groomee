@@ -48,9 +48,14 @@ export default function BookingPanel({
     ? (selectedGs.customPrice ?? selectedGs.service.basePrice)
     : 0;
 
-  const hour = new Date().getHours();
-  const isLateNight = hour >= 22 || hour < 5;
-  const isEarlyMorning = hour >= 5 && hour < 7;
+  // Calculate surcharge based on booking time, not current time
+  const bookingHour = isAsap
+    ? new Date().getHours()
+    : scheduledFor
+      ? new Date(scheduledFor).getHours()
+      : new Date().getHours();
+  const isLateNight = bookingHour >= 22 || bookingHour < 5;
+  const isEarlyMorning = bookingHour >= 5 && bookingHour < 7;
 
   let surchargeRate = 0;
   let surchargeLabel = "";

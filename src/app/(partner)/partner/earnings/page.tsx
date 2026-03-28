@@ -6,26 +6,44 @@ import { formatNaira } from "@/lib/utils";
 export default function PartnerEarningsPage() {
   const [data, setData] = useState<any>(null);
 
-  useEffect(() => {
+  const [fetchError, setFetchError] = useState("");
+
+  function loadEarnings() {
+    setFetchError("");
     fetch("/api/partner/earnings")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load");
+        return r.json();
+      })
       .then((d) => {
         if (d.success) setData(d.data);
-      });
-  }, []);
+      })
+      .catch(() => setFetchError("Could not load earnings. Tap to retry."));
+  }
+
+  useEffect(() => { loadEarnings(); }, []);
 
   if (!data) {
     return (
       <div className="p-8 space-y-6">
-        <div className="skeleton h-8 w-48" />
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="glass rounded-2xl border border-white/20 p-5">
-              <div className="skeleton h-4 w-20 mb-2" />
-              <div className="skeleton h-8 w-32" />
+        {fetchError ? (
+          <div className="rounded-2xl bg-red-50 border border-red-100 p-6 text-center">
+            <p className="text-red-600 font-semibold mb-2">{fetchError}</p>
+            <button onClick={loadEarnings} className="btn-primary btn-sm">Retry</button>
+          </div>
+        ) : (
+          <>
+            <div className="skeleton h-8 w-48" />
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="glass rounded-2xl border border-white/20 p-5">
+                  <div className="skeleton h-4 w-20 mb-2" />
+                  <div className="skeleton h-8 w-32" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     );
   }

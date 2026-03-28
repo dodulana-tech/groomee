@@ -16,6 +16,7 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true);
   const [showReview, setShowReview] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
 
@@ -171,7 +172,7 @@ export default function BookingPage() {
               release payment.
             </div>
             <button
-              onClick={confirmService}
+              onClick={() => setShowConfirmDialog(true)}
               disabled={confirming}
               className="w-full py-4 rounded-2xl font-bold text-white text-base"
               style={{ background: confirming ? "#9CA3AF" : "#1A3A2A" }}
@@ -231,6 +232,36 @@ export default function BookingPage() {
           </div>
         )}
       </div>
+
+      {/* Confirm payment release dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/70 backdrop-blur-sm p-4">
+          <div role="dialog" aria-modal="true" aria-label="Confirm payment release" className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
+            <p className="text-3xl text-center mb-3">💸</p>
+            <h3 className="font-display text-lg font-bold text-gray-900 text-center mb-2">
+              Release payment?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-5">
+              This will release {formatNaira(booking.totalAmount)} to {booking.pro?.name ?? "the pro"}. This action cannot be undone.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => { setShowConfirmDialog(false); confirmService(); }}
+                className="w-full py-3.5 rounded-2xl font-bold text-white text-sm"
+                style={{ background: "#1A3A2A" }}
+              >
+                Yes, release payment
+              </button>
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className="w-full py-3 rounded-2xl font-semibold text-sm border border-gray-200 text-gray-500 bg-white"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showReview && booking.pro && (
         <ReviewModal

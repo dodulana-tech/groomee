@@ -76,7 +76,40 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
         ))}
       </div>
 
-      <div className="card overflow-hidden">
+      {/* Mobile card layout */}
+      <div className="space-y-3 lg:hidden">
+        {bookings.map((b) => (
+          <Link
+            key={b.id}
+            href={`/admin/bookings/${b.id}`}
+            className="block rounded-2xl bg-white border border-gray-100 p-4 shadow-sm active:scale-[0.99] transition-all"
+          >
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div>
+                <p className="font-semibold text-sm text-gray-900">{b.customer.name ?? "Customer"}</p>
+                <p className="text-xs text-gray-400">{b.service.name}</p>
+              </div>
+              <span className={cn("status-pill shrink-0", getBookingStatusColor(b.status))}>
+                {getBookingStatusLabel(b.status)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>{b.pro?.name ?? "Unassigned"} {b.zone?.name ? `· ${b.zone.name}` : ""}</span>
+              <span className="font-bold text-gray-900">{formatNaira(b.totalAmount)}</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">{format(new Date(b.createdAt), "dd MMM, HH:mm")}</p>
+          </Link>
+        ))}
+        {bookings.length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <p className="text-3xl mb-2">📋</p>
+            <p>No bookings found</p>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="card overflow-hidden hidden lg:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -153,6 +186,13 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
                   </td>
                 </tr>
               ))}
+              {bookings.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="text-center py-12 text-gray-400">
+                    No bookings found
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
