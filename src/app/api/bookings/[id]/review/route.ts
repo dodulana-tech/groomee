@@ -66,6 +66,17 @@ export async function POST(
     // Award points for leaving a review
     await awardPoints(session.userId, POINTS.LEAVE_REVIEW, "Left a review", review.id).catch(() => {});
 
+    // Send thank you email (fire-and-forget)
+    const pro = await db.pro.findUnique({ where: { id: booking.proId! }, select: { name: true } });
+    import("@/lib/email-notify").then(({ emailReviewThankYou }) =>
+      emailReviewThankYou({
+        customerId: session.userId,
+        proName: pro?.name ?? "your pro",
+        rating,
+        pointsEarned: POINTS.LEAVE_REVIEW,
+      }),
+    ).catch(() => {});
+
     return NextResponse.json({ success: true, data: review }, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError)

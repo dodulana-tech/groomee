@@ -229,6 +229,19 @@ export async function POST(req: NextRequest) {
       metadata: { bookingId: booking.id, reference, userId: session.userId },
     });
 
+    // Send booking email (fire-and-forget)
+    import("@/lib/email-notify").then(({ emailBookingCreated }) =>
+      emailBookingCreated({
+        id: booking.id,
+        reference,
+        totalAmount,
+        isAsap: input.isAsap,
+        customerId: session.userId,
+        service: { name: service.name },
+        authorizationUrl: paystack.authorization_url,
+      }),
+    ).catch(() => {});
+
     return NextResponse.json(
       {
         success: true,

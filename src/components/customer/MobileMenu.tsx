@@ -48,10 +48,18 @@ export default function MobileMenu({ session }: Props) {
       {open && createPortal(
         <>
           <div
-            className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm animate-fade-in"
             onClick={() => setOpen(false)}
           />
-          <nav role="navigation" aria-label="Mobile menu" className="fixed inset-y-0 right-0 z-[95] w-72 overflow-y-auto bg-brand-deep border-l border-white/10 shadow-2xl" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+          <nav
+            role="navigation"
+            aria-label="Mobile menu"
+            className="fixed inset-y-0 right-0 z-[95] w-72 overflow-y-auto bg-brand-deep border-l border-white/10 shadow-2xl"
+            style={{
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+              animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          >
             {/* Close */}
             <div className="flex h-14 items-center justify-end px-4">
               <button

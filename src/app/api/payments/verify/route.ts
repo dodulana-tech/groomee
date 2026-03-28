@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const payment = await db.payment.findFirst({
       where: { paystackRef: reference },
-      include: { booking: { select: { customerId: true } } },
+      include: { booking: { select: { customerId: true, reference: true, service: { select: { name: true } } } } },
     });
     if (!payment) {
       return NextResponse.redirect(`${appUrl}/?error=payment_not_found`);
@@ -62,6 +62,17 @@ export async function GET(req: NextRequest) {
           data: { status: "DISPATCHING" },
         });
         tryNextPro(bookingId).catch(console.error);
+
+        // Send payment confirmed email (fire-and-forget)
+        import("@/lib/email-notify").then(({ emailPaymentConfirmed }) =>
+          emailPaymentConfirmed({
+            id: bookingId,
+            reference: payment.booking.reference,
+            totalAmount: payment.amount,
+            customerId: payment.booking.customerId,
+            service: { name: payment.booking.service?.name ?? "Beauty service" },
+          }),
+        ).catch(() => {});
       }
 
       return NextResponse.redirect(`${appUrl}/booking/${bookingId}`);

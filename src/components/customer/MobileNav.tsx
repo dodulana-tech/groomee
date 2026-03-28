@@ -43,35 +43,41 @@ export default function MobileNav() {
               alignItems: "center",
               justifyContent: "center",
               gap: "4px",
-              color: active ? "#1A3A2A" : "#9CA3AF",
               textDecoration: "none",
               position: "relative",
+              transition: "color 0.2s ease",
+              color: active ? "#1A3A2A" : "#9CA3AF",
             }}
           >
-            <TabIcon name={tab.label} active={!!active} />
+            <div style={{
+              transition: "transform 0.2s ease",
+              transform: active ? "scale(1.1)" : "scale(1)",
+            }}>
+              <TabIcon name={tab.label} active={!!active} />
+            </div>
             <span
               style={{
                 fontSize: "11px",
                 fontWeight: active ? 700 : 500,
                 letterSpacing: "0.3px",
+                transition: "font-weight 0.15s ease",
               }}
             >
               {tab.label}
             </span>
-            {active && (
-              <span
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  width: "32px",
-                  height: "2px",
-                  background: "#1A3A2A",
-                  borderRadius: "2px 2px 0 0",
-                }}
-              />
-            )}
+            <span
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: active ? "32px" : "0px",
+                height: "2px",
+                background: "#1A3A2A",
+                borderRadius: "2px 2px 0 0",
+                transition: "width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            />
           </Link>
         );
       })}

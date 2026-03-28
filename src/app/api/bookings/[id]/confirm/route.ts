@@ -15,7 +15,7 @@ export async function POST(
 
     const booking = await db.booking.findUnique({
       where: { id },
-      include: { payment: true, pro: true },
+      include: { payment: true, pro: true, service: true },
     });
 
     if (!booking)
@@ -74,6 +74,18 @@ export async function POST(
 
     // Award points for booking confirmation
     await awardPoints(session.userId, POINTS.BOOKING_COMPLETION, "Booking confirmed", id).catch(() => {});
+
+    // Send confirmation email (fire-and-forget)
+    import("@/lib/email-notify").then(({ emailServiceConfirmed }) =>
+      emailServiceConfirmed({
+        id,
+        totalAmount: booking.totalAmount,
+        customerId: booking.customerId,
+        service: { name: booking.service.name },
+        pro: { name: booking.pro!.name },
+        pointsEarned: POINTS.BOOKING_COMPLETION,
+      }),
+    ).catch(() => {});
 
     // Check for unpaid referral — award referrer on first confirmed booking
     const referral = await db.referral.findFirst({

@@ -22,7 +22,7 @@ export async function POST(
 
     const booking = await db.booking.findUnique({
       where: { id },
-      include: { customer: true, payment: true, pro: true },
+      include: { customer: true, payment: true, pro: true, service: true },
     });
 
     if (!booking) {
@@ -102,13 +102,21 @@ export async function POST(
       }
     }
 
-    // Notify customer
+    // Notify customer (WhatsApp + email)
     try {
       await notifyCustomerBookingCancelled(
         booking.customer.phone,
         reason || "Booking cancelled",
       );
     } catch {}
+    import("@/lib/email-notify").then(({ emailBookingCancelled }) =>
+      emailBookingCancelled({
+        reference: booking.reference,
+        customerId: booking.customerId,
+        service: { name: booking.service.name },
+        refundAmount: refundAmount > 0 ? refundAmount : undefined,
+      }),
+    ).catch(() => {});
 
     return NextResponse.json({
       success: true,

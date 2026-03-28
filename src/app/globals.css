@@ -113,6 +113,15 @@
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── MOBILE TOUCH FEEL ──────────────────────────────────── */
+@media (hover: none) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }
 
 body {
@@ -221,11 +230,15 @@ button:focus-visible,
   gap: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'DM Sans', sans-serif;
   border: none;
   white-space: nowrap;
   text-decoration: none;
+}
+.btn:active {
+  transform: scale(0.97);
+  transition-duration: 0.1s;
 }
 
 .btn-forest {
@@ -446,8 +459,9 @@ button:focus-visible,
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+    border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.2s ease;
   -webkit-appearance: none;
 }
 .input:focus {
@@ -657,6 +671,10 @@ button:focus-visible,
 }
 @keyframes swooshDraw {
   to { stroke-dashoffset: 0; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
 .opacity-0 {
