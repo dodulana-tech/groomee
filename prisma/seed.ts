@@ -75,11 +75,12 @@ async function main() {
   // Create default super admin user
   const superAdminRole = roles.find((r) => r.slug === "super-admin");
   const adminPhone = process.env.ADMIN_PHONES?.split(",")[0]?.trim() ?? "+2347067921202";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "kiitan@groomeeapp.com";
   if (superAdminRole) {
     await prisma.user.upsert({
       where: { phone: adminPhone },
-      update: { role: "ADMIN", adminRoleId: superAdminRole.id },
-      create: { phone: adminPhone, name: "Admin", role: "ADMIN", adminRoleId: superAdminRole.id },
+      update: { role: "ADMIN", adminRoleId: superAdminRole.id, email: adminEmail },
+      create: { phone: adminPhone, email: adminEmail, name: "Admin", role: "ADMIN", adminRoleId: superAdminRole.id },
     });
     // Also assign to any other ADMIN users missing a role
     await prisma.user.updateMany({
@@ -87,7 +88,7 @@ async function main() {
       data: { adminRoleId: superAdminRole.id },
     });
   }
-  console.log(`✅ Super admin: ${adminPhone}`);
+  console.log(`✅ Super admin: ${adminPhone} / ${adminEmail}`);
 
   // ── ZONES ────────────────────────────────────────────────
   const zones = await Promise.all([
