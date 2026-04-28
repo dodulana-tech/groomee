@@ -9,6 +9,8 @@ import {
 import { isValidNigerianPhone } from "@/lib/utils";
 import { db } from "@/lib/db";
 
+const TEMP_PHONE_PREFIX = "+234_email_";
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -32,6 +34,46 @@ export async function POST(req: NextRequest) {
     const linked = await linkPhoneToUser(session.userId, phone);
 
     if (!linked) {
+      // Phone is taken by another account. If the current session is on a
+      // temp email-only user, treat this as the user re-finding their original
+      // phone-based account: merge the temp user's email onto the existing
+      // account, drop the temp, and sign in as the existing user.
+      const sessionUser = await db.user.findUnique({
+        where: { id: session.userId },
+      });
+      const owner = await db.user.findFirst({ where: { phone } });
+
+      if (
+        sessionUser &&
+        owner &&
+        sessionUser.id !== owner.id &&
+        sessionUser.phone.startsWith(TEMP_PHONE_PREFIX)
+      ) {
+        // Only copy the email over if the existing account doesn't already have one,
+        // so we never silently overwrite a user-set address.
+        if (!owner.email && sessionUser.email) {
+          await db.user.update({
+            where: { id: owner.id },
+            data: { email: sessionUser.email },
+          });
+        }
+        await db.user.delete({ where: { id: sessionUser.id } });
+
+        const merged = await db.user.findUnique({ where: { id: owner.id } });
+        if (merged) {
+          const token = await signUserToken(merged);
+          await setSessionCookie(token);
+        }
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            message: "Welcome back! We linked this email to your existing account.",
+            merged: true,
+          },
+        });
+      }
+
       return NextResponse.json(
         {
           success: false,

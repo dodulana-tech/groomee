@@ -152,17 +152,28 @@ export async function verifyOtp(
 
 // ─── EMAIL OTP ───────────────────────────────────────────────────────────────
 
+const TEMP_PHONE_PREFIX = "+234_email_";
+
+// Prefer a fully linked user (real phone) over an email-only temp user when
+// the same email exists on multiple records.
+async function findUserByEmailPreferLinked(email: string) {
+  return (
+    (await db.user.findFirst({
+      where: { email, NOT: { phone: { startsWith: TEMP_PHONE_PREFIX } } },
+    })) ?? (await db.user.findFirst({ where: { email } }))
+  );
+}
+
 export async function createOtpByEmail(
   email: string,
 ): Promise<{ otp: string; userId: string; isNewUser: boolean }> {
-  // Find existing user by email
-  let user = await db.user.findFirst({ where: { email } });
+  let user = await findUserByEmailPreferLinked(email);
   const isNewUser = !user;
 
   if (!user) {
     // Create a temporary user with a placeholder phone
     // The real phone will be collected after email verification
-    const tempPhone = `+234_email_${Date.now()}`;
+    const tempPhone = `${TEMP_PHONE_PREFIX}${Date.now()}`;
     user = await db.user.create({
       data: { phone: tempPhone, email, role: "CUSTOMER" },
     });
@@ -210,12 +221,12 @@ export async function verifyOtpByEmail(
     data: { usedAt: new Date() },
   });
 
-  const user = await db.user.findFirst({ where: { email } });
+  const user = await findUserByEmailPreferLinked(email);
   if (!user) return null;
 
   const isNewUser = !user.name;
   // Check if this user has a real phone number (not the temp placeholder)
-  const needsPhone = user.phone.startsWith("+234_email_");
+  const needsPhone = user.phone.startsWith(TEMP_PHONE_PREFIX);
 
   return {
     userId: user.id,
