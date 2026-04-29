@@ -84,16 +84,7 @@ export function generateOtp(): string {
   return randomInt(100000, 999999).toString();
 }
 
-export async function createOtp(
-  phone: string,
-): Promise<{ otp: string; userId: string }> {
-  // Upsert user by phone
-  const user = await db.user.upsert({
-    where: { phone },
-    update: {},
-    create: { phone, role: isAdmin(phone) ? "ADMIN" : "CUSTOMER" },
-  });
-
+export async function createOtp(phone: string): Promise<{ otp: string }> {
   // Invalidate old OTPs for this phone
   await db.otpCode.updateMany({
     where: { phone, usedAt: null },
@@ -107,7 +98,7 @@ export async function createOtp(
     data: { phone, code: otp, expiresAt },
   });
 
-  return { otp, userId: user.id };
+  return { otp };
 }
 
 export async function verifyOtp(
@@ -133,7 +124,7 @@ export async function verifyOtp(
 
   if (consumed.count === 0) return null; // Another request consumed it first
 
-  // Find or create user
+  // Defer user creation until first successful verification.
   const existingUser = await db.user.findUnique({ where: { phone } });
   const isNewUser = !existingUser?.name;
 
@@ -164,21 +155,7 @@ async function findUserByEmailPreferLinked(email: string) {
   );
 }
 
-export async function createOtpByEmail(
-  email: string,
-): Promise<{ otp: string; userId: string; isNewUser: boolean }> {
-  let user = await findUserByEmailPreferLinked(email);
-  const isNewUser = !user;
-
-  if (!user) {
-    // Create a temporary user with a placeholder phone
-    // The real phone will be collected after email verification
-    const tempPhone = `${TEMP_PHONE_PREFIX}${Date.now()}`;
-    user = await db.user.create({
-      data: { phone: tempPhone, email, role: "CUSTOMER" },
-    });
-  }
-
+export async function createOtpByEmail(email: string): Promise<{ otp: string }> {
   // Invalidate old OTPs for this email
   await db.otpCode.updateMany({
     where: { phone: `email:${email}`, usedAt: null },
@@ -193,7 +170,7 @@ export async function createOtpByEmail(
     data: { phone: `email:${email}`, code: otp, expiresAt },
   });
 
-  return { otp, userId: user.id, isNewUser };
+  return { otp };
 }
 
 export async function verifyOtpByEmail(
@@ -221,8 +198,20 @@ export async function verifyOtpByEmail(
     data: { usedAt: new Date() },
   });
 
-  const user = await findUserByEmailPreferLinked(email);
-  if (!user) return null;
+  let user = await findUserByEmailPreferLinked(email);
+
+  // Defer user creation until verification: only create the temp record
+  // once the user proves ownership of the email by entering the OTP.
+  if (!user) {
+    const tempPhone = `${TEMP_PHONE_PREFIX}${Date.now()}`;
+    user = await db.user.create({
+      data: {
+        phone: tempPhone,
+        email,
+        role: isAdminEmail(email) ? "ADMIN" : "CUSTOMER",
+      },
+    });
+  }
 
   const isNewUser = !user.name;
   // Check if this user has a real phone number (not the temp placeholder)
@@ -345,8 +334,21 @@ export function hasAnyPermission(
 function isAdmin(phone: string): boolean {
   const adminPhones = (process.env.ADMIN_PHONES ?? "")
     .split(",")
-    .map((p) => p.trim());
+    .map((p) => p.trim())
+    .filter(Boolean);
   return adminPhones.includes(phone);
+}
+
+export function isAdminEmail(email: string): boolean {
+  // Accepts ADMIN_EMAILS (comma-separated list) and the singular ADMIN_EMAIL
+  // (used by prisma/seed.ts) as a fallback so both stay in sync.
+  const list = [
+    ...(process.env.ADMIN_EMAILS ?? "").split(","),
+    process.env.ADMIN_EMAIL ?? "",
+  ]
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.trim().toLowerCase());
 }
 
 export function formatPhone(phone: string): string {

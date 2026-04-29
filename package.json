@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
+    "gc:temp-users": "tsx scripts/gc-temp-users.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

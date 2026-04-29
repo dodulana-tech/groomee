@@ -34,11 +34,18 @@ function formatNaira(amount: number): string {
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function AdminDashboard() {
+  let session;
   try {
-    await requireAdmin();
+    session = await requireAdmin();
   } catch {
     redirect("/admin/login");
   }
+
+  const adminUser = await db.user.findUnique({
+    where: { id: session.userId },
+    select: { name: true },
+  });
+  const firstName = adminUser?.name?.trim().split(/\s+/)[0] ?? "there";
 
   const now = new Date();
   const today = startOfDay(now);
@@ -167,7 +174,7 @@ export default async function AdminDashboard() {
               : now.getHours() < 17
                 ? "afternoon"
                 : "evening"}
-            , Amaka 👋
+            , {firstName} 👋
           </h2>
           <p className="text-gray-400 text-sm mt-0.5">
             {now.toLocaleDateString("en-NG", {

@@ -28,7 +28,9 @@ export default function AdminLoginPage() {
           ? "/api/auth/send-otp"
           : "/api/auth/send-email-otp";
       const body =
-        method === "phone" ? { phone } : { email };
+        method === "phone"
+          ? { phone, purpose: "admin" }
+          : { email, purpose: "admin" };
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
