@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { subDays, startOfDay, startOfMonth } from "date-fns";
+import { subDays, startOfDay, startOfMonth, differenceInDays } from "date-fns";
 
 export const revalidate = 0;
 
@@ -11,17 +12,30 @@ function formatNaira(amount: number): string {
   return `\u20A6${amount.toLocaleString()}`;
 }
 
-export default async function AnalyticsPage() {
+interface Props {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}
+
+export default async function AnalyticsPage({ searchParams }: Props) {
   try {
     await requireAdmin();
   } catch {
     redirect("/admin/login");
   }
 
+  const sp = await searchParams;
   const now = new Date();
   const today = startOfDay(now);
+  const defaultFrom = sp.from ? new Date(sp.from) : startOfMonth(now);
+  const defaultTo = sp.to ? new Date(sp.to) : now;
+  // For the 30-day trend chart we still pin to last 30 days for visual stability,
+  // but the KPIs honour the user-chosen range.
   const thirtyDaysAgo = subDays(today, 30);
-  const monthStart = startOfMonth(now);
+  const monthStart = defaultFrom;
+  const rangeEnd = new Date(defaultTo);
+  rangeEnd.setHours(23, 59, 59, 999);
+  const rangeDays = Math.max(1, differenceInDays(rangeEnd, defaultFrom) + 1);
+  const exportQs = `from=${defaultFrom.toISOString().slice(0, 10)}&to=${defaultTo.toISOString().slice(0, 10)}`;
 
   const [
     monthlyRevenue,
@@ -36,14 +50,14 @@ export default async function AnalyticsPage() {
     bookingTrend,
     surveyByType,
   ] = await Promise.all([
-    // Monthly revenue
+    // Range revenue
     db.payment.aggregate({
-      where: { status: "CAPTURED", capturedAt: { gte: monthStart } },
+      where: { status: "CAPTURED", capturedAt: { gte: monthStart, lte: rangeEnd } },
       _sum: { amount: true },
     }),
-    // Monthly bookings
+    // Range bookings
     db.booking.count({
-      where: { createdAt: { gte: monthStart } },
+      where: { createdAt: { gte: monthStart, lte: rangeEnd } },
     }),
     // Total customers
     db.user.count({ where: { role: "CUSTOMER" } }),
@@ -122,18 +136,89 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
-        <p className="text-sm text-gray-400 mt-0.5">
-          Platform performance, surveys, waitlist, and pro leaderboard
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
+          <p className="text-sm text-gray-400 mt-0.5">
+            Platform performance, surveys, waitlist, and pro leaderboard · {rangeDays} day{rangeDays !== 1 ? "s" : ""} selected
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`/api/admin/analytics/export?type=bookings&${exportQs}`}
+            className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200"
+          >
+            ⬇ Bookings CSV
+          </a>
+          <a
+            href={`/api/admin/analytics/export?type=payments&${exportQs}`}
+            className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200"
+          >
+            ⬇ Payments CSV
+          </a>
+          <a
+            href={`/api/admin/analytics/export?type=surveys&${exportQs}`}
+            className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200"
+          >
+            ⬇ Surveys CSV
+          </a>
+          <a
+            href={`/api/admin/analytics/export?type=waitlist&${exportQs}`}
+            className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-2 rounded-xl hover:bg-gray-200"
+          >
+            ⬇ Waitlist CSV
+          </a>
+        </div>
       </div>
+
+      {/* Date range form */}
+      <form
+        method="GET"
+        className="flex flex-wrap items-end gap-2 rounded-2xl bg-white border border-gray-100 p-3"
+      >
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            From
+          </label>
+          <input
+            type="date"
+            name="from"
+            defaultValue={defaultFrom.toISOString().slice(0, 10)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            To
+          </label>
+          <input
+            type="date"
+            name="to"
+            defaultValue={defaultTo.toISOString().slice(0, 10)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+          />
+        </div>
+        <button
+          type="submit"
+          className="bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-brand-700"
+        >
+          Apply range
+        </button>
+        {(sp.from || sp.to) && (
+          <Link
+            href="/admin/analytics"
+            className="text-sm font-semibold text-gray-500 px-3 py-2 rounded-xl hover:bg-gray-100"
+          >
+            Reset to month-to-date
+          </Link>
+        )}
+      </form>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {[
-          { label: "Monthly Revenue", value: formatNaira(monthlyRevenue._sum.amount ?? 0), icon: "💰" },
-          { label: "Monthly Bookings", value: String(monthlyBookings), icon: "📋" },
+          { label: "Range Revenue", value: formatNaira(monthlyRevenue._sum.amount ?? 0), icon: "💰" },
+          { label: "Range Bookings", value: String(monthlyBookings), icon: "📋" },
           { label: "Total Customers", value: String(totalCustomers), icon: "👥" },
           { label: "Active Pros", value: String(totalPros), icon: "💇" },
           { label: "Waitlist Signups", value: String(totalWaitlist), icon: "📝" },
