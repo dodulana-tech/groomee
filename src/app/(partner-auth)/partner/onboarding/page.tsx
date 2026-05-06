@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LOGO_TEAL_BASE64 } from "@/lib/logo";
+import { formatPhone, isValidNigerianPhone } from "@/lib/utils";
 
 type Step = "info" | "services" | "zones" | "pricing" | "bank" | "terms";
 
@@ -52,6 +53,42 @@ export default function PartnerOnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [emailWarning, setEmailWarning] = useState<string | null>(null);
+  const [sessionPhone, setSessionPhone] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+
+  // Pre-flight: confirm the user is signed in and prefill phone/email from
+  // their session. Email-only users (no linked phone) are funnelled through
+  // the auth page first so we don't dump them mid-form with a 400 later.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        if (!res.ok || !data?.data) {
+          router.push("/auth?redirect=/partner/onboarding");
+          return;
+        }
+        const u = data.data;
+        if (u.phone) {
+          setSessionPhone(u.phone);
+          setPhone(u.phone);
+        }
+        if (u.email && !email) {
+          setEmail(u.email);
+        }
+        if (u.name && !name) {
+          setName(u.name);
+        }
+      } catch {
+        router.push("/auth?redirect=/partner/onboarding");
+        return;
+      } finally {
+        setSessionLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const currentIndex = STEPS.findIndex((s) => s.key === step);
   const pct = ((currentIndex + 1) / STEPS.length) * 100;
@@ -80,34 +117,96 @@ export default function PartnerOnboardingPage() {
     );
   }
 
+  async function submitOnboarding(): Promise<{
+    ok: boolean;
+    needsPhone?: boolean;
+    error?: string;
+    emailWarning?: string | null;
+  }> {
+    const res = await fetch("/api/partner/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        phone,
+        email,
+        bio,
+        services: selectedServices,
+        zones: selectedZones,
+        bankName,
+        bankAccount,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return {
+        ok: false,
+        needsPhone: Boolean(data?.needsPhone),
+        error: data?.error ?? "Something went wrong. Please try again.",
+      };
+    }
+    return { ok: true, emailWarning: data?.data?.emailWarning ?? null };
+  }
+
   async function handleSubmit() {
     setLoading(true);
     setError("");
+    setEmailWarning(null);
     try {
-      const res = await fetch("/api/partner/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phone,
-          email,
-          bio,
-          services: selectedServices,
-          zones: selectedZones,
-          bankName,
-          bankAccount,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Something went wrong. Please try again.");
-        setLoading(false);
+      let result = await submitOnboarding();
+
+      // If the API tells us the user has no linked phone, attempt to link the
+      // phone they typed in the form, then retry. Avoids dumping email-only
+      // users at a confusing 400.
+      if (!result.ok && result.needsPhone) {
+        if (!isValidNigerianPhone(phone)) {
+          setError(
+            "Please enter a valid Nigerian phone number on the first step — we need it linked to your account.",
+          );
+          setStep("info");
+          return;
+        }
+        const linkRes = await fetch("/api/auth/link-phone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: formatPhone(phone) }),
+        });
+        const linkData = await linkRes.json();
+        if (!linkRes.ok) {
+          if (linkRes.status === 409) {
+            setError(
+              "That phone is already on another Groomee account. Please log in with that phone first, then come back to apply.",
+            );
+          } else {
+            setError(linkData?.error ?? "We couldn't link that phone number. Please check it and try again.");
+          }
+          setStep("info");
+          return;
+        }
+        // Retry now that the phone is linked.
+        result = await submitOnboarding();
+      }
+
+      if (!result.ok) {
+        setError(result.error ?? "Something went wrong. Please try again.");
         return;
+      }
+
+      if (result.emailWarning) {
+        setEmailWarning(result.emailWarning);
       }
       setSubmitted(true);
     } finally {
       setLoading(false);
     }
+  }
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-cream-50">
+        <div className="text-sm text-gray-400">Loading…</div>
+      </div>
+    );
   }
 
   if (submitted) {
@@ -131,6 +230,11 @@ export default function PartnerOnboardingPage() {
             24-48 hours. You&apos;ll receive a WhatsApp message when you&apos;re
             approved.
           </p>
+          {emailWarning && (
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left text-sm text-amber-800">
+              ⚠️ {emailWarning}
+            </div>
+          )}
           <div className="glass rounded-2xl border border-white/20 p-5 shadow-lg mb-6">
             <h3 className="font-bold text-gray-900 mb-3">What happens next?</h3>
             <div className="space-y-3 text-sm text-left">
@@ -230,7 +334,20 @@ export default function PartnerOnboardingPage() {
               </div>
               <div>
                 <label className="input-label mb-1">Phone number</label>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="input" placeholder="0801 234 5678" required />
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input"
+                  placeholder="0801 234 5678"
+                  readOnly={Boolean(sessionPhone)}
+                  required
+                />
+                {sessionPhone && (
+                  <p className="mt-1 text-xs text-gray-400">
+                    Linked to your account — change it later from your profile.
+                  </p>
+                )}
               </div>
               <div>
                 <label className="input-label mb-1">Email (optional)</label>

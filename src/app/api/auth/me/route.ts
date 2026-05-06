@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, clearSessionCookie, requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { touchAdminActivity } from "@/lib/admin-audit";
 
 // GET /api/auth/me
 export async function GET() {
@@ -22,6 +23,8 @@ export async function GET() {
       createdAt: true,
     },
   });
+  // Update lastActiveAt for admins (throttled internally).
+  await touchAdminActivity(session.userId, session.role);
   return NextResponse.json({ success: true, data: user });
 }
 

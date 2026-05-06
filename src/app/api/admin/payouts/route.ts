@@ -3,6 +3,7 @@ import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { initiateTransfer, createTransferRecipient } from "@/lib/paystack";
 import { startOfWeek, endOfWeek, subWeeks } from "date-fns";
+import { logAdminAction } from "@/lib/admin-audit";
 
 export async function GET() {
   try {
@@ -135,6 +136,22 @@ export async function POST(req: NextRequest) {
         console.error(`Payout failed for pro ${proId}:`, err);
         results.push({ proId, success: false, reason: "Payout processing failed" });
       }
+    }
+
+    const successful = results.filter((r) => r.success);
+    if (successful.length > 0) {
+      await logAdminAction({
+        adminId: session!.userId,
+        action: "payout.process",
+        entityType: "payout_batch",
+        entityId: `batch-${Date.now()}`,
+        metadata: {
+          attemptedCount: results.length,
+          successCount: successful.length,
+          totalAmount: successful.reduce((sum, r) => sum + (r.amount ?? 0), 0),
+          proIds: successful.map((r) => r.proId),
+        },
+      });
     }
 
     return NextResponse.json({ success: true, data: results });

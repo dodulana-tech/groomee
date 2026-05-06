@@ -22,6 +22,22 @@ interface TeamMember {
   adminRoleId: string | null;
   adminRole: { id: string; name: string; slug: string } | null;
   createdAt: string;
+  lastActiveAt: string | null;
+}
+
+interface ActivityRow {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  admin: { id: string; name: string | null; phone: string; email: string | null };
+}
+
+interface TeamMeta {
+  count: number;
+  cap: number;
 }
 
 // ─── PERMISSION GROUPS (mirrors server) ──────────────────────────────────────
@@ -124,8 +140,9 @@ const PERMISSION_GROUPS = [
 // ─── PAGE ────────────────────────────────────────────────────────────────────
 
 export default function TeamPage() {
-  const [tab, setTab] = useState<"members" | "roles">("members");
+  const [tab, setTab] = useState<"members" | "roles" | "activity">("members");
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [meta, setMeta] = useState<TeamMeta | null>(null);
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,7 +163,10 @@ export default function TeamPage() {
       ]);
       const membersData = await membersRes.json();
       const rolesData = await rolesRes.json();
-      if (membersData.success) setMembers(membersData.data);
+      if (membersData.success) {
+        setMembers(membersData.data);
+        if (membersData.meta) setMeta(membersData.meta);
+      }
       if (rolesData.success) setRoles(rolesData.data);
     } catch {
       setError("Failed to load team data");
@@ -154,6 +174,8 @@ export default function TeamPage() {
       setLoading(false);
     }
   }, []);
+
+  const atCap = Boolean(meta && meta.count >= meta.cap);
 
   useEffect(() => {
     fetchData();
@@ -178,23 +200,43 @@ export default function TeamPage() {
           <h2 className="text-xl font-bold text-gray-900">Team Management</h2>
           <p className="text-sm text-gray-400 mt-0.5">
             Manage admin users and their roles
+            {meta && (
+              <>
+                {" "}&middot;{" "}
+                <span
+                  className={`font-semibold ${atCap ? "text-amber-600" : "text-gray-500"}`}
+                >
+                  {meta.count}/{meta.cap} admins
+                </span>
+              </>
+            )}
           </p>
         </div>
-        <button
-          onClick={() => (tab === "members" ? setShowInvite(true) : setShowRoleForm(true))}
-          className="text-sm font-semibold text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition-colors"
-        >
-          {tab === "members" ? "+ Invite member" : "+ Create role"}
-        </button>
+        {tab !== "activity" && (
+          <button
+            onClick={() => (tab === "members" ? setShowInvite(true) : setShowRoleForm(true))}
+            disabled={tab === "members" && atCap}
+            title={tab === "members" && atCap ? "Admin team is at capacity" : undefined}
+            className="text-sm font-semibold text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {tab === "members" ? "+ Invite member" : "+ Create role"}
+          </button>
+        )}
       </div>
 
       {error && (
         <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>
       )}
 
+      {atCap && tab === "members" && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          ⚠️ Admin team is at capacity ({meta?.cap}). Remove a member before inviting another.
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {(["members", "roles"] as const).map((t) => (
+        {(["members", "roles", "activity"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -204,19 +246,24 @@ export default function TeamPage() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            {t === "members" ? `Members (${members.length})` : `Roles (${roles.length})`}
+            {t === "members"
+              ? `Members (${members.length})`
+              : t === "roles"
+                ? `Roles (${roles.length})`
+                : "Activity"}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      {tab === "members" ? (
+      {tab === "members" && (
         <MembersTable
           members={members}
           roles={roles}
           onEdit={setEditingMember}
         />
-      ) : (
+      )}
+      {tab === "roles" && (
         <RolesGrid
           roles={roles}
           onEdit={(role) => {
@@ -232,6 +279,7 @@ export default function TeamPage() {
           }}
         />
       )}
+      {tab === "activity" && <ActivityTab />}
 
       {/* Invite modal */}
       {showInvite && (
@@ -283,7 +331,7 @@ function MembersTable({
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100">
-            {["Name", "Phone", "Role", "Joined", "Actions"].map((h) => (
+            {["Name", "Phone", "Role", "Last active", "Joined", "Actions"].map((h) => (
               <th
                 key={h}
                 className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-5 py-3"
@@ -320,6 +368,9 @@ function MembersTable({
                 </span>
               </td>
               <td className="px-5 py-3.5 text-gray-400 text-xs">
+                {formatRelative(m.lastActiveAt)}
+              </td>
+              <td className="px-5 py-3.5 text-gray-400 text-xs">
                 {new Date(m.createdAt).toLocaleDateString("en-NG", {
                   day: "numeric",
                   month: "short",
@@ -338,13 +389,139 @@ function MembersTable({
           ))}
           {members.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-5 py-12 text-center text-gray-400">
+              <td colSpan={6} className="px-5 py-12 text-center text-gray-400">
                 No team members yet. Invite your first admin.
               </td>
             </tr>
           )}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function formatRelative(iso: string | null): string {
+  if (!iso) return "Never";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60_000) return "Just now";
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-NG", { day: "numeric", month: "short" });
+}
+
+// ─── ACTIVITY TAB ────────────────────────────────────────────────────────────
+
+function ActivityTab() {
+  const [rows, setRows] = useState<ActivityRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/activity?page=${page}`);
+        const data = await res.json();
+        if (cancelled) return;
+        if (data.success) {
+          setRows(data.data);
+          setTotalPages(data.meta?.totalPages ?? 1);
+          setError(null);
+        } else {
+          setError(data.error ?? "Failed to load activity");
+        }
+      } catch {
+        if (!cancelled) setError("Failed to load activity");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
+
+  if (loading && rows.length === 0) {
+    return <div className="text-sm text-gray-400">Loading activity…</div>;
+  }
+  if (error) {
+    return <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>;
+  }
+
+  return (
+    <div className="glass-card rounded-2xl overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-gray-100">
+            {["When", "Admin", "Action", "Target"].map((h) => (
+              <th
+                key={h}
+                className="text-left text-xs font-bold text-gray-400 uppercase tracking-wider px-5 py-3"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+              <td className="px-5 py-3 text-xs text-gray-400 whitespace-nowrap">
+                {new Date(r.createdAt).toLocaleString("en-NG", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </td>
+              <td className="px-5 py-3 text-sm text-gray-700">
+                {r.admin?.name ?? r.admin?.phone ?? "Unknown"}
+              </td>
+              <td className="px-5 py-3 text-sm font-mono text-gray-600">
+                {r.action}
+              </td>
+              <td className="px-5 py-3 text-xs text-gray-500 font-mono">
+                {r.entityType}: {r.entityId.slice(0, 8)}…
+              </td>
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr>
+              <td colSpan={4} className="px-5 py-12 text-center text-gray-400">
+                No activity recorded yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            ← Previous
+          </button>
+          <span className="text-xs text-gray-400">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className="text-xs font-semibold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Next →
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -438,6 +615,7 @@ function InviteModal({
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [roleId, setRoleId] = useState(roles[0]?.id || "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -450,7 +628,7 @@ function InviteModal({
     const res = await fetch("/api/admin/team", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, roleId }),
+      body: JSON.stringify({ name, phone, email: email || undefined, roleId }),
     });
     const data = await res.json();
 
@@ -495,6 +673,19 @@ function InviteModal({
             required
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
             placeholder="+2348012345678"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">
+            Email <span className="font-normal text-gray-400">(optional — for invite & email login)</span>
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
+            placeholder="amaka@groomee.ng"
           />
         </div>
 

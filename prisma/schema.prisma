@@ -79,11 +79,13 @@ model User {
   id                String         @id @default(cuid())
   phone             String?        @unique
   name              String?
-  email             String?
+  email             String?        @unique
   role              UserRole       @default(CUSTOMER)
   points            Int            @default(0)
   adminRoleId       String?
   adminRole         AdminRole?     @relation(fields: [adminRoleId], references: [id])
+  lastActiveAt      DateTime?
+  sessionsValidFrom DateTime?
   bookings          Booking[]
   favouritePros     FavouritePro[]
   beautyProfile     BeautyProfile?

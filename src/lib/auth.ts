@@ -51,10 +51,48 @@ export async function clearSessionCookie() {
 
 // ─── SERVER-SIDE SESSION ──────────────────────────────────────────────────────
 
+// In-memory cache of `sessionsValidFrom` per user so we don't hit the DB on
+// every request. Short TTL — the goal is just to coalesce burst traffic.
+const SESSION_VALIDITY_TTL_MS = 30_000;
+const sessionValidityCache = new Map<string, { validFrom: number; checkedAt: number }>();
+
+async function isSessionRevoked(payload: SessionPayload): Promise<boolean> {
+  // Only admins are subject to forced revocation today (demote/remove flow).
+  // Non-admin sessions don't pay this DB cost.
+  if (payload.role !== "ADMIN") return false;
+  const tokenIat = payload.iat ?? 0; // seconds
+  if (!tokenIat) return false;
+
+  const cached = sessionValidityCache.get(payload.userId);
+  const now = Date.now();
+  let validFrom: number;
+  if (cached && now - cached.checkedAt < SESSION_VALIDITY_TTL_MS) {
+    validFrom = cached.validFrom;
+  } else {
+    const user = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: { sessionsValidFrom: true, role: true },
+    });
+    if (!user) return true; // user gone — kill the session
+    if (user.role !== "ADMIN") return true; // demoted — kill the session
+    validFrom = user.sessionsValidFrom ? Math.floor(user.sessionsValidFrom.getTime() / 1000) : 0;
+    sessionValidityCache.set(payload.userId, { validFrom, checkedAt: now });
+  }
+
+  return tokenIat < validFrom;
+}
+
+export function invalidateSessionCache(userId: string) {
+  sessionValidityCache.delete(userId);
+}
+
 export async function getSession(): Promise<SessionPayload | null> {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifyToken(token);
+  const payload = await verifyToken(token);
+  if (!payload) return null;
+  if (await isSessionRevoked(payload)) return null;
+  return payload;
 }
 
 export async function getSessionFromRequest(
@@ -62,7 +100,10 @@ export async function getSessionFromRequest(
 ): Promise<SessionPayload | null> {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifyToken(token);
+  const payload = await verifyToken(token);
+  if (!payload) return null;
+  if (await isSessionRevoked(payload)) return null;
+  return payload;
 }
 
 export async function requireSession(): Promise<SessionPayload> {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createRefund } from "@/lib/paystack";
+import { logAdminAction } from "@/lib/admin-audit";
 
 export async function POST(
   req: NextRequest,
@@ -123,6 +124,19 @@ export async function POST(
         data: { strikeCount: { increment: 1 } },
       });
     }
+
+    await logAdminAction({
+      adminId: session!.userId,
+      action: "dispute.resolve",
+      entityType: "dispute",
+      entityId: id,
+      metadata: {
+        bookingId: dispute.bookingId,
+        outcome,
+        refundAmount: finalRefund,
+        appliedStrike: Boolean(applyStrikeToPro && dispute.booking.proId),
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

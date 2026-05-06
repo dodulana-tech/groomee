@@ -30,6 +30,7 @@ function AuthPageContent() {
   const [needsPhone, setNeedsPhone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [phoneCollision, setPhoneCollision] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   function getSubtitle(): string {
@@ -188,6 +189,7 @@ function AuthPageContent() {
   async function linkPhone(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setPhoneCollision(false);
     if (!isValidNigerianPhone(phone)) {
       setError("Please enter a valid Nigerian phone number.");
       return;
@@ -201,12 +203,54 @@ function AuthPageContent() {
       });
       const data = await res.json();
       if (!res.ok) {
+        // 409: phone belongs to a different account. Offer "sign in with phone".
+        if (res.status === 409) {
+          setPhoneCollision(true);
+          setError(data.error);
+          return;
+        }
         setError(data.error);
+        return;
+      }
+      // If the API merged this email onto the existing phone-linked account,
+      // there is no fresh signup — drop the user back into their account.
+      if (data.data?.merged) {
+        router.push(redirect);
+        router.refresh();
         return;
       }
       setStep("name");
     } catch {
       setError("We couldn't link that number. Please check it and try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function switchToPhoneSignIn() {
+    // User landed on link-phone but the number belongs to a different account.
+    // Send an SMS OTP to that number so they can sign into the right account.
+    setError("");
+    setPhoneCollision(false);
+    setMethod("phone");
+    setOtp("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: formatPhone(phone) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Couldn't send a code. Please try again.");
+        setMethod("email");
+        return;
+      }
+      setStep("otp");
+    } catch {
+      setError("Hmm, that didn't work. Please try again.");
+      setMethod("email");
     } finally {
       setLoading(false);
     }
@@ -459,7 +503,10 @@ function AuthPageContent() {
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (phoneCollision) setPhoneCollision(false);
+                    }}
                     placeholder="0801 234 5678"
                     className="input flex-1"
                     autoComplete="tel"
@@ -469,13 +516,33 @@ function AuthPageContent() {
                 </div>
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary btn-lg w-full"
-              >
-                {loading ? "Linking…" : "Continue"}
-              </button>
+              {phoneCollision ? (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={switchToPhoneSignIn}
+                    disabled={loading}
+                    className="btn-primary btn-lg w-full"
+                  >
+                    {loading ? "Sending…" : "Sign in with this phone instead"}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn-ghost btn-md w-full"
+                  >
+                    Try a different number
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary btn-lg w-full"
+                >
+                  {loading ? "Linking…" : "Continue"}
+                </button>
+              )}
             </form>
           )}
 

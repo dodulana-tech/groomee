@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { logAdminAction } from "@/lib/admin-audit";
 
 export async function PATCH(
   req: NextRequest,
@@ -39,6 +40,14 @@ export async function PATCH(
         where: { id: proId },
         data: { availability: "BUSY", currentBookingId: id },
       });
+    });
+
+    await logAdminAction({
+      adminId: session!.userId,
+      action: "booking.assign",
+      entityType: "booking",
+      entityId: id,
+      metadata: { proId, proName: pro.name, previousStatus: booking.status },
     });
 
     return NextResponse.json({ success: true });

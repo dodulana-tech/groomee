@@ -18,11 +18,16 @@ export async function POST(request: Request) {
     // Use the authenticated user's phone — never trust the request body
     const sessionUser = await db.user.findUnique({
       where: { id: session.userId },
-      select: { phone: true },
+      select: { phone: true, email: true },
     });
     if (!sessionUser?.phone) {
       return NextResponse.json(
-        { success: false, error: "Could not resolve your phone number" },
+        {
+          success: false,
+          error:
+            "Please add a phone number to your account before applying. We need it to send booking alerts.",
+          needsPhone: true,
+        },
         { status: 400 },
       );
     }
@@ -75,14 +80,30 @@ export async function POST(request: Request) {
     // Note: User role stays CUSTOMER until admin approves the Pro (PENDING → ACTIVE).
     // The signUserToken function auto-detects approved Pro records and upgrades the role.
 
-    // Update the user email if provided
-    if (email) {
-      await db.user.update({
-        where: { id: session.userId },
-        data: { email },
-      }).catch(() => {
-        // Non-critical: email update may fail if duplicate
+    // Update the user email if provided AND it's different from what's set.
+    // Surface a warning instead of silently swallowing — duplicates have
+    // historically masked real problems.
+    let emailWarning: string | null = null;
+    if (email && email !== sessionUser.email) {
+      const normalised = String(email).toLowerCase().trim();
+      const taken = await db.user.findFirst({
+        where: { email: normalised, id: { not: session.userId } },
+        select: { id: true },
       });
+      if (taken) {
+        emailWarning =
+          "We kept your existing email — the one you entered is already linked to another account.";
+      } else {
+        try {
+          await db.user.update({
+            where: { id: session.userId },
+            data: { email: normalised },
+          });
+        } catch (err) {
+          console.error("partner onboarding: email update failed", err);
+          emailWarning = "We couldn't update your email — please change it later from your profile.";
+        }
+      }
     }
 
     // Resolve service IDs from category names (e.g. "HAIR", "MAKEUP")
@@ -129,7 +150,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: { proId: pro.id },
+      data: { proId: pro.id, ...(emailWarning ? { emailWarning } : {}) },
       message: "Onboarding application submitted",
     });
   } catch (err) {

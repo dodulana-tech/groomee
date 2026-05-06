@@ -209,6 +209,38 @@ export function reviewThankYouEmail(data: {
   };
 }
 
+// ── ADMIN INVITE ─────────────────────────────────────────
+
+export function adminInviteEmail(data: {
+  inviteeName: string;
+  inviterName: string | null;
+  roleName: string;
+  loginUrl?: string;
+}): { subject: string; html: string } {
+  const url = data.loginUrl ?? `${APP_URL}/admin/login`;
+  const greeting = data.inviteeName ? data.inviteeName.split(" ")[0] : "there";
+  return {
+    subject: `You've been added to the Groomee admin team`,
+    html: layout(`
+      <p class="hero-text">Welcome to the team, ${greeting}!</p>
+      <p class="body-text">
+        ${data.inviterName ? `${data.inviterName} added you` : "You were added"} to the Groomee admin
+        team as <span class="highlight">${data.roleName}</span>.
+      </p>
+      <p class="body-text">
+        Sign in with your phone or email to access the admin dashboard. We'll
+        send you a one-time code to verify it's really you.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${url}" class="cta">Sign in to admin</a>
+      </div>
+      <p class="muted" style="text-align: center;">
+        If you weren't expecting this, please contact ${data.inviterName ?? "the team"} or hello@groomeeapp.com.
+      </p>
+    `),
+  };
+}
+
 // ── NO PRO AVAILABLE ─────────────────────────────────────
 
 export function noProEmail(data: {
