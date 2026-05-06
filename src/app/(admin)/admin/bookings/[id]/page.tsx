@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { format } from "date-fns";
 import { formatNaira } from "@/lib/utils";
 import AssignProButton from "./AssignProButton";
+import BookingActions from "./BookingActions";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Booking Detail" };
@@ -395,6 +396,14 @@ export default async function AdminBookingDetailPage({
           </dl>
         </div>
       )}
+
+      <BookingActions
+        bookingId={booking.id}
+        currentStatus={booking.status}
+        bookingTotal={booking.totalAmount}
+        refundedSoFar={booking.payment?.refundAmount ?? 0}
+        hasPaystackPayment={Boolean(booking.payment?.paystackRef)}
+      />
 
       {/* Review */}
       {booking.review && (

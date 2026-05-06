@@ -8,13 +8,22 @@ import {
   getBookingStatusColor,
 } from "@/lib/utils";
 import type { Metadata } from "next";
+import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Bookings" };
 export const revalidate = 0;
 
 interface Props {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    q?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+  }>;
 }
+
+const PAGE_SIZE = 50;
 
 const STATUS_TABS = [
   { label: "All", value: "" },
@@ -25,55 +34,156 @@ const STATUS_TABS = [
   { label: "Disputed", value: "DISPUTED" },
 ];
 
+function buildQuery(params: {
+  status?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+}) {
+  const out = new URLSearchParams();
+  if (params.status) out.set("status", params.status);
+  if (params.q) out.set("q", params.q);
+  if (params.from) out.set("from", params.from);
+  if (params.to) out.set("to", params.to);
+  return out.toString();
+}
+
 export default async function AdminBookingsPage({ searchParams }: Props) {
-  const { status } = await searchParams;
+  const sp = await searchParams;
+  const status = sp.status;
+  const q = sp.q?.trim();
+  const from = sp.from;
+  const to = sp.to;
+  const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
+
   const statusFilter = status?.split(",") ?? undefined;
 
-  const bookings = await db.booking.findMany({
-    where: statusFilter
-      ? { status: { in: statusFilter as never[] } }
-      : undefined,
-    include: {
-      customer: { select: { name: true, phone: true } },
-      pro: { select: { name: true } },
-      service: { select: { name: true } },
-      zone: { select: { name: true } },
-      payment: { select: { status: true } },
-      dispute: { select: { status: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const where: Prisma.BookingWhereInput = {};
+  if (statusFilter) where.status = { in: statusFilter as never[] };
+  if (from || to) {
+    where.createdAt = {};
+    if (from) where.createdAt.gte = new Date(from);
+    if (to) {
+      const end = new Date(to);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
+  }
+  if (q) {
+    where.OR = [
+      { reference: { contains: q, mode: "insensitive" } },
+      { customer: { name: { contains: q, mode: "insensitive" } } },
+      { customer: { phone: { contains: q } } },
+      { pro: { name: { contains: q, mode: "insensitive" } } },
+      { service: { name: { contains: q, mode: "insensitive" } } },
+    ];
+  }
+
+  const [bookings, total] = await Promise.all([
+    db.booking.findMany({
+      where,
+      include: {
+        customer: { select: { name: true, phone: true } },
+        pro: { select: { name: true } },
+        service: { select: { name: true } },
+        zone: { select: { name: true } },
+        payment: { select: { status: true } },
+        dispute: { select: { status: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+    }),
+    db.booking.count({ where }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const baseQs = buildQuery({ status, q, from, to });
 
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
         <p className="mt-1 text-sm text-gray-500">
-          {bookings.length} bookings shown
+          {total} total · showing {bookings.length} (page {page} of {totalPages})
         </p>
       </div>
 
+      {/* Filters: search + date range */}
+      <form
+        method="GET"
+        className="mb-4 flex flex-wrap items-end gap-2 rounded-2xl bg-white border border-gray-100 p-3"
+      >
+        {status && <input type="hidden" name="status" value={status} />}
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            Search
+          </label>
+          <input
+            type="text"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Customer, phone, ref, pro, service…"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            From
+          </label>
+          <input
+            type="date"
+            name="from"
+            defaultValue={from ?? ""}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
+            To
+          </label>
+          <input
+            type="date"
+            name="to"
+            defaultValue={to ?? ""}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+          />
+        </div>
+        <button
+          type="submit"
+          className="bg-brand-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-brand-700"
+        >
+          Apply
+        </button>
+        {(q || from || to) && (
+          <Link
+            href={status ? `/admin/bookings?status=${status}` : "/admin/bookings"}
+            className="text-sm font-semibold text-gray-500 px-3 py-2 rounded-xl hover:bg-gray-100"
+          >
+            Reset
+          </Link>
+        )}
+      </form>
+
       {/* Status tabs */}
       <div className="mb-5 flex gap-1 overflow-x-auto pb-1">
-        {STATUS_TABS.map((tab) => (
-          <Link
-            key={tab.label}
-            href={
-              tab.value
-                ? `/admin/bookings?status=${tab.value}`
-                : "/admin/bookings"
-            }
-            className={cn(
-              "shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-              (tab.value === "" && !status) || status === tab.value
-                ? "bg-brand-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200",
-            )}
-          >
-            {tab.label}
-          </Link>
-        ))}
+        {STATUS_TABS.map((tab) => {
+          const tabQs = buildQuery({ status: tab.value, q, from, to });
+          return (
+            <Link
+              key={tab.label}
+              href={tabQs ? `/admin/bookings?${tabQs}` : "/admin/bookings"}
+              className={cn(
+                "shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                (tab.value === "" && !status) || status === tab.value
+                  ? "bg-brand-600 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200",
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Mobile card layout */}
@@ -114,65 +224,36 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 text-left">
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Ref
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Customer
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Service
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Pro
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Zone
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Value
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Date
-                </th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Ref</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Customer</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Service</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Pro</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Zone</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Value</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {bookings.map((b) => (
                 <tr key={b.id} className="hover:bg-gray-50/50">
-                  <td className="px-4 py-3 font-mono text-xs text-gray-500">
-                    {b.reference}
-                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">{b.reference}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium">{b.customer.name ?? "-"}</p>
                     <p className="text-xs text-gray-400">{b.customer.phone}</p>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{b.service.name}</td>
                   <td className="px-4 py-3 text-gray-600">
-                    {b.pro?.name ?? (
-                      <span className="text-gray-300">-</span>
-                    )}
+                    {b.pro?.name ?? <span className="text-gray-300">-</span>}
                   </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">
-                    {b.zone?.name ?? "-"}
-                  </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{b.zone?.name ?? "-"}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "status-pill",
-                        getBookingStatusColor(b.status),
-                      )}
-                    >
+                    <span className={cn("status-pill", getBookingStatusColor(b.status))}>
                       {getBookingStatusLabel(b.status)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-bold">
-                    {formatNaira(b.totalAmount)}
-                  </td>
+                  <td className="px-4 py-3 font-bold">{formatNaira(b.totalAmount)}</td>
                   <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                     {format(new Date(b.createdAt), "dd MMM, HH:mm")}
                   </td>
@@ -197,6 +278,47 @@ export default async function AdminBookingsPage({ searchParams }: Props) {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <Link
+            href={
+              page > 1
+                ? `/admin/bookings?${baseQs}${baseQs ? "&" : ""}page=${page - 1}`
+                : "#"
+            }
+            aria-disabled={page <= 1}
+            className={cn(
+              "rounded-xl px-4 py-2 font-semibold border border-gray-200",
+              page <= 1
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-gray-700 hover:bg-gray-50",
+            )}
+          >
+            ← Previous
+          </Link>
+          <span className="text-xs text-gray-400">
+            Page {page} of {totalPages}
+          </span>
+          <Link
+            href={
+              page < totalPages
+                ? `/admin/bookings?${baseQs}${baseQs ? "&" : ""}page=${page + 1}`
+                : "#"
+            }
+            aria-disabled={page >= totalPages}
+            className={cn(
+              "rounded-xl px-4 py-2 font-semibold border border-gray-200",
+              page >= totalPages
+                ? "text-gray-300 cursor-not-allowed"
+                : "text-gray-700 hover:bg-gray-50",
+            )}
+          >
+            Next →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
