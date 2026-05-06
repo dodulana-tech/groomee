@@ -65,6 +65,27 @@ enum DisputeStatus {
   CLOSED
 }
 
+enum ProRelationship {
+  INDEPENDENT
+  APPRENTICE
+  STAFF
+}
+
+enum ApprenticeshipStatus {
+  PENDING_ACCEPT
+  IN_TRAINING
+  READY_FOR_FREEDOM
+  FREED
+  TERMINATED
+}
+
+enum EarningType {
+  SERVICE
+  APPRENTICE_COMMISSION
+  TIP
+  ADJUSTMENT
+}
+
 enum ServiceCategory {
   HAIR
   MAKEUP
@@ -179,10 +200,73 @@ model Pro {
   strikes          Strike[]
   payouts          Payout[]
   schedule         ProSchedule[]
+
+  // ─── Apprenticeship / sub-account ───
+  relationship       ProRelationship @default(INDEPENDENT)
+  parentProId        String?
+  parent             Pro?            @relation("ParentPro", fields: [parentProId], references: [id])
+  dependents         Pro[]           @relation("ParentPro")
+  freedUnderProId    String?
+  freedUnder         Pro?            @relation("FreedomLineage", fields: [freedUnderProId], references: [id])
+  freedDependents    Pro[]           @relation("FreedomLineage")
+  freedAt            DateTime?
+  freedomCertCode    String?         @unique
+  apprenticeshipsAsApprentice Apprenticeship[] @relation("ApprenticeshipApprentice")
+  apprenticeshipsAsMaster     Apprenticeship[] @relation("ApprenticeshipMaster")
+  earningsFromDependents      Earning[]        @relation("SourcePro")
+
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
+  @@index([parentProId])
+  @@index([freedUnderProId])
   @@map("groomers")
+}
+
+model Apprenticeship {
+  id                          String               @id @default(cuid())
+  apprenticeId                String
+  apprentice                  Pro                  @relation("ApprenticeshipApprentice", fields: [apprenticeId], references: [id])
+  masterId                    String
+  master                      Pro                  @relation("ApprenticeshipMaster", fields: [masterId], references: [id])
+  status                      ApprenticeshipStatus @default(PENDING_ACCEPT)
+  // Master's cut of (totalAmount − platform commission) on every dependent activity. Default 30%, configurable.
+  masterCommission            Float                @default(0.30)
+  // Master must explicitly approve independence; combined with curriculum gates this unlocks self-bookings.
+  masterApprovedIndependence  DateTime?
+  invitedAt                   DateTime             @default(now())
+  acceptedAt                  DateTime?
+  expectedFreedom             DateTime?
+  readyForFreedomAt           DateTime?
+  freedomDate                 DateTime?
+  freedomCertCode             String?              @unique
+  terminatedAt                DateTime?
+  terminationReason           String?
+  modules                     CurriculumModule[]
+  earnings                    Earning[]
+
+  @@index([apprenticeId])
+  @@index([masterId])
+  @@index([status])
+  @@map("apprenticeships")
+}
+
+model CurriculumModule {
+  id                String         @id @default(cuid())
+  apprenticeshipId  String
+  apprenticeship    Apprenticeship @relation(fields: [apprenticeshipId], references: [id], onDelete: Cascade)
+  title             String
+  description       String?
+  sortOrder         Int            @default(0)
+  required          Boolean        @default(true)
+  // When true, completion of this module is required for the apprentice to take independent bookings.
+  gatesIndependence Boolean        @default(false)
+  completedAt       DateTime?
+  masterSignoffAt   DateTime?
+  notes             String?
+
+  @@index([apprenticeshipId])
+  @@map("curriculum_modules")
 }
 
 model FavouritePro {
@@ -353,16 +437,30 @@ model Review {
 }
 
 model Earning {
-  proId     String   @map("groomerId")
-  id        String   @id @default(cuid())
-  bookingId String   @unique
-  amount    Float
-  paid      Boolean  @default(false)
-  payoutId  String?
-  pro       Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  proId           String      @map("groomerId")
+  id              String      @id @default(cuid())
+  bookingId       String
+  amount          Float
+  paid            Boolean     @default(false)
+  payoutId        String?
+  pro             Pro         @relation(fields: [proId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
 
+  // ─── Apprenticeship support ───
+  // SERVICE: pro's own work earning (default).
+  // APPRENTICE_COMMISSION: master's cut from a dependent's booking.
+  type             EarningType    @default(SERVICE)
+  // For APPRENTICE_COMMISSION rows, the dependent who actually performed the work.
+  sourceProId      String?
+  sourcePro        Pro?           @relation("SourcePro", fields: [sourceProId], references: [id])
+  // Tags master-commission earnings to the apprenticeship that produced them; useful for audit / freedom-cutoff queries.
+  apprenticeshipId String?
+  apprenticeship   Apprenticeship? @relation(fields: [apprenticeshipId], references: [id])
+
+  @@unique([bookingId, proId, type])
   @@index([proId, paid])
+  @@index([sourceProId])
+  @@index([apprenticeshipId])
   @@map("earnings")
 }
 

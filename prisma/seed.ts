@@ -24,6 +24,7 @@ const DEFAULT_ROLES = [
       "disputes.view", "disputes.manage", "pros.view", "pros.manage",
       "customers.view", "customers.manage", "catalog.view", "catalog.manage",
       "settings.view", "settings.manage_ops", "notes.view", "notes.manage",
+      "apprenticeships.view", "apprenticeships.manage",
     ],
     isSystem: false,
   },
@@ -31,7 +32,11 @@ const DEFAULT_ROLES = [
     name: "Pro Manager",
     slug: "pro-manager",
     description: "Onboards and manages beauty professionals.",
-    permissions: ["dashboard.view", "pros.view", "pros.manage", "notes.view", "notes.manage"],
+    permissions: [
+      "dashboard.view", "pros.view", "pros.manage",
+      "notes.view", "notes.manage",
+      "apprenticeships.view", "apprenticeships.manage",
+    ],
     isSystem: false,
   },
   {

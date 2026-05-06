@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin", label: "Overview", icon: "📊", exact: true, permission: "dashboard.view" },
   { href: "/admin/bookings", label: "Bookings", icon: "📋", permission: "bookings.view" },
   { href: "/admin/pros", label: "Beauty Pros", icon: "💇", permission: "pros.view" },
+  { href: "/admin/apprenticeships", label: "Apprenticeships", icon: "🎓", permission: "apprenticeships.view" },
   { href: "/admin/customers", label: "Customers", icon: "👥", permission: "customers.view" },
   { href: "/admin/disputes", label: "Disputes", icon: "⚠️", permission: "disputes.view" },
   { href: "/admin/advances", label: "Advances", icon: "💰", permission: "advances.view" },

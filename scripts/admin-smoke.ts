@@ -29,6 +29,7 @@ const PAGES = [
   "/admin/bookings",
   "/admin/pros",
   "/admin/pros/new",
+  "/admin/apprenticeships",
   "/admin/customers",
   "/admin/disputes",
   "/admin/advances",

@@ -28,12 +28,19 @@ export default async function autoConfirm(bookingId: string) {
     }
 
     await tx.earning.upsert({
-      where: { bookingId },
+      where: {
+        bookingId_proId_type: {
+          bookingId,
+          proId: booking.proId!,
+          type: "SERVICE",
+        },
+      },
       update: {},
       create: {
         proId: booking.proId!,
         bookingId,
         amount: booking.proEarning,
+        type: "SERVICE",
       },
     });
 

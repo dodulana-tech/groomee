@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequestEdge } from "@/lib/auth-edge";
 
 // Exact-match public paths
 const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const session = await getSessionFromRequest(request);
+  const session = await getSessionFromRequestEdge(request);
 
   // Require auth for protected paths
   if (!session) {
