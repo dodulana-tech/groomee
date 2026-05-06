@@ -26,9 +26,9 @@ export default async function ProfilePage() {
   const referrals:    any[] = [];
   const squadCount   = 0;
 
-  const isTempPhone = user?.phone?.startsWith("+234_email_") ?? false;
-  const profileComplete = !!(user?.name && !isTempPhone);
-  const displayPhone = isTempPhone ? user?.email ?? "Email login" : user?.phone;
+  const hasPhone = !!user?.phone;
+  const profileComplete = !!(user?.name && hasPhone);
+  const displayPhone = hasPhone ? user?.phone : user?.email ?? "Email login";
   const referralCode    = session.userId.slice(-8).toUpperCase();
   const appUrl          = process.env.NEXT_PUBLIC_APP_URL ?? 'https://groomee.ng';
   const whatsappMsg     = encodeURIComponent(
@@ -50,8 +50,8 @@ export default async function ProfilePage() {
             <p className="text-sm font-bold text-amber-900">Complete your profile</p>
             <p className="text-xs text-amber-700">
               {!user?.name ? "Add your name" : ""}
-              {!user?.name && isTempPhone ? " and " : ""}
-              {isTempPhone ? "link your phone number" : ""}
+              {!user?.name && !hasPhone ? " and " : ""}
+              {!hasPhone ? "link your phone number" : ""}
               {" "}to book beauty pros.
             </p>
           </div>

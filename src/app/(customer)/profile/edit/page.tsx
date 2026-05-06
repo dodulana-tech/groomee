@@ -26,10 +26,9 @@ export default function EditProfilePage() {
       .then((d) => {
         setName(d.data?.name ?? "");
         setEmail(d.data?.email ?? "");
-        const ph = d.data?.phone ?? "";
-        const isTemp = ph.startsWith("+234_email_");
-        setPhone(isTemp ? "" : ph);
-        setNeedsPhone(isTemp);
+        const ph: string | null = d.data?.phone ?? null;
+        setPhone(ph ?? "");
+        setNeedsPhone(!ph);
       })
       .finally(() => setLoading(false));
   }, []);

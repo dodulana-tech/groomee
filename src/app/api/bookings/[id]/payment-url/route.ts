@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   initializeTransaction,
   generatePaymentReference,
+  paystackEmailFor,
 } from "@/lib/paystack";
 
 export async function GET(
@@ -39,7 +40,7 @@ export async function GET(
     const paymentRef = generatePaymentReference(booking.reference);
 
     const paystack = await initializeTransaction({
-      email: user.email ?? `${user.phone.replace(/\+/g, "")}@groomee.ng`,
+      email: paystackEmailFor(user),
       phone: user.phone,
       amount: booking.totalAmount,
       reference: paymentRef,

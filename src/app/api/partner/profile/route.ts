@@ -9,7 +9,7 @@ export async function GET() {
     if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
     const pro = await db.pro.findFirst({
-      where: { phone: session.phone },
+      where: { userId: session.userId },
       include: {
         services: { include: { service: true } },
         zones: { include: { zone: true } },
@@ -31,7 +31,7 @@ export async function PATCH(request: Request) {
     if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
-    const pro = await db.pro.findFirst({ where: { phone: session.phone } });
+    const pro = await db.pro.findFirst({ where: { userId: session.userId } });
     if (!pro) return NextResponse.json({ success: false, error: "Pro not found" }, { status: 404 });
 
     const body = await request.json();

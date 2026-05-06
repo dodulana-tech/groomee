@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
-    const pro = await db.pro.findFirst({ where: { phone: session.phone } });
+    const pro = await db.pro.findFirst({ where: { userId: session.userId } });
     if (!pro) return NextResponse.json({ success: false, error: "Pro not found" }, { status: 404 });
 
     const url = new URL(request.url);
@@ -60,7 +60,7 @@ export async function PATCH(request: Request) {
     if (!session) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
-    const pro = await db.pro.findFirst({ where: { phone: session.phone } });
+    const pro = await db.pro.findFirst({ where: { userId: session.userId } });
     if (!pro) return NextResponse.json({ success: false, error: "Pro not found" }, { status: 404 });
 
     const { bookingId, status } = await request.json();

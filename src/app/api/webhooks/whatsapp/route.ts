@@ -101,17 +101,19 @@ export async function POST(req: NextRequest) {
             customerName: booking.customer.name ?? "Customer",
             address: booking.address,
             mapsLink,
-            maskedPhone: maskPhone(booking.customer.phone),
+            maskedPhone: maskPhone(booking.customer.phone ?? ""),
           });
 
-          // Notify customer
-          const { notifyCustomerBookingConfirmed } =
-            await import("@/lib/whatsapp");
-          await notifyCustomerBookingConfirmed(
-            booking.customer.phone,
-            pro.name,
-            "20–45 minutes",
-          );
+          // Notify customer (skip when customer has no phone — email-only signup)
+          if (booking.customer.phone) {
+            const { notifyCustomerBookingConfirmed } =
+              await import("@/lib/whatsapp");
+            await notifyCustomerBookingConfirmed(
+              booking.customer.phone,
+              pro.name,
+              "20–45 minutes",
+            );
+          }
         }
       }
       return NextResponse.json({ ok: true });
@@ -140,11 +142,13 @@ export async function POST(req: NextRequest) {
           data: { status: "EN_ROUTE", enRouteAt: new Date() },
         });
         await sendProStatusAck(pro.phone, "OTWAY");
-        await notifyCustomerProEnRoute(
-          booking.customer.phone,
-          pro.name,
-          25,
-        );
+        if (booking.customer.phone) {
+          await notifyCustomerProEnRoute(
+            booking.customer.phone,
+            pro.name,
+            25,
+          );
+        }
       }
       return NextResponse.json({ ok: true });
     }
@@ -164,10 +168,12 @@ export async function POST(req: NextRequest) {
           data: { status: "ARRIVED", arrivedAt: new Date() },
         });
         await sendProStatusAck(pro.phone, "ARRIVED");
-        await notifyCustomerProArrived(
-          booking.customer.phone,
-          pro.name,
-        );
+        if (booking.customer.phone) {
+          await notifyCustomerProArrived(
+            booking.customer.phone,
+            pro.name,
+          );
+        }
       }
       return NextResponse.json({ ok: true });
     }
@@ -187,11 +193,13 @@ export async function POST(req: NextRequest) {
           data: { status: "COMPLETED", completedAt: new Date() },
         });
         await sendProStatusAck(pro.phone, "DONE");
-        await notifyCustomerServiceComplete(
-          booking.customer.phone,
-          booking.id,
-          booking.totalAmount,
-        );
+        if (booking.customer.phone) {
+          await notifyCustomerServiceComplete(
+            booking.customer.phone,
+            booking.id,
+            booking.totalAmount,
+          );
+        }
 
         // Auto-capture handled by cron job at /api/cron/tick
         // (setTimeout unreliable in serverless environments)

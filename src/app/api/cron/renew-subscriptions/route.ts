@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
 import { addMonths } from "date-fns";
+import { paystackEmailFor } from "@/lib/paystack";
 
 // GET /api/cron/renew-subscriptions - called by cron job daily
 export async function GET(req: Request) {
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
         },
         body: JSON.stringify({
           authorization_code: sub.paystackAuthCode,
-          email: sub.user.email ?? `${sub.user.phone.replace(/\+/g, "")}@groomee.ng`,
+          email: paystackEmailFor(sub.user),
           amount: Math.round(sub.plan.price * 100), // kobo
           metadata: { type: "subscription_renewal", subscriptionId: sub.id },
         }),

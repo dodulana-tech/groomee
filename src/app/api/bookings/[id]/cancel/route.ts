@@ -102,13 +102,15 @@ export async function POST(
       }
     }
 
-    // Notify customer (WhatsApp + email)
-    try {
-      await notifyCustomerBookingCancelled(
-        booking.customer.phone,
-        reason || "Booking cancelled",
-      );
-    } catch {}
+    // Notify customer (WhatsApp + email) — phone may be null for email-only signups
+    if (booking.customer.phone) {
+      try {
+        await notifyCustomerBookingCancelled(
+          booking.customer.phone,
+          reason || "Booking cancelled",
+        );
+      } catch {}
+    }
     import("@/lib/email-notify").then(({ emailBookingCancelled }) =>
       emailBookingCancelled({
         reference: booking.reference,

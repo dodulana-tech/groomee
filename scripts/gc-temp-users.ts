@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-const TEMP_PHONE_PREFIX = "+234_email_";
+const LEGACY_TEMP_PREFIX = "+234_email_";
 const STALE_AFTER_HOURS = 24;
 
 async function main() {
@@ -8,12 +8,28 @@ async function main() {
   const cutoff = new Date(Date.now() - STALE_AFTER_HOURS * 60 * 60 * 1000);
   const dryRun = process.argv.includes("--dry-run");
 
-  // Candidates: temp email-only users older than cutoff that have not completed
-  // signup (no name set). We additionally guard by checking they own no booking
-  // or pro records before deleting.
+  // First, normalise any legacy +234_email_* placeholders down to phone=null.
+  // After the nullable-phone migration this is the canonical "no phone yet"
+  // representation.
+  const legacy = await db.user.findMany({
+    where: { phone: { startsWith: LEGACY_TEMP_PREFIX } },
+    select: { id: true },
+  });
+  if (legacy.length > 0) {
+    console.log(`Normalising ${legacy.length} legacy +234_email_* phones to null${dryRun ? " (dry-run)" : ""}.`);
+    if (!dryRun) {
+      await db.user.updateMany({
+        where: { id: { in: legacy.map((u) => u.id) } },
+        data: { phone: null },
+      });
+    }
+  }
+
+  // Candidates: email-only users (phone null) older than cutoff that have not
+  // completed signup (no name set). Guard by checking no owned data.
   const candidates = await db.user.findMany({
     where: {
-      phone: { startsWith: TEMP_PHONE_PREFIX },
+      phone: null,
       name: null,
       createdAt: { lt: cutoff },
     },

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   // Pro can only view their own credit score
   const pro = await db.pro.findFirst({
-    where: { phone: session.phone },
+    where: { userId: session.userId },
   });
 
   if (!pro)

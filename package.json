@@ -13,6 +13,7 @@
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
     "gc:temp-users": "tsx scripts/gc-temp-users.ts",
+    "smoke:admin": "tsx scripts/admin-smoke.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

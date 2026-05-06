@@ -9,8 +9,6 @@ import {
 import { isValidNigerianPhone } from "@/lib/utils";
 import { db } from "@/lib/db";
 
-const TEMP_PHONE_PREFIX = "+234_email_";
-
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -47,7 +45,7 @@ export async function POST(req: NextRequest) {
         sessionUser &&
         owner &&
         sessionUser.id !== owner.id &&
-        sessionUser.phone.startsWith(TEMP_PHONE_PREFIX)
+        sessionUser.phone === null
       ) {
         // Only copy the email over if the existing account doesn't already have one,
         // so we never silently overwrite a user-set address.

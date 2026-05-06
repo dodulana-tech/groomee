@@ -58,10 +58,12 @@ export default async function autoConfirm(bookingId: string) {
     bookingId,
   ).catch(console.error);
 
-  await sendMessage(
-    booking.customer.phone,
-    `✅ Your booking has been auto-confirmed and payment of ₦${booking.totalAmount.toLocaleString()} released.\n\nThank you for using Groomee! We hope you enjoyed your service. 💚\n\nYou've earned ${POINTS.BOOKING_COMPLETION} Groomee Points.`,
-  ).catch(console.error);
+  if (booking.customer.phone) {
+    await sendMessage(
+      booking.customer.phone,
+      `✅ Your booking has been auto-confirmed and payment of ₦${booking.totalAmount.toLocaleString()} released.\n\nThank you for using Groomee! We hope you enjoyed your service. 💚\n\nYou've earned ${POINTS.BOOKING_COMPLETION} Groomee Points.`,
+    ).catch(console.error);
+  }
 
   console.log(`[auto-confirm] Booking ${bookingId} auto-confirmed.`);
 }

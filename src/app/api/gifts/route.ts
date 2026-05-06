@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import {
   initializeTransaction,
   generatePaymentReference,
+  paystackEmailFor,
 } from "@/lib/paystack";
 import { sendMessage } from "@/lib/whatsapp";
 import { addDays } from "date-fns";
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const ref = generatePaymentReference(`GIFT-${code}`);
     const paystack = await initializeTransaction({
-      email: user.email ?? `${user.phone.replace(/\+/g, "")}@groomee.ng`,
+      email: paystackEmailFor(user),
       phone: user.phone,
       amount: input.amount,
       reference: ref,

@@ -68,7 +68,7 @@ export type BookingFull = BookingWithRelations & {
 
 export interface SessionPayload {
   userId: string;
-  phone: string;
+  phone: string | null;
   role: "CUSTOMER" | "ADMIN" | "PRO";
   adminRoleId?: string;
   adminRoleName?: string;

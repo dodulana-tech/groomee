@@ -10,9 +10,8 @@ export async function GET() {
     }
     if (session.role !== "PRO" && session.role !== "ADMIN") return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
-    // Find the pro record linked to this user's phone
     const pro = await db.pro.findFirst({
-      where: { phone: session.phone },
+      where: { userId: session.userId },
     });
 
     if (!pro) {

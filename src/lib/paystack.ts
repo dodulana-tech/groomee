@@ -4,6 +4,18 @@ import type { PaystackInitResponse, PaystackVerifyResponse } from "@/types";
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!;
 const BASE = "https://api.paystack.co";
 
+// Paystack requires an email on every transaction. Prefer the user's real
+// email, then derive one from phone, then fall back to a deterministic id.
+export function paystackEmailFor(user: {
+  id: string;
+  email?: string | null;
+  phone?: string | null;
+}): string {
+  if (user.email) return user.email;
+  if (user.phone) return `${user.phone.replace(/\+/g, "")}@groomee.ng`;
+  return `${user.id}@groomee.ng`;
+}
+
 async function paystackFetch<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -34,7 +46,7 @@ export async function initializeTransaction({
   metadata,
 }: {
   email: string;
-  phone: string;
+  phone: string | null;
   amount: number;
   reference: string;
   callbackUrl: string;
@@ -45,7 +57,7 @@ export async function initializeTransaction({
     {
       method: "POST",
       body: JSON.stringify({
-        email: email || `${phone.replace(/\+/g, "")}@groomee.ng`,
+        email: email || (phone ? `${phone.replace(/\+/g, "")}@groomee.ng` : ""),
         amount: Math.round(amount * 100), // kobo
         reference,
         callback_url: callbackUrl,

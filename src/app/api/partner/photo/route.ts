@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const pro = await db.pro.findFirst({ where: { phone: session.phone } });
+    const pro = await db.pro.findFirst({ where: { userId: session.userId } });
     if (!pro) return NextResponse.json({ error: "Not a pro" }, { status: 403 });
 
     const formData = await req.formData();

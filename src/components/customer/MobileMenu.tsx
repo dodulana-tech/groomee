@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 
 interface Props {
-  session: { userId: string; phone: string; role: string } | null;
+  session: { userId: string; phone: string | null; role: string } | null;
 }
 
 const NAV_LINKS = [

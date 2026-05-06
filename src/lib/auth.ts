@@ -143,15 +143,12 @@ export async function verifyOtp(
 
 // ─── EMAIL OTP ───────────────────────────────────────────────────────────────
 
-const TEMP_PHONE_PREFIX = "+234_email_";
-
-// Prefer a fully linked user (real phone) over an email-only temp user when
-// the same email exists on multiple records.
+// Prefer a fully linked user (has a real phone) over an email-only user when
+// the same email appears on multiple records.
 async function findUserByEmailPreferLinked(email: string) {
   return (
-    (await db.user.findFirst({
-      where: { email, NOT: { phone: { startsWith: TEMP_PHONE_PREFIX } } },
-    })) ?? (await db.user.findFirst({ where: { email } }))
+    (await db.user.findFirst({ where: { email, NOT: { phone: null } } })) ??
+    (await db.user.findFirst({ where: { email } }))
   );
 }
 
@@ -200,13 +197,13 @@ export async function verifyOtpByEmail(
 
   let user = await findUserByEmailPreferLinked(email);
 
-  // Defer user creation until verification: only create the temp record
-  // once the user proves ownership of the email by entering the OTP.
+  // Defer user creation until verification: only create the record once the
+  // user proves ownership of the email by entering the OTP. Phone is null
+  // until the user links one via the link-phone flow.
   if (!user) {
-    const tempPhone = `${TEMP_PHONE_PREFIX}${Date.now()}`;
     user = await db.user.create({
       data: {
-        phone: tempPhone,
+        phone: null,
         email,
         role: isAdminEmail(email) ? "ADMIN" : "CUSTOMER",
       },
@@ -214,8 +211,7 @@ export async function verifyOtpByEmail(
   }
 
   const isNewUser = !user.name;
-  // Check if this user has a real phone number (not the temp placeholder)
-  const needsPhone = user.phone.startsWith(TEMP_PHONE_PREFIX);
+  const needsPhone = user.phone === null;
 
   return {
     userId: user.id,
@@ -263,16 +259,19 @@ export async function getAdminRoleData(userId: string): Promise<{
 
 export async function signUserToken(user: {
   id: string;
-  phone: string;
+  phone: string | null;
   role: string;
 }): Promise<string> {
   let role = user.role as "CUSTOMER" | "ADMIN" | "PRO";
 
-  // If role is CUSTOMER, check if this user has an approved Pro record
+  // If role is CUSTOMER, check if this user has an approved Pro record.
+  // Match on userId, plus phone when one is set (covers legacy Pro rows
+  // created before user-linking).
   if (role === "CUSTOMER") {
+    const proPhoneClause = user.phone ? [{ phone: user.phone }] : [];
     const pro = await db.pro.findFirst({
       where: {
-        OR: [{ userId: user.id }, { phone: user.phone }],
+        OR: [{ userId: user.id }, ...proPhoneClause],
         status: "ACTIVE",
       },
     });

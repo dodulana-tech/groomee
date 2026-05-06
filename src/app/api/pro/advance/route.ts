@@ -22,9 +22,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { amount, reason } = advanceSchema.parse(body);
 
-    // Find pro by session phone — only the pro themselves can request
+    // Only the pro themselves can request — match by linked userId
     const pro = await db.pro.findFirst({
-      where: { phone: session.phone, status: "ACTIVE" },
+      where: { userId: session.userId, status: "ACTIVE" },
     });
 
     if (!pro) {
@@ -140,7 +140,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const pro = await db.pro.findFirst({ where: { phone: session.phone } });
+  const pro = await db.pro.findFirst({ where: { userId: session.userId } });
   if (!pro) {
     return NextResponse.json(
       { success: false, error: "Pro not found." },

@@ -5,7 +5,7 @@ async function getProStats() {
   try {
     const session = await getSession();
     if (!session) return null;
-    const pro = await db.pro.findFirst({ where: { phone: session.phone } });
+    const pro = await db.pro.findFirst({ where: { userId: session.userId } });
     if (!pro) return null;
     return {
       totalJobs: pro.totalJobs,

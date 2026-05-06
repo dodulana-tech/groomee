@@ -77,7 +77,7 @@ enum ServiceCategory {
 
 model User {
   id                String         @id @default(cuid())
-  phone             String         @unique
+  phone             String?        @unique
   name              String?
   email             String?
   role              UserRole       @default(CUSTOMER)
