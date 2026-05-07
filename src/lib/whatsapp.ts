@@ -219,3 +219,54 @@ export async function notifyApprenticeFreedomGranted(
     `🎓✨ *FREEDOM!*\n\nYou've done it. *${masterName}* has bestowed your Freedom — you are now a fully independent Groomee pro.\n\nYour Certificate of Freedom is permanent and verifiable:\n🪪 Code: *${certCode}*\n🌐 ${certUrl}\n\nShare it with the world. Print it. Frame it. You earned every line of it.\n\nFrom today: every naira from your bookings is yours alone. Stay sharp. Build your name. We're proud of you. 💚`,
   );
 }
+
+// ─── DEPLOYMENT (master → dependent on a live booking) ───────────────────────
+
+export async function notifyApprenticeBookingDeployed({
+  apprenticePhone,
+  masterName,
+  customerName,
+  address,
+  mapsLink,
+  maskedCustomerPhone,
+}: {
+  apprenticePhone: string;
+  masterName: string;
+  customerName: string;
+  address: string;
+  mapsLink: string;
+  maskedCustomerPhone: string;
+}) {
+  return sendMessage(
+    apprenticePhone,
+    `🎯 *${masterName}* has deployed you on a live booking — same booking, your hands now.\n\n👤 Customer: ${customerName}\n📍 Address: ${address}\n🗺️ Maps: ${mapsLink}\n📞 Contact: ${maskedCustomerPhone}\n\nCommands:\n• Text *OTWAY* when you leave\n• Text *ARRIVED* when you get there\n• Text *DONE* when finished\n• Text *CANCEL* to cancel (penalty applies)\n• Text *HELP* for admin assistance\n\nMake your master proud. 💚`,
+  );
+}
+
+export async function notifyCustomerBookingDeployed({
+  customerPhone,
+  masterName,
+  apprenticeName,
+}: {
+  customerPhone: string;
+  masterName: string;
+  apprenticeName: string;
+}) {
+  return sendMessage(
+    customerPhone,
+    `📣 Quick update on your booking:\n\n*${masterName}* has sent her trained pro *${apprenticeName}* — same booking, different hands. ${apprenticeName} is fully trained under ${masterName} and your booking is unchanged.\n\nYou'll get the usual notifications when ${apprenticeName} is on the way and when they arrive. 💚`,
+  );
+}
+
+export async function notifyApprenticeDeploymentRescinded({
+  apprenticePhone,
+  masterName,
+}: {
+  apprenticePhone: string;
+  masterName: string;
+}) {
+  return sendMessage(
+    apprenticePhone,
+    `↩️ Heads up — *${masterName}* has rescinded the booking deployment they sent you. The booking is back with them.\n\nYou are now back online and free to receive other jobs. No strike, no penalty.`,
+  );
+}

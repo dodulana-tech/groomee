@@ -472,6 +472,92 @@ export function masterFreedomCompleteEmail(data: {
   };
 }
 
+// ── DEPLOYMENT (master → dependent on a live booking) ────
+
+export function apprenticeBookingDeployedEmail(data: {
+  apprenticeName: string;
+  masterName: string;
+  customerName: string;
+  serviceName: string;
+  address: string;
+  mapsLink: string;
+  maskedCustomerPhone: string;
+  fee: string;
+}): { subject: string; html: string } {
+  const greeting = data.apprenticeName ? data.apprenticeName.split(" ")[0] : "there";
+  return {
+    subject: `${data.masterName} deployed you on a live booking`,
+    html: layout(`
+      <p class="hero-text">You've been deployed, ${greeting}.</p>
+      <p class="body-text">
+        <strong>${data.masterName}</strong> has handed you a live customer booking. Same booking, your hands now — make her proud.
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+        <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Service</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right;">${data.serviceName}</td></tr>
+        <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Customer</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right;">${data.customerName}</td></tr>
+        <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Address</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right;">${data.address}</td></tr>
+        <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Contact</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right; font-family: monospace;">${data.maskedCustomerPhone}</td></tr>
+        <tr><td class="detail-label" style="padding: 10px 0;">Your fee</td><td class="detail-value" style="padding: 10px 0; text-align: right;">${data.fee}</td></tr>
+      </table>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.mapsLink}" class="cta">Open in Maps</a>
+      </div>
+      <p class="muted" style="text-align: center;">
+        Reply <strong>OTWAY</strong> on WhatsApp when you leave, <strong>ARRIVED</strong> on arrival, <strong>DONE</strong> when finished.
+      </p>
+    `),
+  };
+}
+
+export function customerBookingDeployedEmail(data: {
+  customerName: string;
+  masterName: string;
+  apprenticeName: string;
+  serviceName: string;
+}): { subject: string; html: string } {
+  const greeting = data.customerName ? data.customerName.split(" ")[0] : "there";
+  return {
+    subject: `${data.masterName} sent ${data.apprenticeName} for your booking`,
+    html: layout(`
+      <p class="hero-text">A quick update, ${greeting}.</p>
+      <p class="body-text">
+        <strong>${data.masterName}</strong> has sent her trained pro <strong>${data.apprenticeName}</strong> for your ${data.serviceName} booking — same booking, different hands.
+      </p>
+      <p class="body-text">
+        ${data.apprenticeName} trained directly under ${data.masterName} and is fully cleared to take this job. Your booking, time, and price are unchanged.
+      </p>
+      <p class="body-text">
+        You'll get the usual notifications when ${data.apprenticeName} is on the way and when they arrive at your door.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${APP_URL}/bookings" class="cta">View booking</a>
+      </div>
+    `),
+  };
+}
+
+export function apprenticeDeploymentRescindedEmail(data: {
+  apprenticeName: string;
+  masterName: string;
+}): { subject: string; html: string } {
+  const greeting = data.apprenticeName ? data.apprenticeName.split(" ")[0] : "there";
+  return {
+    subject: `${data.masterName} rescinded the booking deployment`,
+    html: layout(`
+      <p class="hero-text">Deployment cancelled, ${greeting}.</p>
+      <p class="body-text">
+        <strong>${data.masterName}</strong> has taken the booking back. No strike, no penalty — these things happen.
+      </p>
+      <p class="body-text">
+        You're back online and free to receive other jobs. Stay sharp.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${APP_URL}/partner/bookings" class="cta">View bookings</a>
+      </div>
+    `),
+  };
+}
+
 // ── NO PRO AVAILABLE ─────────────────────────────────────
 
 export function noProEmail(data: {

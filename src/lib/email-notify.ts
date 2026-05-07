@@ -14,6 +14,9 @@ import {
   apprenticeReadyForFreedomEmail,
   apprenticeFreedomGrantedEmail,
   masterFreedomCompleteEmail,
+  apprenticeBookingDeployedEmail,
+  customerBookingDeployedEmail,
+  apprenticeDeploymentRescindedEmail,
 } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/utils";
 
@@ -300,6 +303,69 @@ export async function emailMasterFreedomComplete(data: {
       apprenticeName: data.apprenticeName,
       certCode: data.certCode,
       certUrl: data.certUrl,
+    }),
+  );
+}
+
+// ─── DEPLOYMENT (master → dependent on a live booking) ───────────────────────
+
+export async function emailApprenticeBookingDeployed(data: {
+  to: string;
+  apprenticeName: string;
+  masterName: string;
+  customerName: string;
+  serviceName: string;
+  address: string;
+  mapsLink: string;
+  maskedCustomerPhone: string;
+  fee: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeBookingDeployedEmail({
+      apprenticeName: data.apprenticeName,
+      masterName: data.masterName,
+      customerName: data.customerName,
+      serviceName: data.serviceName,
+      address: data.address,
+      mapsLink: data.mapsLink,
+      maskedCustomerPhone: data.maskedCustomerPhone,
+      fee: data.fee,
+    }),
+  );
+}
+
+export async function emailCustomerBookingDeployed(data: {
+  to: string;
+  customerName: string;
+  masterName: string;
+  apprenticeName: string;
+  serviceName: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    customerBookingDeployedEmail({
+      customerName: data.customerName,
+      masterName: data.masterName,
+      apprenticeName: data.apprenticeName,
+      serviceName: data.serviceName,
+    }),
+  );
+}
+
+export async function emailApprenticeDeploymentRescinded(data: {
+  to: string;
+  apprenticeName: string;
+  masterName: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeDeploymentRescindedEmail({
+      apprenticeName: data.apprenticeName,
+      masterName: data.masterName,
     }),
   );
 }
