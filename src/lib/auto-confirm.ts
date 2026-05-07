@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { awardPoints, POINTS } from "./points";
 import { sendMessage } from "./whatsapp";
+import { computeEarningsSplit } from "./apprenticeships";
 
 export default async function autoConfirm(bookingId: string) {
   const booking = await db.booking.findUnique({
@@ -10,6 +11,9 @@ export default async function autoConfirm(bookingId: string) {
 
   if (!booking || booking.status !== "COMPLETED") return;
   if (!booking.proId) return; // No pro assigned — can't confirm
+
+  // Compute apprenticeship split BEFORE the transaction (does its own reads).
+  const split = await computeEarningsSplit(booking.proId, booking.proEarning);
 
   // Atomic: conditional update prevents double-confirm race
   const confirmed = await db.$transaction(async (tx) => {
@@ -27,22 +31,61 @@ export default async function autoConfirm(bookingId: string) {
       });
     }
 
-    await tx.earning.upsert({
-      where: {
-        bookingId_proId_type: {
-          bookingId,
+    if (split) {
+      // Apprentice's reduced SERVICE row.
+      await tx.earning.upsert({
+        where: {
+          bookingId_proId_type: {
+            bookingId,
+            proId: booking.proId!,
+            type: "SERVICE",
+          },
+        },
+        update: {},
+        create: {
           proId: booking.proId!,
+          bookingId,
+          amount: split.apprenticeAmount,
           type: "SERVICE",
         },
-      },
-      update: {},
-      create: {
-        proId: booking.proId!,
-        bookingId,
-        amount: booking.proEarning,
-        type: "SERVICE",
-      },
-    });
+      });
+      // Master's commission row — race-safe via the same compound unique.
+      await tx.earning.upsert({
+        where: {
+          bookingId_proId_type: {
+            bookingId,
+            proId: split.masterId,
+            type: "APPRENTICE_COMMISSION",
+          },
+        },
+        update: {},
+        create: {
+          proId: split.masterId,
+          bookingId,
+          amount: split.masterAmount,
+          type: "APPRENTICE_COMMISSION",
+          sourceProId: booking.proId!,
+          apprenticeshipId: split.apprenticeshipId,
+        },
+      });
+    } else {
+      await tx.earning.upsert({
+        where: {
+          bookingId_proId_type: {
+            bookingId,
+            proId: booking.proId!,
+            type: "SERVICE",
+          },
+        },
+        update: {},
+        create: {
+          proId: booking.proId!,
+          bookingId,
+          amount: booking.proEarning,
+          type: "SERVICE",
+        },
+      });
+    }
 
     await tx.pro.update({
       where: { id: booking.proId! },

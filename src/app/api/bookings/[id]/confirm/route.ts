@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { awardPoints, POINTS } from "@/lib/points";
+import { computeEarningsSplit } from "@/lib/apprenticeships";
 
 export async function POST(
   req: NextRequest,
@@ -33,6 +34,11 @@ export async function POST(
         { status: 400 },
       );
 
+    // Compute apprenticeship split BEFORE the transaction (it does its own
+    // DB reads). When non-null, the booking pro is an active apprentice and
+    // we must split earnings between them and the master.
+    const split = await computeEarningsSplit(booking.proId, booking.proEarning);
+
     // Atomic: conditional update prevents double-confirm race
     const confirmed = await db.$transaction(async (tx) => {
       const updated = await tx.booking.updateMany({
@@ -48,13 +54,38 @@ export async function POST(
         });
       }
 
-      await tx.earning.create({
-        data: {
-          proId: booking.proId!,
-          bookingId: id,
-          amount: booking.proEarning,
-        },
-      });
+      if (split) {
+        // Apprentice keeps the reduced SERVICE amount.
+        await tx.earning.create({
+          data: {
+            proId: booking.proId!,
+            bookingId: id,
+            amount: split.apprenticeAmount,
+            type: "SERVICE",
+          },
+        });
+        // Master collects an APPRENTICE_COMMISSION row tagged with the
+        // apprenticeship + the apprentice as sourcePro for audit/UI.
+        await tx.earning.create({
+          data: {
+            proId: split.masterId,
+            bookingId: id,
+            amount: split.masterAmount,
+            type: "APPRENTICE_COMMISSION",
+            sourceProId: booking.proId!,
+            apprenticeshipId: split.apprenticeshipId,
+          },
+        });
+      } else {
+        await tx.earning.create({
+          data: {
+            proId: booking.proId!,
+            bookingId: id,
+            amount: booking.proEarning,
+            type: "SERVICE",
+          },
+        });
+      }
 
       await tx.pro.update({
         where: { id: booking.proId! },

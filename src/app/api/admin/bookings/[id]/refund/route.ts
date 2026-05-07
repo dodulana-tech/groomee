@@ -3,6 +3,7 @@ import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createRefund } from "@/lib/paystack";
 import { logAdminAction } from "@/lib/admin-audit";
+import { reverseEarningsForBooking } from "@/lib/earnings-reversal";
 
 // POST /api/admin/bookings/[id]/refund
 //
@@ -95,23 +96,33 @@ export async function POST(
       );
     }
 
-    await db.$transaction([
-      db.payment.update({
-        where: { id: booking.payment.id },
+    // Refund clawback: reverse the earnings rows attached to this booking.
+    // Full refund (cumulative refund hits totalAmount) → delete every Earning
+    // row (apprentice SERVICE + master APPRENTICE_COMMISSION when present).
+    // Partial refund → scale every Earning amount down proportionally so
+    // both apprentice and master take the haircut. Same helper, same math.
+    const refundFraction = Math.min(1, amount / booking.totalAmount);
+    await db.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: booking.payment!.id },
         data: {
           refundAmount: previousRefund + amount,
-          status: previousRefund + amount >= booking.totalAmount ? "REFUNDED" : booking.payment.status,
+          status:
+            previousRefund + amount >= booking.totalAmount
+              ? "REFUNDED"
+              : booking.payment!.status,
         },
-      }),
-      db.note.create({
+      });
+      await tx.note.create({
         data: {
           entityType: "booking",
           entityId: id,
           authorId: session!.userId,
           content: `Refund: ₦${amount.toLocaleString()} — ${reason.trim()}`,
         },
-      }),
-    ]);
+      });
+      await reverseEarningsForBooking(id, refundFraction, tx);
+    });
 
     await logAdminAction({
       adminId: session!.userId,

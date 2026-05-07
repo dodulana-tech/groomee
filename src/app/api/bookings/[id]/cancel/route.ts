@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createRefund } from "@/lib/paystack";
 import { notifyCustomerBookingCancelled } from "@/lib/whatsapp";
+import { reverseEarningsForBooking } from "@/lib/earnings-reversal";
 
 export async function POST(
   req: NextRequest,
@@ -79,6 +80,13 @@ export async function POST(
           data: { status: "REFUND_PENDING" as any, refundAmount },
         });
       }
+
+      // Earnings clawback. Pre-existing gap: this route never touched
+      // earnings, so a CONFIRMED-then-cancelled booking would leave the
+      // pro's SERVICE row (and now the master's APPRENTICE_COMMISSION row)
+      // intact. Reverse them all here. For statuses below CONFIRMED there
+      // typically won't be any earnings rows yet, so deleteMany no-ops.
+      await reverseEarningsForBooking(booking.id, 1, tx);
 
       if (booking.proId) {
         await tx.pro.update({
