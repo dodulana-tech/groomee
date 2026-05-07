@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { formatNaira } from "@/lib/utils";
 import CurriculumActions from "./CurriculumActions";
+import FreedomCard from "./FreedomCard";
 
 export const revalidate = 0;
 
@@ -217,6 +218,15 @@ export default async function PartnerApprenticeDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Freedom card — only when the apprenticeship has cleared the gate */}
+      {a.status === "READY_FOR_FREEDOM" && (
+        <FreedomCard
+          apprenticeshipId={a.id}
+          apprenticeName={a.apprentice.name}
+          masterName={a.master.name}
+        />
+      )}
 
       {/* Curriculum & actions (client) */}
       <CurriculumActions

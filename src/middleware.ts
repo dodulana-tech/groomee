@@ -14,6 +14,7 @@ const PUBLIC_PREFIX = [
   "/api/zones",
   "/api/surveys",
   "/api/waitlist",
+  "/cert/",   // public Freedom certificate verification pages
   "/favicon.ico",
   "/_next",
 ];

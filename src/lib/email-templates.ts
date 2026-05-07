@@ -359,6 +359,119 @@ export function apprenticeReadyForFreedomEmail(data: {
   };
 }
 
+// ── FREEDOM GRANTED (the apprentice's celebration) ───────
+
+export function apprenticeFreedomGrantedEmail(data: {
+  apprenticeName: string;
+  masterName: string;
+  certCode: string;
+  certUrl: string;
+  freedomDate: Date;
+}): { subject: string; html: string } {
+  const greeting = data.apprenticeName ? data.apprenticeName.split(" ")[0] : "there";
+  const dateStr = data.freedomDate.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return {
+    subject: `🎓 Freedom! Your Groomee Certificate is ready, ${greeting}`,
+    html: layout(`
+      <p class="hero-text" style="font-family: var(--font-display), 'Playfair Display', Georgia, serif; font-size: 28px;">A milestone day, ${greeting}.</p>
+      <p class="body-text">
+        Today, <strong>${data.masterName}</strong> bestowed your Freedom. You are no longer
+        an apprentice — you are an independent Groomee pro, with your own customers,
+        your own earnings, and your own name carved into the lineage.
+      </p>
+
+      <!-- Certificate seal -->
+      <div style="
+        margin: 28px 0;
+        padding: 28px 24px;
+        text-align: center;
+        background: linear-gradient(135deg, #014342 0%, #026564 50%, #014342 100%);
+        border: 3px double #D4A853;
+        border-radius: 18px;
+        color: #ffffff;
+      ">
+        <p style="margin: 0; font-size: 14px; letter-spacing: 4px; color: #D4A853; font-weight: 700; text-transform: uppercase;">
+          Certificate of Freedom
+        </p>
+        <p style="margin: 12px 0 4px; font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 800; color: #ffffff;">
+          ${data.apprenticeName}
+        </p>
+        <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.8);">
+          Freed under <strong style="color: #fffea1;">${data.masterName}</strong>
+        </p>
+        <p style="margin: 8px 0 0; font-size: 12px; color: rgba(255,255,255,0.6);">${dateStr}</p>
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.2);">
+          <p style="margin: 0; font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.6); text-transform: uppercase;">
+            Verification code
+          </p>
+          <p style="margin: 4px 0 0; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 900; color: #53eb64; letter-spacing: 4px;">
+            ${data.certCode}
+          </p>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.certUrl}" class="cta">View &amp; share your certificate</a>
+      </div>
+
+      <p class="body-text">
+        Share the link with your customers, your friends, your family. Anyone can scan
+        and verify your Freedom on <a href="${APP_URL}" style="color: #014342; font-weight: 700;">Groomee.ng</a>.
+        Reputation compounds — let the world know what you've earned.
+      </p>
+
+      <hr class="divider" />
+      <p class="muted" style="text-align: center;">
+        From today, every naira from your bookings is yours alone. The lineage with
+        ${data.masterName} stays with you — earned, permanent, never undone.
+      </p>
+    `),
+  };
+}
+
+// ── FREEDOM COMPLETE (the master's celebration) ──────────
+
+export function masterFreedomCompleteEmail(data: {
+  masterName: string;
+  apprenticeName: string;
+  certCode: string;
+  certUrl: string;
+}): { subject: string; html: string } {
+  const greeting = data.masterName ? data.masterName.split(" ")[0] : "there";
+  return {
+    subject: `🎓 Freedom complete — ${data.apprenticeName} is now independent`,
+    html: layout(`
+      <p class="hero-text" style="font-family: var(--font-display), 'Playfair Display', Georgia, serif;">A pro you raised.</p>
+      <p class="body-text">
+        ${greeting}, you did it. <strong>${data.apprenticeName}</strong> has just been
+        granted Freedom under your name. From today, they take their own bookings,
+        keep their own earnings, and build their own reputation — and they do it as
+        someone <em>you</em> trained.
+      </p>
+      <p class="body-text">
+        Their permanent Certificate of Freedom is signed off in your name. Anyone who
+        verifies it will see <span class="highlight">Freed under ${data.masterName}</span>.
+        That lineage is forever.
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+        <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Apprentice</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right;">${data.apprenticeName}</td></tr>
+        <tr><td class="detail-label" style="padding: 10px 0;">Cert code</td><td class="detail-value" style="padding: 10px 0; text-align: right; font-family: monospace;">${data.certCode}</td></tr>
+      </table>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.certUrl}" class="cta">View their certificate</a>
+      </div>
+      <p class="muted" style="text-align: center;">
+        Master commission ends on their future bookings — but the lineage, and the
+        respect, are permanent.
+      </p>
+    `),
+  };
+}
+
 // ── NO PRO AVAILABLE ─────────────────────────────────────
 
 export function noProEmail(data: {

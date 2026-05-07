@@ -193,3 +193,29 @@ export async function notifyMasterApprenticeReadyForFreedom(
     `🎓 *${apprenticeName}* has met every Freedom requirement — curriculum complete, jobs and ratings on track.\n\nWhen you're ready, bestow Freedom from your partner portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
   );
 }
+
+// ─── FREEDOM CEREMONY ────────────────────────────────────────────────────────
+
+export async function notifyMasterFreedomComplete(
+  masterPhone: string,
+  apprenticeName: string,
+  certCode: string,
+  certUrl: string,
+) {
+  return sendMessage(
+    masterPhone,
+    `🎓 Freedom complete — *${apprenticeName}* is now an independent pro on Groomee.\n\nYou trained them up. The lineage stays with you forever — their cert reads "Freed under you".\n\nCert: *${certCode}*\nView: ${certUrl}\n\nFrom today, no more master commission on their bookings. But the bond — and the bragging rights — are permanent. 💚`,
+  );
+}
+
+export async function notifyApprenticeFreedomGranted(
+  apprenticePhone: string,
+  masterName: string,
+  certCode: string,
+  certUrl: string,
+) {
+  return sendMessage(
+    apprenticePhone,
+    `🎓✨ *FREEDOM!*\n\nYou've done it. *${masterName}* has bestowed your Freedom — you are now a fully independent Groomee pro.\n\nYour Certificate of Freedom is permanent and verifiable:\n🪪 Code: *${certCode}*\n🌐 ${certUrl}\n\nShare it with the world. Print it. Frame it. You earned every line of it.\n\nFrom today: every naira from your bookings is yours alone. Stay sharp. Build your name. We're proud of you. 💚`,
+  );
+}

@@ -12,6 +12,8 @@ import {
   apprenticeModuleCompletedEmail,
   apprenticeIndependenceGrantedEmail,
   apprenticeReadyForFreedomEmail,
+  apprenticeFreedomGrantedEmail,
+  masterFreedomCompleteEmail,
 } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/utils";
 
@@ -258,6 +260,46 @@ export async function emailMasterApprenticeReadyForFreedom(data: {
       masterName: data.masterName,
       apprenticeName: data.apprenticeName,
       certPreviewUrl: data.certPreviewUrl,
+    }),
+  );
+}
+
+export async function emailApprenticeFreedomGranted(data: {
+  to: string;
+  apprenticeName: string;
+  masterName: string;
+  certCode: string;
+  certUrl: string;
+  freedomDate: Date;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeFreedomGrantedEmail({
+      apprenticeName: data.apprenticeName,
+      masterName: data.masterName,
+      certCode: data.certCode,
+      certUrl: data.certUrl,
+      freedomDate: data.freedomDate,
+    }),
+  );
+}
+
+export async function emailMasterFreedomComplete(data: {
+  to: string;
+  masterName: string;
+  apprenticeName: string;
+  certCode: string;
+  certUrl: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    masterFreedomCompleteEmail({
+      masterName: data.masterName,
+      apprenticeName: data.apprenticeName,
+      certCode: data.certCode,
+      certUrl: data.certUrl,
     }),
   );
 }
