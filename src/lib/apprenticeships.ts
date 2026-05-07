@@ -244,4 +244,33 @@ export async function withFreedomCertCode<T>(
   );
 }
 
+/**
+ * Compute the apprenticeship earnings split using a *snapshotted* apprenticeship
+ * id, ignoring the apprenticeship's current status. Used at confirm time when a
+ * booking was delegated by a master to an apprentice — the snapshot is durable
+ * even if the apprenticeship has since transitioned to FREED / TERMINATED.
+ *
+ * Returns null if the apprenticeship row is missing (shouldn't happen — they
+ * are append-only — but guard so we degrade gracefully to a single SERVICE row
+ * on the apprentice rather than 500-ing).
+ */
+export async function computeEarningsSplitFromApprenticeshipId(
+  apprenticeshipId: string,
+  proEarning: number,
+): Promise<EarningSplit | null> {
+  const apprenticeship = await db.apprenticeship.findUnique({
+    where: { id: apprenticeshipId },
+  });
+  if (!apprenticeship) return null;
+  const masterAmount =
+    Math.round(proEarning * apprenticeship.masterCommission * 100) / 100;
+  const apprenticeAmount = Math.round((proEarning - masterAmount) * 100) / 100;
+  return {
+    apprenticeAmount,
+    masterAmount,
+    apprenticeshipId: apprenticeship.id,
+    masterId: apprenticeship.masterId,
+  };
+}
+
 export type { Apprenticeship, CurriculumModule };

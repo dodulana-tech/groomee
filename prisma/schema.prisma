@@ -359,6 +359,11 @@ model Booking {
   completedAt      DateTime?
   confirmedAt      DateTime?
   cancelledAt      DateTime?
+  // When a master delegates a booking to an apprentice (or staff), we
+  // snapshot the apprenticeship id so the earnings split at confirm time
+  // is durable even if the apprenticeship later transitions to FREED or
+  // TERMINATED. Null for non-delegated bookings.
+  delegatedApprenticeshipId String?
   customer         User          @relation(fields: [customerId], references: [id])
   pro              Pro?          @relation(fields: [proId], references: [id])
   service          Service       @relation(fields: [serviceId], references: [id])

@@ -110,7 +110,12 @@ export async function POST(
     await db.$transaction(async (tx) => {
       await tx.booking.update({
         where: { id: booking.id },
-        data: { proId: master.id },
+        data: {
+          proId: master.id,
+          // Clear the delegation snapshot — the booking is back with the
+          // master and earnings should not split.
+          delegatedApprenticeshipId: null,
+        },
       });
       await tx.pro.update({
         where: { id: dependent.id },

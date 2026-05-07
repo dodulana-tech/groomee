@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { awardPoints, POINTS } from "@/lib/points";
-import { computeEarningsSplit } from "@/lib/apprenticeships";
+import {
+  computeEarningsSplit,
+  computeEarningsSplitFromApprenticeshipId,
+} from "@/lib/apprenticeships";
 
 export async function POST(
   req: NextRequest,
@@ -37,7 +40,17 @@ export async function POST(
     // Compute apprenticeship split BEFORE the transaction (it does its own
     // DB reads). When non-null, the booking pro is an active apprentice and
     // we must split earnings between them and the master.
-    const split = await computeEarningsSplit(booking.proId, booking.proEarning);
+    //
+    // For delegated bookings (master → apprentice mid-flow) we use the
+    // snapshotted apprenticeship id so the split survives the apprentice
+    // being freed between delegation and confirm. Otherwise fall back to
+    // the live "active apprenticeship" lookup.
+    const split = booking.delegatedApprenticeshipId
+      ? await computeEarningsSplitFromApprenticeshipId(
+          booking.delegatedApprenticeshipId,
+          booking.proEarning,
+        )
+      : await computeEarningsSplit(booking.proId, booking.proEarning);
 
     // Atomic: conditional update prevents double-confirm race
     const confirmed = await db.$transaction(async (tx) => {

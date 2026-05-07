@@ -185,16 +185,38 @@ export async function POST(
       }
     }
 
+    // Snapshot the apprenticeship id so the earnings split at confirm time
+    // remains correct even if the apprenticeship transitions to FREED or
+    // TERMINATED before the booking is confirmed. STAFF (no apprenticeship
+    // row) gets null here and falls back to a single SERVICE earning.
+    const activeApprenticeship = await db.apprenticeship.findFirst({
+      where: {
+        apprenticeId: apprentice.id,
+        masterId: master.id,
+        status: { in: ["IN_TRAINING", "READY_FOR_FREEDOM"] },
+      },
+      select: { id: true },
+      orderBy: { acceptedAt: "desc" },
+    });
+
     // ─── Atomic re-assign ────────────────────────────────────────────────────
     await db.$transaction(async (tx) => {
       await tx.booking.update({
         where: { id: booking.id },
-        data: { proId: apprentice.id },
+        data: {
+          proId: apprentice.id,
+          delegatedApprenticeshipId: activeApprenticeship?.id ?? null,
+        },
       });
-      await tx.pro.update({
-        where: { id: master.id },
-        data: { availability: "ONLINE", currentBookingId: null },
-      });
+      // Only flip the master back to ONLINE if they were tied to *this*
+      // booking. Defensive: if dispatcher ever assigns concurrent work,
+      // we don't lose track of their other in-flight job.
+      if (master.currentBookingId === booking.id) {
+        await tx.pro.update({
+          where: { id: master.id },
+          data: { availability: "ONLINE", currentBookingId: null },
+        });
+      }
       await tx.pro.update({
         where: { id: apprentice.id },
         data: { availability: "BUSY", currentBookingId: booking.id },
