@@ -241,6 +241,55 @@ export function adminInviteEmail(data: {
   };
 }
 
+// ── APPRENTICESHIP INVITATION ────────────────────────────
+
+export function apprenticeInvitationEmail(data: {
+  masterName: string;
+  acceptUrl: string;
+  commissionPct: number;
+}): { subject: string; html: string } {
+  return {
+    subject: `${data.masterName} invited you to apprentice with them on Groomee`,
+    html: layout(`
+      <p class="hero-text">An invitation from ${data.masterName}</p>
+      <p class="body-text">
+        ${data.masterName} has invited you to become their apprentice on Groomee. Under their wing you'll learn the craft, earn while you learn, and graduate one day to your own independent practice.
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+        <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Master</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right;">${data.masterName}</td></tr>
+        <tr><td class="detail-label" style="padding: 10px 0;">Master&rsquo;s commission</td><td class="detail-value" style="padding: 10px 0; text-align: right;">${data.commissionPct}% of your earnings</td></tr>
+      </table>
+      <p class="body-text">
+        Tap the button below to review the full terms, then accept or decline. The invitation expires nothing — but the sooner you respond, the sooner you can begin.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.acceptUrl}" class="cta">Review invitation</a>
+      </div>
+      <p class="muted" style="text-align: center;">Didn&rsquo;t expect this? You can safely ignore this email.</p>
+    `),
+  };
+}
+
+export function apprenticeInviteAcceptedEmail(data: {
+  apprenticeName: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `${data.apprenticeName} has joined your team`,
+    html: layout(`
+      <p class="hero-text">Your team is growing!</p>
+      <p class="body-text">
+        <strong>${data.apprenticeName}</strong> has accepted your apprenticeship invitation. They are now in training under you.
+      </p>
+      <p class="body-text">
+        From your partner portal you can track their progress, edit their curriculum, sign off on completed modules, and approve them for independent bookings when the time comes.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${APP_URL}/partner/team" class="cta">View your team</a>
+      </div>
+    `),
+  };
+}
+
 // ── NO PRO AVAILABLE ─────────────────────────────────────
 
 export function noProEmail(data: {

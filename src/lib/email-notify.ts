@@ -7,6 +7,8 @@ import {
   serviceConfirmedEmail,
   reviewThankYouEmail,
   noProEmail,
+  apprenticeInvitationEmail,
+  apprenticeInviteAcceptedEmail,
 } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/utils";
 
@@ -172,6 +174,38 @@ export async function emailNoPro(booking: {
     noProEmail({
       customerName: customer?.name ?? "there",
       serviceName: booking.service.name,
+    }),
+  );
+}
+
+// ─── APPRENTICESHIP ──────────────────────────────────────────────────────────
+
+export async function emailApprenticeInvitation(data: {
+  to: string;
+  masterName: string;
+  acceptUrl: string;
+  commissionPct: number;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeInvitationEmail({
+      masterName: data.masterName,
+      acceptUrl: data.acceptUrl,
+      commissionPct: data.commissionPct,
+    }),
+  );
+}
+
+export async function emailInviteAccepted(data: {
+  to: string;
+  apprenticeName: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeInviteAcceptedEmail({
+      apprenticeName: data.apprenticeName,
     }),
   );
 }

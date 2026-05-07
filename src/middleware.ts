@@ -83,13 +83,22 @@ export async function middleware(request: NextRequest) {
     session.role !== "PRO" &&
     session.role !== "ADMIN"
   ) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json(
-        { success: false, error: "Forbidden" },
-        { status: 403 },
-      );
+    // Apprenticeship invite flow: invitees may still be CUSTOMER role when they
+    // arrive at the accept page. The page + API both enforce identity by
+    // phone match against the apprenticeship row, so the middleware just
+    // needs to require *a* session.
+    const isApprenticeInvite =
+      pathname.startsWith("/partner/invitation/") ||
+      /^\/api\/partner\/apprentices\/[^/]+\/(accept|decline)$/.test(pathname);
+    if (!isApprenticeInvite) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden" },
+          { status: 403 },
+        );
+      }
+      return NextResponse.redirect(new URL("/partner/login", request.url));
     }
-    return NextResponse.redirect(new URL("/partner/login", request.url));
   }
 
   // Attach user info to headers for server components

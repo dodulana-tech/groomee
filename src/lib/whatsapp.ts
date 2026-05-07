@@ -133,3 +133,33 @@ export async function sendProStrikeNotice(phone: string, strikeCount: number, re
 export async function sendProBalanceInfo(phone: string, pending: number, nextPayout: string) {
   return sendMessage(phone, `💰 *Your Groomee Balance*\n\nPending earnings: ₦${pending.toLocaleString()}\nNext payout: ${nextPayout}\n\nPayouts are sent every Friday. Contact admin if you have questions.`);
 }
+
+// ─── APPRENTICESHIP NOTIFICATIONS ────────────────────────────────────────────
+
+export async function notifyApprenticeInvited(phone: string, masterName: string, acceptUrl: string) {
+  return sendMessage(
+    phone,
+    `🎓 *${masterName}* has invited you to become their apprentice on Groomee.\n\nUnder their wing you'll learn the trade, earn while you learn, and one day graduate to your own independent practice.\n\nReview the offer and accept here:\n${acceptUrl}\n\nIf this wasn't expected, you can safely ignore this message.`,
+  );
+}
+
+export async function notifyMasterInviteAccepted(masterPhone: string, apprenticeName: string) {
+  return sendMessage(
+    masterPhone,
+    `🎉 *${apprenticeName}* has accepted your apprenticeship invitation!\n\nThey are now in training under you. Track their progress, sign off on curriculum modules, and grow your team from the partner portal:\n\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
+  );
+}
+
+export async function notifyMasterInviteDeclined(masterPhone: string, apprenticeName: string) {
+  return sendMessage(
+    masterPhone,
+    `Your apprenticeship invitation to *${apprenticeName}* was declined.\n\nNo stress — you can invite someone else any time from your partner portal.`,
+  );
+}
+
+export async function notifyApprenticeInviteCancelled(apprenticePhone: string, masterName: string) {
+  return sendMessage(
+    apprenticePhone,
+    `*${masterName}* has cancelled the apprenticeship invitation they sent you.\n\nIf this is unexpected, please reach out to them directly.`,
+  );
+}
