@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
@@ -14,29 +15,60 @@ export async function GET(req: NextRequest) {
     ? parseInt(searchParams.get("maxPrice")!)
     : undefined;
 
-  const pros = await db.pro.findMany({
-    where: {
-      status: "ACTIVE",
-      ...(asap ? { availability: "ONLINE" } : {}),
-      ...(serviceSlug
-        ? { services: { some: { service: { slug: serviceSlug } } } }
-        : {}),
-      ...(zoneSlug ? { zones: { some: { zone: { slug: zoneSlug } } } } : {}),
-      ...(minPrice !== undefined || maxPrice !== undefined
-        ? {
-            services: {
-              some: {
-                service: {
-                  basePrice: {
-                    ...(minPrice !== undefined ? { gte: minPrice } : {}),
-                    ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
-                  },
-                },
+  // ─── Apprenticeship gating (Slice 5) ───
+  // A pro is shown publicly only when they're NOT an apprentice, OR when
+  // they're an apprentice who has been independence-approved by their master
+  // AND has cleared every required+gating curriculum module. We push the
+  // filter into Prisma rather than post-filtering per row to keep the query
+  // fast; the equivalent in TS lives in `canTakeIndependentBookings`.
+  const independenceGate: Prisma.ProWhereInput = {
+    OR: [
+      { relationship: { not: "APPRENTICE" } },
+      {
+        relationship: "APPRENTICE",
+        apprenticeshipsAsApprentice: {
+          some: {
+            status: { in: ["IN_TRAINING", "READY_FOR_FREEDOM"] },
+            masterApprovedIndependence: { not: null },
+            modules: {
+              none: {
+                required: true,
+                gatesIndependence: true,
+                OR: [{ completedAt: null }, { masterSignoffAt: null }],
               },
             },
-          }
-        : {}),
-    },
+          },
+        },
+      },
+    ],
+  };
+
+  const andClauses: Prisma.ProWhereInput[] = [
+    { status: "ACTIVE" },
+    independenceGate,
+  ];
+  if (asap) andClauses.push({ availability: "ONLINE" });
+  if (serviceSlug)
+    andClauses.push({ services: { some: { service: { slug: serviceSlug } } } });
+  if (zoneSlug)
+    andClauses.push({ zones: { some: { zone: { slug: zoneSlug } } } });
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    andClauses.push({
+      services: {
+        some: {
+          service: {
+            basePrice: {
+              ...(minPrice !== undefined ? { gte: minPrice } : {}),
+              ...(maxPrice !== undefined ? { lte: maxPrice } : {}),
+            },
+          },
+        },
+      },
+    });
+  }
+
+  const pros = await db.pro.findMany({
+    where: { AND: andClauses },
     select: {
       id: true,
       name: true,
@@ -44,6 +76,10 @@ export async function GET(req: NextRequest) {
       avgRating: true,
       reviewCount: true,
       totalJobs: true,
+      relationship: true,
+      freedAt: true,
+      parent: { select: { id: true, name: true } },
+      freedUnder: { select: { id: true, name: true } },
       services: {
         include: {
           service: {

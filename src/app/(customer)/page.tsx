@@ -1,10 +1,9 @@
 import { Suspense } from "react";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import Hero from "@/components/customer/Hero";
-import TrustBadges from "@/components/customer/TrustBadges";
 import CityRolloutBanner from "@/components/customer/CityRolloutBanner";
-import ServiceCategories from "@/components/customer/ServiceCategories";
-import TopPros from "@/components/customer/TopPros";
+import Browse from "@/components/customer/Browse";
 import HowItWorks from "@/components/customer/HowItWorks";
 import SurveySection from "@/components/customer/SurveySection";
 import AboutSection from "@/components/customer/AboutSection";
@@ -14,13 +13,43 @@ import Footer from "@/components/customer/Footer";
 export const revalidate = 300;
 
 async function getHomeData() {
+  // Apprenticeship gating (Slice 5): apprentices who haven't earned
+  // independence don't appear in the top-pros section. Same filter as
+  // /api/pros — see comment there.
+  const independenceGate: Prisma.ProWhereInput = {
+    OR: [
+      { relationship: { not: "APPRENTICE" } },
+      {
+        relationship: "APPRENTICE",
+        apprenticeshipsAsApprentice: {
+          some: {
+            status: { in: ["IN_TRAINING", "READY_FOR_FREEDOM"] },
+            masterApprovedIndependence: { not: null },
+            modules: {
+              none: {
+                required: true,
+                gatesIndependence: true,
+                OR: [{ completedAt: null }, { masterSignoffAt: null }],
+              },
+            },
+          },
+        },
+      },
+    ],
+  };
+
   const [services, pros] = await Promise.all([
     db.service.findMany({
       where: { isActive: true },
       orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
     }),
     db.pro.findMany({
-      where: { status: "ACTIVE", avgRating: { gte: 4.0 } },
+      where: {
+        AND: [
+          { status: "ACTIVE", avgRating: { gte: 4.0 } },
+          independenceGate,
+        ],
+      },
       include: {
         services: { include: { service: true }, take: 3 },
         zones: { include: { zone: true }, take: 2 },
@@ -57,11 +86,9 @@ export default async function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Hero services={services} />
-      <TrustBadges />
       <CityRolloutBanner />
-      <ServiceCategories services={services} />
       <Suspense fallback={<div className="h-64" />}>
-        <TopPros pros={pros} />
+        <Browse services={services} pros={pros} />
       </Suspense>
       <HowItWorks />
       <SurveySection />

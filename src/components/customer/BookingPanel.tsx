@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/utils";
 import type { Service, Zone } from "@/types";
@@ -16,6 +17,12 @@ interface Props {
     name: string;
     availability: string;
     commissionRate: number;
+    // ─── Apprenticeship gating (Slice 5) ───
+    // When false, the apprentice has not earned independence yet — booking is
+    // disabled here and the customer is sent to the master's profile instead.
+    canTakeIndependent?: boolean;
+    parent?: { id: string; name: string; slug?: string | null } | null;
+    relationship?: "INDEPENDENT" | "APPRENTICE" | "STAFF";
   };
   preSelectedService?: Service;
   proServices: ProServiceItem[];
@@ -118,6 +125,53 @@ export default function BookingPanel({
     } finally {
       setLoading(false);
     }
+  }
+
+  // Apprentice not yet cleared for independent bookings — route customers to
+  // their master, who can deploy the apprentice on this job. We hide pricing
+  // and the booking form entirely; the master's profile handles the booking.
+  if (pro.canTakeIndependent === false && pro.parent) {
+    const masterHref = `/pro/${pro.parent.slug ?? pro.parent.id}`;
+    return (
+      <div className="card shadow-lg overflow-hidden">
+        <div
+          className="px-5 py-4 border-b border-gray-100"
+          style={{ background: "#FFFBEB" }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs font-bold px-2.5 py-1 rounded-full"
+              style={{ background: "#FEF3C7", color: "#92400E" }}
+            >
+              🎓 Apprentice
+            </span>
+            <h3 className="font-bold text-gray-900 text-sm">
+              Available via master
+            </h3>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            <span className="font-semibold">{pro.name.split(" ")[0]}</span> is
+            still in training under{" "}
+            <span className="font-semibold">{pro.parent.name}</span> and isn't
+            taking independent bookings yet. Book{" "}
+            <span className="font-semibold">{pro.parent.name}</span> instead —
+            they may deploy {pro.name.split(" ")[0]} for your job.
+          </p>
+          <Link
+            href={masterHref}
+            className="btn-primary btn-lg w-full text-center inline-flex items-center justify-center"
+          >
+            Book this pro via {pro.parent.name} →
+          </Link>
+          <p className="flex items-center justify-center gap-1.5 text-xs text-gray-400 text-center">
+            <span>🛡️</span>
+            Apprentice work is signed off by the master
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

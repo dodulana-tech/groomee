@@ -49,6 +49,13 @@ interface ProData {
   proServices: ProServiceRow[];
   allZones: Zone[];
   reviews: Review[];
+  // ─── Apprenticeship lineage (Slice 5) ───
+  relationship?: "INDEPENDENT" | "APPRENTICE" | "STAFF" | null;
+  parent?: { id: string; name: string; slug?: string | null } | null;
+  freedUnder?: { id: string; name: string; freedomCertCode?: string | null } | null;
+  freedAt?: Date | string | null;
+  freedomCertCode?: string | null;
+  canTakeIndependent?: boolean;
 }
 
 export default function ProProfileView({ pro }: { pro: ProData }) {
@@ -61,7 +68,15 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
     name: pro.name,
     availability: pro.isOnline ? "ONLINE" : "OFFLINE",
     commissionRate: 0.2,
+    canTakeIndependent: pro.canTakeIndependent ?? true,
+    parent: pro.parent ?? null,
+    relationship: pro.relationship ?? "INDEPENDENT",
   };
+
+  const freedYear = pro.freedAt ? new Date(pro.freedAt).getFullYear() : null;
+  const showApprenticeBadge =
+    pro.relationship === "APPRENTICE" && pro.parent?.name;
+  const showFreedBadge = !!pro.freedUnder?.name;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,6 +133,23 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
                     style={{ background: "#D4A853", color: "#0D1B12" }}
                   >
                     ✓ Verified
+                  </span>
+                )}
+                {showApprenticeBadge && (
+                  <span
+                    className="text-xs font-bold px-2.5 py-1 rounded-full"
+                    style={{ background: "#FEF3C7", color: "#92400E" }}
+                  >
+                    🎓 Apprentice • Trained by {pro.parent!.name}
+                  </span>
+                )}
+                {showFreedBadge && (
+                  <span
+                    className="text-xs font-bold px-2.5 py-1 rounded-full"
+                    style={{ background: "#FBBF24", color: "#78350F" }}
+                  >
+                    ✨ Freed under {pro.freedUnder!.name}
+                    {freedYear ? ` · ${freedYear}` : ""}
                   </span>
                 )}
               </div>
@@ -356,6 +388,74 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
                   <p className="text-gray-600 leading-relaxed mb-6">
                     {pro.bio}
                   </p>
+
+                  {/* Lineage section — apprentice or freed lineage detail */}
+                  {(showApprenticeBadge || showFreedBadge) && (
+                    <div
+                      className="rounded-2xl p-4 mb-6 border"
+                      style={
+                        showFreedBadge
+                          ? {
+                              background:
+                                "linear-gradient(135deg, #FEF3C7, #FDE68A)",
+                              borderColor: "#FBBF24",
+                            }
+                          : {
+                              background: "#FFFBEB",
+                              borderColor: "#FCD34D",
+                            }
+                      }
+                    >
+                      <p
+                        className="text-xs font-bold uppercase tracking-widest mb-2"
+                        style={{
+                          color: showFreedBadge ? "#78350F" : "#92400E",
+                        }}
+                      >
+                        {showFreedBadge ? "Lineage" : "In training"}
+                      </p>
+                      {showFreedBadge ? (
+                        <p
+                          className="text-sm leading-relaxed"
+                          style={{ color: "#78350F" }}
+                        >
+                          <span className="text-base mr-1">✨</span>
+                          Freed under{" "}
+                          <span className="font-bold">
+                            {pro.freedUnder!.name}
+                          </span>
+                          {freedYear ? ` in ${freedYear}` : ""}
+                          {pro.freedUnder!.freedomCertCode || pro.freedomCertCode ? (
+                            <>
+                              {" "}— Freedom certificate{" "}
+                              <Link
+                                href={`/cert/${pro.freedomCertCode ?? pro.freedUnder!.freedomCertCode}`}
+                                className="font-semibold underline"
+                                style={{ color: "#78350F" }}
+                              >
+                                verified ✓
+                              </Link>
+                            </>
+                          ) : null}
+                          . This is a permanent recognition of mastery.
+                        </p>
+                      ) : (
+                        <p
+                          className="text-sm leading-relaxed"
+                          style={{ color: "#92400E" }}
+                        >
+                          <span className="text-base mr-1">🎓</span>
+                          {pro.name.split(" ")[0]} is currently apprenticing
+                          under{" "}
+                          <span className="font-bold">
+                            {pro.parent!.name}
+                          </span>
+                          . Bookings flow through their master, who may deploy
+                          them on your job.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div
                       className="rounded-xl p-4"
@@ -431,23 +531,44 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
         className="fixed bottom-16 left-0 right-0 border-t border-gray-100 p-4 lg:hidden z-40"
         style={{ background: "#ffffff" }}
       >
-        <button
-          onClick={() => setBookingOpen(true)}
-          style={{
-            width: "100%",
-            background: "#1A3A2A",
-            color: "#ffffff",
-            borderRadius: "14px",
-            padding: "16px",
-            fontSize: "16px",
-            fontWeight: 700,
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Book {pro.name.split(" ")[0]} - from{" "}
-          {formatNaira(pro.baseRate)}
-        </button>
+        {!proForPanel.canTakeIndependent && pro.parent ? (
+          <Link
+            href={`/pro/${pro.parent.slug ?? pro.parent.id}`}
+            style={{
+              width: "100%",
+              display: "block",
+              textAlign: "center",
+              background: "#92400E",
+              color: "#ffffff",
+              borderRadius: "14px",
+              padding: "16px",
+              fontSize: "15px",
+              fontWeight: 700,
+              border: "none",
+              textDecoration: "none",
+            }}
+          >
+            Book this pro via {pro.parent.name} →
+          </Link>
+        ) : (
+          <button
+            onClick={() => setBookingOpen(true)}
+            style={{
+              width: "100%",
+              background: "#1A3A2A",
+              color: "#ffffff",
+              borderRadius: "14px",
+              padding: "16px",
+              fontSize: "16px",
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Book {pro.name.split(" ")[0]} - from{" "}
+            {formatNaira(pro.baseRate)}
+          </button>
+        )}
       </div>
 
       {/* Mobile booking sheet */}

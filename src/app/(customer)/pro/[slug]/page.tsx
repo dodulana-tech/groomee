@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import ProProfileView from "@/components/customer/ProProfileView";
+import { canTakeIndependentBookings } from "@/lib/apprenticeships";
 
 export default async function ProPage({
   params,
@@ -14,10 +15,16 @@ export default async function ProPage({
     include: {
       services: { include: { service: true } },
       zones: { include: { zone: true } },
+      parent: { select: { id: true, name: true } },
+      freedUnder: { select: { id: true, name: true, freedomCertCode: true } },
     },
   });
 
   if (!pro) notFound();
+
+  // Independence gate — apprentices who haven't cleared their gating modules &
+  // master sign-off can't take direct bookings; we surface a "via master" CTA.
+  const canTakeIndependent = await canTakeIndependentBookings(pro.id);
 
   // All zones for the booking panel dropdown
   const allZones = await db.zone.findMany({ orderBy: { name: "asc" } });
@@ -62,6 +69,21 @@ export default async function ProPage({
     })),
     // Full zone objects for BookingPanel dropdown
     allZones,
+    // ─── Apprenticeship lineage (Slice 5) ───
+    relationship: pro.relationship,
+    parent: pro.parent
+      ? { id: pro.parent.id, name: pro.parent.name, slug: pro.parent.id }
+      : null,
+    freedUnder: pro.freedUnder
+      ? {
+          id: pro.freedUnder.id,
+          name: pro.freedUnder.name,
+          freedomCertCode: pro.freedUnder.freedomCertCode ?? null,
+        }
+      : null,
+    freedAt: pro.freedAt,
+    freedomCertCode: pro.freedomCertCode ?? null,
+    canTakeIndependent,
     reviews: await db.review.findMany({
       where: { booking: { proId: pro.id } },
       orderBy: { createdAt: "desc" },

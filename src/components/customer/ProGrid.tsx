@@ -24,6 +24,11 @@ interface Props {
       customPrice: number | null;
     }>;
     zones: Array<{ zone: { name: string } }>;
+    // ─── Apprenticeship lineage (Slice 5) ───
+    relationship?: "INDEPENDENT" | "APPRENTICE" | "STAFF" | null;
+    parent?: { name: string } | null;
+    freedUnder?: { name: string } | null;
+    freedAt?: Date | string | null;
   }>;
   searchParams: { service?: string };
 }
@@ -236,6 +241,41 @@ export default function ProGrid({ pros, searchParams }: Props) {
                   </span>
                 </div>
               </div>
+
+              {/* Lineage pill (apprentice / freed) */}
+              {pro.relationship === "APPRENTICE" && pro.parent?.name && (
+                <span
+                  style={{
+                    alignSelf: "flex-start",
+                    marginTop: 8,
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    color: "#92400E",
+                    background: "#FEF3C7",
+                    padding: "3px 9px",
+                    borderRadius: 100,
+                  }}
+                >
+                  🎓 Apprentice • Trained by {pro.parent.name}
+                </span>
+              )}
+              {pro.freedUnder?.name && (
+                <span
+                  style={{
+                    alignSelf: "flex-start",
+                    marginTop: 8,
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    color: "#78350F",
+                    background: "#FBBF24",
+                    padding: "3px 9px",
+                    borderRadius: 100,
+                  }}
+                >
+                  ✨ Freed under {pro.freedUnder.name}
+                  {pro.freedAt ? ` · ${new Date(pro.freedAt).getFullYear()}` : ""}
+                </span>
+              )}
 
               {/* Service tags */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 10, marginBottom: 14 }}>

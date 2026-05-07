@@ -15,6 +15,14 @@ interface ProCardData {
   isOnline: boolean;
   isVerified: boolean;
   baseRate: number;
+  // ─── Apprenticeship lineage ───
+  // INDEPENDENT: no badge. APPRENTICE (still training): amber pill with master's
+  // name. FREED: gold pill with master's name + freedom year. Lineage is
+  // permanent — the freed pill stays for life as a status symbol.
+  relationship?: "INDEPENDENT" | "APPRENTICE" | "STAFF";
+  parentName?: string | null;
+  freedUnderName?: string | null;
+  freedAt?: Date | string | null;
 }
 
 export default function ProCard({
@@ -71,6 +79,12 @@ export default function ProCard({
             ★ {pro.avgRating}
           </div>
         </div>
+        <LineageBadge
+          relationship={pro.relationship}
+          parentName={pro.parentName}
+          freedUnderName={pro.freedUnderName}
+          freedAt={pro.freedAt}
+        />
         <p className="text-gray-500 text-xs leading-snug mb-3 line-clamp-2">
           {pro.headline}
         </p>
@@ -103,4 +117,42 @@ export default function ProCard({
       </div>
     </Link>
   );
+}
+
+// Lineage pill — see comment on ProCardData. Inline-style to match existing
+// trust-badge vocabulary (verified ✓, top-rated ★ are stylistic models).
+function LineageBadge({
+  relationship,
+  parentName,
+  freedUnderName,
+  freedAt,
+}: {
+  relationship?: "INDEPENDENT" | "APPRENTICE" | "STAFF";
+  parentName?: string | null;
+  freedUnderName?: string | null;
+  freedAt?: Date | string | null;
+}) {
+  if (relationship === "APPRENTICE" && parentName) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 self-start mb-2 px-2 py-0.5 rounded-full text-[10px] font-bold"
+        style={{ background: "#FEF3C7", color: "#92400E" }}
+      >
+        🎓 Apprentice • Trained by {parentName}
+      </span>
+    );
+  }
+  if (freedUnderName) {
+    const year = freedAt ? new Date(freedAt).getFullYear() : null;
+    return (
+      <span
+        className="inline-flex items-center gap-1 self-start mb-2 px-2 py-0.5 rounded-full text-[10px] font-bold"
+        style={{ background: "#FBBF24", color: "#78350F" }}
+      >
+        ✨ Freed under {freedUnderName}
+        {year ? ` · ${year}` : ""}
+      </span>
+    );
+  }
+  return null;
 }
