@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { generateFreedomCertCode } from "@/lib/apprenticeships";
+import { withFreedomCertCode } from "@/lib/apprenticeships";
 import {
   notifyMasterFreedomComplete,
   notifyApprenticeFreedomGranted,
@@ -113,25 +113,6 @@ export async function POST(
       );
     }
 
-    // Generate a unique cert code; retry on the rare collision against the
-    // unique index on Apprenticeship.freedomCertCode / Pro.freedomCertCode.
-    // (Pattern lifted from slice 7's force-freedom route.)
-    let certCode = generateFreedomCertCode();
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const collision = await db.apprenticeship.findUnique({
-        where: { freedomCertCode: certCode },
-        select: { id: true },
-      });
-      const proCollision = collision
-        ? null
-        : await db.pro.findUnique({
-            where: { freedomCertCode: certCode },
-            select: { id: true },
-          });
-      if (!collision && !proCollision) break;
-      certCode = generateFreedomCertCode();
-    }
-
     const now = new Date();
 
     // The master under whom they're freed: snapshot their parentProId before
@@ -139,13 +120,16 @@ export async function POST(
     const freedUnderProId =
       apprenticeship.apprentice.parentProId ?? apprenticeship.masterId;
 
-    await db.$transaction(async (tx) => {
+    // Atomic freedom grant. The helper retries with a fresh cert code if the
+    // unique index on freedomCertCode collides — handles the rare race where
+    // two concurrent freedom grants generate the same code.
+    const { certCode } = await withFreedomCertCode(async (code, tx) => {
       await tx.apprenticeship.update({
         where: { id },
         data: {
           status: "FREED",
           freedomDate: now,
-          freedomCertCode: certCode,
+          freedomCertCode: code,
         },
       });
       await tx.pro.update({
@@ -155,7 +139,7 @@ export async function POST(
           freedAt: now,
           parentProId: null,
           relationship: "INDEPENDENT",
-          freedomCertCode: certCode,
+          freedomCertCode: code,
         },
       });
     });

@@ -3,7 +3,7 @@ import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   APPRENTICESHIP_PERMISSIONS,
-  generateFreedomCertCode,
+  withFreedomCertCode,
 } from "@/lib/apprenticeships";
 import { logAdminAction } from "@/lib/admin-audit";
 import { z } from "zod";
@@ -60,24 +60,6 @@ export async function POST(
       );
     }
 
-    // Generate a unique cert code; retry on the rare collision against the
-    // unique index on Apprenticeship.freedomCertCode / Pro.freedomCertCode.
-    let certCode = generateFreedomCertCode();
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const collision = await db.apprenticeship.findUnique({
-        where: { freedomCertCode: certCode },
-        select: { id: true },
-      });
-      const proCollision = collision
-        ? null
-        : await db.pro.findUnique({
-            where: { freedomCertCode: certCode },
-            select: { id: true },
-          });
-      if (!collision && !proCollision) break;
-      certCode = generateFreedomCertCode();
-    }
-
     const now = new Date();
 
     // Snapshot apprentice's current parentProId before clearing it; that's
@@ -89,13 +71,14 @@ export async function POST(
     const freedUnderProId =
       apprentice?.parentProId ?? apprenticeship.masterId;
 
-    await db.$transaction(async (tx) => {
+    // Atomic freedom grant — helper retries on cert code unique collision.
+    const { certCode } = await withFreedomCertCode(async (code, tx) => {
       await tx.apprenticeship.update({
         where: { id },
         data: {
           status: "FREED",
           freedomDate: now,
-          freedomCertCode: certCode,
+          freedomCertCode: code,
           readyForFreedomAt:
             apprenticeship.status === "READY_FOR_FREEDOM"
               ? undefined
@@ -109,7 +92,7 @@ export async function POST(
           freedAt: now,
           parentProId: null,
           relationship: "INDEPENDENT",
-          freedomCertCode: certCode,
+          freedomCertCode: code,
         },
       });
     });

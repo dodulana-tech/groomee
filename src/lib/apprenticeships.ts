@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { Prisma } from "@prisma/client";
 import type { Apprenticeship, CurriculumModule, Pro } from "@prisma/client";
 
 // ─── DEFAULT CURRICULUM ──────────────────────────────────────────────────────
@@ -199,6 +200,48 @@ export async function computeEarningsSplit(
     apprenticeshipId: apprenticeship.id,
     masterId: apprenticeship.masterId,
   };
+}
+
+/**
+ * Run a Prisma transaction that needs a unique freedom cert code, retrying
+ * with a fresh code on P2002 collisions against either unique index
+ * (Apprenticeship.freedomCertCode / Pro.freedomCertCode).
+ *
+ * Replaces the pre-transaction "check then write" pattern, which was racy:
+ * two concurrent freedom grants could both pass the existence check, then
+ * the second write would 500 with a unique-constraint violation.
+ */
+export async function withFreedomCertCode<T>(
+  callback: (
+    certCode: string,
+    tx: Prisma.TransactionClient,
+  ) => Promise<T>,
+  maxAttempts = 5,
+): Promise<{ certCode: string; result: T }> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const certCode = generateFreedomCertCode();
+    try {
+      const result = await db.$transaction(async (tx) => callback(certCode, tx));
+      return { certCode, result };
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002" &&
+        Array.isArray((err.meta as { target?: unknown } | undefined)?.target) &&
+        ((err.meta as { target: string[] }).target.includes("freedomCertCode") ||
+          (err.meta as { target: string[] }).target.includes("freedomcertcode"))
+      ) {
+        lastError = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw (
+    lastError ??
+    new Error(`Failed to generate unique freedom cert code after ${maxAttempts} attempts`)
+  );
 }
 
 export type { Apprenticeship, CurriculumModule };

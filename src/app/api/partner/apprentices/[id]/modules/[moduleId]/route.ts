@@ -109,26 +109,39 @@ export async function PATCH(
       // If marking incomplete, also revoke any existing sign-off — sign-off implies completion.
       if (!input.completed) data.masterSignoffAt = null;
     }
-    if (input.signedOff !== undefined) {
-      if (input.signedOff) {
-        // Sign-off implies completion. If not yet completed, set completedAt as well.
-        data.masterSignoffAt = existing.masterSignoffAt ?? now;
-        if (!existing.completedAt && data.completedAt === undefined) {
-          data.completedAt = now;
-        }
-      } else {
-        data.masterSignoffAt = null;
-      }
+    // Sign-off transition is handled separately below as an atomic
+    // updateMany so concurrent PATCHes can't both fire the apprentice
+    // notification.
+    let pendingSignoff: false | "grant" | "revoke" = false;
+    if (input.signedOff === true) {
+      pendingSignoff = "grant";
+    } else if (input.signedOff === false) {
+      pendingSignoff = "revoke";
+    }
+
+    // Atomically transition the sign-off only when state actually changes.
+    // This is the only field where duplicate notifications would matter.
+    let signoffNewlyGranted = false;
+    if (pendingSignoff === "grant") {
+      const result = await db.curriculumModule.updateMany({
+        where: { id: moduleId, masterSignoffAt: null },
+        data: {
+          masterSignoffAt: now,
+          // Sign-off implies completion.
+          ...(existing.completedAt === null && data.completedAt === undefined
+            ? { completedAt: now }
+            : {}),
+        },
+      });
+      signoffNewlyGranted = result.count === 1;
+    } else if (pendingSignoff === "revoke") {
+      data.masterSignoffAt = null;
     }
 
     const updated = await db.curriculumModule.update({
       where: { id: moduleId },
       data,
     });
-
-    // Apprentice notification: only when sign-off newly transitioned from null → set.
-    const signoffNewlyGranted =
-      existing.masterSignoffAt === null && updated.masterSignoffAt !== null;
     if (signoffNewlyGranted && apprenticeship.apprentice.phone) {
       notifyApprenticeModuleCompleted(
         apprenticeship.apprentice.phone,
