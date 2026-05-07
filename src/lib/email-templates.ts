@@ -290,6 +290,75 @@ export function apprenticeInviteAcceptedEmail(data: {
   };
 }
 
+export function apprenticeModuleCompletedEmail(data: {
+  apprenticeName: string;
+  moduleTitle: string;
+  masterName: string;
+}): { subject: string; html: string } {
+  const greeting = data.apprenticeName ? data.apprenticeName.split(" ")[0] : "there";
+  return {
+    subject: `${data.masterName} signed off your module: ${data.moduleTitle}`,
+    html: layout(`
+      <p class="hero-text">Module signed off, ${greeting}!</p>
+      <p class="body-text">
+        <strong>${data.masterName}</strong> has signed off your work on <span class="highlight">${data.moduleTitle}</span>.
+      </p>
+      <p class="body-text">
+        Every module you finish moves you closer to independent bookings — and ultimately Freedom. Keep your head down and the work tight.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${APP_URL}/partner" class="cta">View progress</a>
+      </div>
+    `),
+  };
+}
+
+export function apprenticeIndependenceGrantedEmail(data: {
+  apprenticeName: string;
+  masterName: string;
+}): { subject: string; html: string } {
+  const greeting = data.apprenticeName ? data.apprenticeName.split(" ")[0] : "there";
+  return {
+    subject: `You're cleared for independent bookings`,
+    html: layout(`
+      <p class="hero-text">A big day, ${greeting}.</p>
+      <p class="body-text">
+        <strong>${data.masterName}</strong> has approved you to take customer bookings on your own. This is real trust, earned through real work.
+      </p>
+      <p class="body-text">
+        You're still under the apprenticeship until Freedom, and your master still takes commission on every job. But the next customer booking can come straight to you.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${APP_URL}/partner" class="cta">Open your portal</a>
+      </div>
+      <p class="muted" style="text-align: center;">Stay sharp. Reputation compounds.</p>
+    `),
+  };
+}
+
+export function apprenticeReadyForFreedomEmail(data: {
+  masterName: string;
+  apprenticeName: string;
+  certPreviewUrl?: string;
+}): { subject: string; html: string } {
+  const greeting = data.masterName ? data.masterName.split(" ")[0] : "there";
+  return {
+    subject: `${data.apprenticeName} is ready for Freedom`,
+    html: layout(`
+      <p class="hero-text">A Freedom moment is brewing, ${greeting}.</p>
+      <p class="body-text">
+        <strong>${data.apprenticeName}</strong> has met every Freedom requirement — curriculum complete, master sign-off in place, and Groomee thresholds for jobs and ratings cleared.
+      </p>
+      <p class="body-text">
+        When you're ready, bestow Freedom from your partner portal. This is the moment that turns an apprentice into a full pro of their own.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.certPreviewUrl ?? `${APP_URL}/partner/team`}" class="cta">Review &amp; bestow Freedom</a>
+      </div>
+    `),
+  };
+}
+
 // ── NO PRO AVAILABLE ─────────────────────────────────────
 
 export function noProEmail(data: {

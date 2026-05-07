@@ -163,3 +163,33 @@ export async function notifyApprenticeInviteCancelled(apprenticePhone: string, m
     `*${masterName}* has cancelled the apprenticeship invitation they sent you.\n\nIf this is unexpected, please reach out to them directly.`,
   );
 }
+
+export async function notifyApprenticeModuleCompleted(
+  apprenticePhone: string,
+  moduleTitle: string,
+) {
+  return sendMessage(
+    apprenticePhone,
+    `📘 Your master signed off another module: *${moduleTitle}*.\n\nKeep going — every module brings you closer to independence and Freedom. Track progress in your portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner`,
+  );
+}
+
+export async function notifyApprenticeIndependenceGranted(
+  apprenticePhone: string,
+  masterName: string,
+) {
+  return sendMessage(
+    apprenticePhone,
+    `🎉 Big step: *${masterName}* has approved you to take your own customer bookings on Groomee!\n\nYou'll still split commission with your master until Freedom, but the trust is yours now. Stay sharp out there. 💚`,
+  );
+}
+
+export async function notifyMasterApprenticeReadyForFreedom(
+  masterPhone: string,
+  apprenticeName: string,
+) {
+  return sendMessage(
+    masterPhone,
+    `🎓 *${apprenticeName}* has met every Freedom requirement — curriculum complete, jobs and ratings on track.\n\nWhen you're ready, bestow Freedom from your partner portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
+  );
+}

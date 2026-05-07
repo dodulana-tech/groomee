@@ -9,6 +9,9 @@ import {
   noProEmail,
   apprenticeInvitationEmail,
   apprenticeInviteAcceptedEmail,
+  apprenticeModuleCompletedEmail,
+  apprenticeIndependenceGrantedEmail,
+  apprenticeReadyForFreedomEmail,
 } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/utils";
 
@@ -206,6 +209,55 @@ export async function emailInviteAccepted(data: {
     data.to,
     apprenticeInviteAcceptedEmail({
       apprenticeName: data.apprenticeName,
+    }),
+  );
+}
+
+export async function emailApprenticeModuleCompleted(data: {
+  to: string;
+  apprenticeName: string;
+  moduleTitle: string;
+  masterName: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeModuleCompletedEmail({
+      apprenticeName: data.apprenticeName,
+      moduleTitle: data.moduleTitle,
+      masterName: data.masterName,
+    }),
+  );
+}
+
+export async function emailApprenticeIndependenceGranted(data: {
+  to: string;
+  apprenticeName: string;
+  masterName: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeIndependenceGrantedEmail({
+      apprenticeName: data.apprenticeName,
+      masterName: data.masterName,
+    }),
+  );
+}
+
+export async function emailMasterApprenticeReadyForFreedom(data: {
+  to: string;
+  masterName: string;
+  apprenticeName: string;
+  certPreviewUrl?: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    apprenticeReadyForFreedomEmail({
+      masterName: data.masterName,
+      apprenticeName: data.apprenticeName,
+      certPreviewUrl: data.certPreviewUrl,
     }),
   );
 }
