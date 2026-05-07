@@ -53,6 +53,7 @@ const GET_APIS = [
   "/api/admin/payouts",
   "/api/admin/stats",
   "/api/admin/pros/list",
+  "/api/admin/apprenticeships",
 ];
 
 async function main() {
