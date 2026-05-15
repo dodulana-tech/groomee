@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { logAdminAction } from "@/lib/admin-audit";
 import {
   notifyApprenticeBookingDeployed,
   notifyCustomerBookingDeployed,
@@ -221,6 +222,23 @@ export async function POST(
         where: { id: apprentice.id },
         data: { availability: "BUSY", currentBookingId: booking.id },
       });
+    });
+
+    // ─── Audit trail ─────────────────────────────────────────────────────────
+    // logAdminAction writes to ActivityLog. Reused here for pro-initiated
+    // booking events so we have a single audit timeline. Action prefix
+    // `booking.*` separates these from `team.*` and other admin actions.
+    await logAdminAction({
+      adminId: session.userId,
+      action: "booking.delegate",
+      entityType: "booking",
+      entityId: booking.id,
+      metadata: {
+        fromProId: master.id,
+        toProId: apprentice.id,
+        apprenticeName: apprentice.name,
+        delegatedApprenticeshipId: activeApprenticeship?.id ?? null,
+      },
     });
 
     // ─── Notifications ───────────────────────────────────────────────────────

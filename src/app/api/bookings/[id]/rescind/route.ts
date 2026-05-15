@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { logAdminAction } from "@/lib/admin-audit";
 import { notifyApprenticeDeploymentRescinded } from "@/lib/whatsapp";
 import { emailApprenticeDeploymentRescinded } from "@/lib/email-notify";
 
@@ -125,6 +126,19 @@ export async function POST(
         where: { id: master.id },
         data: { availability: "BUSY", currentBookingId: booking.id },
       });
+    });
+
+    // ─── Audit trail ─────────────────────────────────────────────────────────
+    await logAdminAction({
+      adminId: session.userId,
+      action: "booking.rescind",
+      entityType: "booking",
+      entityId: booking.id,
+      metadata: {
+        fromProId: dependent.id,
+        toProId: master.id,
+        dependentName: dependent.name,
+      },
     });
 
     // ─── Notify the dependent ─────────────────────────────────────────────────
