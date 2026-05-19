@@ -14,6 +14,7 @@
     "db:studio": "prisma studio",
     "gc:temp-users": "tsx scripts/gc-temp-users.ts",
     "smoke:admin": "tsx scripts/admin-smoke.ts",
+    "test:deep": "tsx scripts/deep-test.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
