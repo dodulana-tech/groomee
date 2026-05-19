@@ -146,6 +146,19 @@ export default function AdminSettingsPage() {
         </button>
       </div>
 
+      <a
+        href="/admin/settings/travel-times"
+        className="mb-6 flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-4 transition-all hover:border-brand-300 hover:shadow-sm"
+      >
+        <div>
+          <p className="text-sm font-bold text-gray-900">Travel times matrix</p>
+          <p className="text-xs text-gray-500">
+            Tune zone-to-zone drive times for the scheduler.
+          </p>
+        </div>
+        <span className="text-sm font-semibold text-brand-600">Open →</span>
+      </a>
+
       <div className="space-y-4">
         {Object.entries(SETTING_META).map(([key, meta]) => {
           const val = edits[key] ?? "";

@@ -141,8 +141,92 @@ async function main() {
       update: {},
       create: { name: "Gbagada", slug: "gbagada", city: "Lagos" },
     }),
+    // ── Abuja zones ──
+    prisma.zone.upsert({
+      where: { slug: "wuse" },
+      update: {},
+      create: { name: "Wuse", slug: "wuse", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "maitama" },
+      update: {},
+      create: { name: "Maitama", slug: "maitama", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "asokoro" },
+      update: {},
+      create: { name: "Asokoro", slug: "asokoro", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "garki" },
+      update: {},
+      create: { name: "Garki", slug: "garki", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "jabi" },
+      update: {},
+      create: { name: "Jabi", slug: "jabi", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "gudu" },
+      update: {},
+      create: { name: "Gudu", slug: "gudu", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "gwarinpa" },
+      update: {},
+      create: { name: "Gwarinpa", slug: "gwarinpa", city: "Abuja" },
+    }),
+    prisma.zone.upsert({
+      where: { slug: "utako" },
+      update: {},
+      create: { name: "Utako", slug: "utako", city: "Abuja" },
+    }),
   ]);
   console.log(`✅ ${zones.length} zones`);
+
+  // ── ZONE TRAVEL MATRIX ──────────────────────────────────
+  // Approximate inter-zone drive times in minutes (off-peak averages).
+  // Same-zone pairs are 0 and skipped. Missing pairs fall back to the
+  // DEFAULT_CROSS_ZONE_MINS in scheduling.ts.
+  const TRAVEL_MATRIX: Record<string, Record<string, number>> = {
+    // Abuja
+    jabi: { wuse: 15, maitama: 20, asokoro: 30, garki: 25, gudu: 25, gwarinpa: 15, utako: 8 },
+    wuse: { jabi: 15, maitama: 10, asokoro: 15, garki: 12, gudu: 20, gwarinpa: 25, utako: 12 },
+    maitama: { jabi: 20, wuse: 10, asokoro: 15, garki: 18, gudu: 30, gwarinpa: 30, utako: 18 },
+    asokoro: { jabi: 30, wuse: 15, maitama: 15, garki: 12, gudu: 25, gwarinpa: 40, utako: 25 },
+    garki: { jabi: 25, wuse: 12, maitama: 18, asokoro: 12, gudu: 12, gwarinpa: 35, utako: 18 },
+    gudu: { jabi: 25, wuse: 20, maitama: 30, asokoro: 25, garki: 12, gwarinpa: 35, utako: 20 },
+    gwarinpa: { jabi: 15, wuse: 25, maitama: 30, asokoro: 40, garki: 35, gudu: 35, utako: 20 },
+    utako: { jabi: 8, wuse: 12, maitama: 18, asokoro: 25, garki: 18, gudu: 20, gwarinpa: 20 },
+    // Lagos
+    "victoria-island": { ikoyi: 10, "lekki-phase-1": 20, yaba: 30, surulere: 35, ikeja: 60, gbagada: 40, ajah: 45 },
+    ikoyi: { "victoria-island": 10, "lekki-phase-1": 20, yaba: 25, surulere: 30, ikeja: 55, gbagada: 35, ajah: 45 },
+    "lekki-phase-1": { "victoria-island": 20, ikoyi: 20, yaba: 45, surulere: 50, ikeja: 75, gbagada: 50, ajah: 25 },
+    yaba: { "victoria-island": 30, ikoyi: 25, "lekki-phase-1": 45, surulere: 15, ikeja: 30, gbagada: 20, ajah: 60 },
+    surulere: { "victoria-island": 35, ikoyi: 30, "lekki-phase-1": 50, yaba: 15, ikeja: 30, gbagada: 25, ajah: 65 },
+    ikeja: { "victoria-island": 60, ikoyi: 55, "lekki-phase-1": 75, yaba: 30, surulere: 30, gbagada: 35, ajah: 90 },
+    gbagada: { "victoria-island": 40, ikoyi: 35, "lekki-phase-1": 50, yaba: 20, surulere: 25, ikeja: 35, ajah: 60 },
+    ajah: { "victoria-island": 45, ikoyi: 45, "lekki-phase-1": 25, yaba: 60, surulere: 65, ikeja: 90, gbagada: 60 },
+  };
+
+  const zoneBySlug = new Map(zones.map((z) => [z.slug, z]));
+  let travelCount = 0;
+  for (const [fromSlug, edges] of Object.entries(TRAVEL_MATRIX)) {
+    const from = zoneBySlug.get(fromSlug);
+    if (!from) continue;
+    for (const [toSlug, mins] of Object.entries(edges)) {
+      const to = zoneBySlug.get(toSlug);
+      if (!to) continue;
+      await prisma.zoneTravel.upsert({
+        where: { fromZoneId_toZoneId: { fromZoneId: from.id, toZoneId: to.id } },
+        update: { travelMins: mins, isActive: true },
+        create: { fromZoneId: from.id, toZoneId: to.id, travelMins: mins },
+      });
+      travelCount++;
+    }
+  }
+  console.log(`✅ ${travelCount} zone-travel pairs`);
 
   // ── SERVICES ─────────────────────────────────────────────
   const services = [

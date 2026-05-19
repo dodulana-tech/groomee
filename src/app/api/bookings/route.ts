@@ -9,10 +9,14 @@ import {
   paystackEmailFor,
 } from "@/lib/paystack";
 import { tryNextPro } from "@/lib/dispatch";
+import { findConflict, inWorkingHours } from "@/lib/scheduling";
 import { z } from "zod";
 
 const createBookingSchema = z.object({
   serviceId: z.string().min(1),
+  // When set, the customer is booking a specific pro from that pro's profile.
+  // Triggers scheduler conflict + working-hours checks for scheduled bookings.
+  proId: z.string().optional(),
   address: z.string().min(5),
   addressExtra: z.string().optional(),
   latitude: z.number().optional(),
@@ -97,6 +101,46 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ─── Scheduler enforcement (pro pre-selected + scheduled time) ───
+    // When the customer is booking a specific pro for a future time, we
+    // refuse the booking if it would land outside the pro's working hours
+    // or collide with another booking (including travel buffers).
+    const proStart =
+      !input.isAsap && input.scheduledFor && input.proId
+        ? new Date(input.scheduledFor)
+        : null;
+    if (proStart && input.proId) {
+      const proEnd = new Date(
+        proStart.getTime() + service.durationMins * 60_000,
+      );
+      const withinHours = await inWorkingHours({
+        proId: input.proId,
+        start: proStart,
+        end: proEnd,
+      });
+      if (!withinHours) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Selected time is outside the pro's working hours.",
+          },
+          { status: 409 },
+        );
+      }
+      const hit = await findConflict({
+        proId: input.proId,
+        start: proStart,
+        end: proEnd,
+        zoneId: input.zoneId ?? null,
+      });
+      if (hit.conflict) {
+        return NextResponse.json(
+          { success: false, error: hit.reason, code: "SCHEDULE_CONFLICT" },
+          { status: 409 },
+        );
+      }
+    }
+
     const user = await db.user.findUnique({
       where: { id: session.userId },
       select: { id: true, phone: true, email: true, points: true },
@@ -164,12 +208,14 @@ export async function POST(req: NextRequest) {
           reference,
           customerId: session.userId,
           serviceId: service.id,
+          proId: input.proId ?? null,
           zoneId: input.zoneId ?? null,
           address: input.address,
           latitude: input.latitude,
           longitude: input.longitude,
           isAsap: input.isAsap,
           scheduledFor,
+          durationMins: service.durationMins,
           customerNotes: input.customerNotes,
           baseAmount: service.basePrice,
           surchargeType: surcharge.type,

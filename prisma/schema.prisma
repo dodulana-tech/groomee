@@ -302,12 +302,14 @@ model Service {
 }
 
 model Zone {
-  id       String    @id @default(cuid())
-  name     String
-  slug     String    @unique
-  city     String    @default("Lagos")
-  pros     ProZone[]
-  bookings Booking[]
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  city        String       @default("Lagos")
+  pros        ProZone[]
+  bookings    Booking[]
+  travelFrom  ZoneTravel[] @relation("ZoneTravelFrom")
+  travelTo    ZoneTravel[] @relation("ZoneTravelTo")
 
   @@map("zones")
 }
@@ -346,6 +348,10 @@ model Booking {
   longitude        Float?
   isAsap           Boolean       @default(false)
   scheduledFor     DateTime?
+  // Cached total duration in minutes (sum of service durations). Computed at
+  // booking creation; falls back to service.durationMins when zero/legacy.
+  // Drives calendar block sizes and conflict detection.
+  durationMins     Int           @default(0)
   customerNotes    String?
   totalAmount      Float
   baseAmount       Float
@@ -696,6 +702,25 @@ model Payout {
   createdAt          DateTime  @default(now())
 
   @@map("payouts")
+}
+
+// Admin-tuned travel time matrix between zones. Used by the scheduler to add
+// transit buffers between consecutive bookings for the same pro. Missing pairs
+// fall back to scheduling.DEFAULT_CROSS_ZONE_MINS; same-zone pairs are 0.
+model ZoneTravel {
+  id          String   @id @default(cuid())
+  fromZoneId  String
+  toZoneId    String
+  travelMins  Int
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  fromZone    Zone     @relation("ZoneTravelFrom", fields: [fromZoneId], references: [id], onDelete: Cascade)
+  toZone      Zone     @relation("ZoneTravelTo", fields: [toZoneId], references: [id], onDelete: Cascade)
+
+  @@unique([fromZoneId, toZoneId])
+  @@index([fromZoneId])
+  @@map("zone_travel")
 }
 
 model ProSchedule {

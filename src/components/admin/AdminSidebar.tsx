@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/admin", label: "Overview", icon: "📊", exact: true, permission: "dashboard.view" },
   { href: "/admin/bookings", label: "Bookings", icon: "📋", permission: "bookings.view" },
+  { href: "/admin/calendar", label: "Calendar", icon: "📆", permission: "pros.view" },
   { href: "/admin/pros", label: "Beauty Pros", icon: "💇", permission: "pros.view" },
   { href: "/admin/apprenticeships", label: "Apprenticeships", icon: "🎓", permission: "apprenticeships.view" },
   { href: "/admin/customers", label: "Customers", icon: "👥", permission: "customers.view" },

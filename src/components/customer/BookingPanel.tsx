@@ -1,10 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/utils";
 import type { Service, Zone } from "@/types";
+
+function nextDay(ymd: string): string {
+  const d = new Date(`${ymd}T00:00:00+01:00`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return new Date(d.getTime() + 60 * 60_000).toISOString().slice(0, 10);
+}
+function todayYmd(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function fmtTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-NG", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Africa/Lagos",
+  }).format(new Date(iso));
+}
 
 interface ProServiceItem {
   service: Service;
@@ -41,6 +58,9 @@ export default function BookingPanel({
   );
   const [isAsap, setIsAsap] = useState(true);
   const [scheduledFor, setScheduledFor] = useState("");
+  const [slotDate, setSlotDate] = useState<string>(nextDay(todayYmd()));
+  const [slots, setSlots] = useState<string[] | null>(null);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [address, setAddress] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [notes, setNotes] = useState("");
@@ -80,6 +100,44 @@ export default function BookingPanel({
   const surchargeAmt = Math.round(price * surchargeRate);
   const total = price + surchargeAmt;
 
+  // Fetch real availability whenever the customer is in Schedule mode and we
+  // know what service / day. Slots respect the pro's working hours, existing
+  // bookings, and travel buffers from the customer's zone.
+  useEffect(() => {
+    if (isAsap || !selectedServiceId) {
+      setSlots(null);
+      setScheduledFor("");
+      return;
+    }
+    const controller = new AbortController();
+    setSlotsLoading(true);
+    const qs = new URLSearchParams({
+      date: `${slotDate}T12:00:00.000Z`,
+      serviceId: selectedServiceId,
+      ...(zoneId ? { zoneId } : {}),
+    });
+    fetch(`/api/pros/${pro.id}/availability?${qs.toString()}`, {
+      signal: controller.signal,
+    })
+      .then(async (r) => {
+        if (!r.ok) throw new Error("avail-fetch-failed");
+        return r.json();
+      })
+      .then((d) => {
+        setSlots(d.data?.slots ?? []);
+        // Clear stale selection if it's no longer in the list.
+        if (scheduledFor && !d.data?.slots?.includes(scheduledFor)) {
+          setScheduledFor("");
+        }
+      })
+      .catch((err) => {
+        if (err?.name !== "AbortError") setSlots([]);
+      })
+      .finally(() => setSlotsLoading(false));
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAsap, selectedServiceId, slotDate, zoneId, pro.id]);
+
   async function handleBook() {
     if (!selectedServiceId) {
       setError("Please select a service.");
@@ -92,11 +150,17 @@ export default function BookingPanel({
     setLoading(true);
     setError("");
     try {
+      if (!isAsap && !scheduledFor) {
+        setError("Please pick a time slot.");
+        setLoading(false);
+        return;
+      }
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId: selectedServiceId,
+          proId: pro.id,
           address,
           zoneId: zoneId || undefined,
           isAsap,
@@ -286,15 +350,57 @@ export default function BookingPanel({
             </button>
           </div>
           {!isAsap && (
-            <input
-              type="datetime-local"
-              value={scheduledFor}
-              onChange={(e) => setScheduledFor(e.target.value)}
-              min={new Date(Date.now() + 60 * 60_000)
-                .toISOString()
-                .slice(0, 16)}
-              className="input mt-2 text-sm"
-            />
+            <div className="mt-3 space-y-3">
+              {/* Day picker */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSlotDate(nextDay(slotDate))}
+                  aria-hidden
+                  className="hidden"
+                />
+                <input
+                  type="date"
+                  value={slotDate}
+                  min={todayYmd()}
+                  onChange={(e) => setSlotDate(e.target.value)}
+                  className="input text-sm"
+                />
+              </div>
+
+              {/* Slot chips */}
+              {!selectedServiceId ? (
+                <p className="text-xs text-gray-400">
+                  Select a service first to see available times.
+                </p>
+              ) : slotsLoading ? (
+                <p className="text-xs text-gray-400">Loading times…</p>
+              ) : slots && slots.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {slots.map((iso) => {
+                    const sel = scheduledFor === iso;
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        onClick={() => setScheduledFor(iso)}
+                        className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                          sel
+                            ? "border-brand-600 bg-brand-600 text-white shadow-sm"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        {fmtTime(iso)}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-500">
+                  No times available on this day. Try another date or book ASAP.
+                </div>
+              )}
+            </div>
           )}
         </div>
 
