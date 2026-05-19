@@ -24,6 +24,29 @@ const SUPPORT = [
   { href: "/partner/login", label: "Pro portal" },
 ];
 
+const TRUST_BADGES = [
+  {
+    icon: "🛡️",
+    title: "ID-verified pros",
+    desc: "Government ID checked before first job",
+  },
+  {
+    icon: "💳",
+    title: "Secure payments",
+    desc: "Held by Paystack until you confirm",
+  },
+  {
+    icon: "⭐",
+    title: "4.8+ average rating",
+    desc: "Only top-reviewed pros on the platform",
+  },
+  {
+    icon: "📱",
+    title: "Real-time tracking",
+    desc: "WhatsApp updates at every step",
+  },
+];
+
 const SOCIAL = [
   {
     label: "Instagram",
@@ -68,6 +91,30 @@ const SOCIAL = [
 export default function Footer() {
   return (
     <footer className="bg-[#0a0f0b]">
+      {/* ── Trust Strip ── */}
+      <div className="border-b border-white/[0.06]">
+        <div className="mx-auto max-w-7xl px-6 py-8 sm:px-10 sm:py-10">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {TRUST_BADGES.map((b) => (
+              <div
+                key={b.title}
+                className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
+              >
+                <span className="shrink-0 text-xl">{b.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white/80 truncate">
+                    {b.title}
+                  </p>
+                  <p className="text-[11px] leading-snug text-white/30 truncate">
+                    {b.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ── CTA Banner ── */}
       <div className="border-b border-white/[0.06]">
         <div className="mx-auto max-w-7xl px-6 sm:px-10">
