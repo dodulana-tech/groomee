@@ -109,9 +109,41 @@ export default function BookingPage() {
           <p className="font-bold text-sm text-gray-900 mb-3">
             Booking details
           </p>
+          {booking.items && booking.items.length > 0 && (
+            <ul className="mb-4 space-y-1 rounded-2xl bg-gray-50 p-3 text-sm border border-gray-100">
+              <li className="flex justify-between font-semibold text-gray-900">
+                <span>{booking.service.name}</span>
+                <span className="text-xs text-gray-400">
+                  ~{booking.service.durationMins} mins
+                </span>
+              </li>
+              {booking.items.map((it) => (
+                <li
+                  key={it.id}
+                  className="flex justify-between text-gray-700"
+                >
+                  <span>+ {it.service.name}</span>
+                  <span className="text-xs text-gray-400">
+                    ~{it.service.durationMins} mins
+                  </span>
+                </li>
+              ))}
+              <li className="flex justify-between border-t border-gray-200 pt-2 text-[11px] font-bold uppercase tracking-widest text-gray-500">
+                <span>Total time</span>
+                <span>
+                  {Math.floor((booking.durationMins ?? booking.service.durationMins) / 60)}h
+                  {((booking.durationMins ?? booking.service.durationMins) % 60)
+                    ? ` ${(booking.durationMins ?? booking.service.durationMins) % 60}m`
+                    : ""}
+                </span>
+              </li>
+            </ul>
+          )}
           <dl className="space-y-2.5 text-sm">
             {[
-              { label: "Service", value: booking.service.name },
+              ...(booking.items && booking.items.length > 0
+                ? []
+                : [{ label: "Service", value: booking.service.name }]),
               { label: "Address", value: booking.address },
               {
                 label: "Type",

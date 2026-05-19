@@ -10,10 +10,14 @@ import {
 } from "@/lib/paystack";
 import { tryNextPro } from "@/lib/dispatch";
 import { findConflict, inWorkingHours } from "@/lib/scheduling";
+import { resolveBookingServices } from "@/lib/booking-items";
 import { z } from "zod";
 
 const createBookingSchema = z.object({
   serviceId: z.string().min(1),
+  // Optional add-on services chained to the primary (e.g. loosen + wash +
+  // reloc). Durations and prices sum into the booking total.
+  additionalServiceIds: z.array(z.string().min(1)).max(8).optional(),
   // When set, the customer is booking a specific pro from that pro's profile.
   // Triggers scheduler conflict + working-hours checks for scheduled bookings.
   proId: z.string().optional(),
@@ -72,15 +76,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const input = createBookingSchema.parse(body);
 
-    const service = await db.service.findUnique({
-      where: { id: input.serviceId, isActive: true },
-    });
-    if (!service) {
-      return NextResponse.json(
-        { success: false, error: "Service not found." },
-        { status: 404 },
-      );
+    // Resolve primary + any additional services chained to this booking.
+    let resolved;
+    try {
+      resolved = await resolveBookingServices({
+        primaryServiceId: input.serviceId,
+        additionalServiceIds: input.additionalServiceIds,
+        proId: input.proId ?? null,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Service unavailable.";
+      return NextResponse.json({ success: false, error: msg }, { status: 404 });
     }
+    const { primary, additional, totalDurationMins, totalBasePrice } = resolved;
+    // Back-compat: existing helpers still expect a single `service` reference.
+    const service = primary;
 
     // Check minimum lead time
     const settings = await db.setting.findFirst({
@@ -110,9 +120,7 @@ export async function POST(req: NextRequest) {
         ? new Date(input.scheduledFor)
         : null;
     if (proStart && input.proId) {
-      const proEnd = new Date(
-        proStart.getTime() + service.durationMins * 60_000,
-      );
+      const proEnd = new Date(proStart.getTime() + totalDurationMins * 60_000);
       const withinHours = await inWorkingHours({
         proId: input.proId,
         start: proStart,
@@ -157,13 +165,13 @@ export async function POST(req: NextRequest) {
       : null;
     const surcharge = await calculateSurcharge(
       input.isAsap ? null : scheduledFor,
-      service.basePrice,
+      totalBasePrice,
     );
 
     // Get pro commission (default 20%)
     const commissionRate = 0.2;
     const { totalAmount: rawTotal, proEarning } = calculateEarnings({
-      baseAmount: service.basePrice,
+      baseAmount: totalBasePrice,
       surchargeAmount: surcharge.amount,
       surchargeType: surcharge.type,
       commissionRate,
@@ -215,9 +223,9 @@ export async function POST(req: NextRequest) {
           longitude: input.longitude,
           isAsap: input.isAsap,
           scheduledFor,
-          durationMins: service.durationMins,
+          durationMins: totalDurationMins,
           customerNotes: input.customerNotes,
-          baseAmount: service.basePrice,
+          baseAmount: totalBasePrice,
           surchargeType: surcharge.type,
           surchargeAmount: surcharge.amount,
           totalAmount,
@@ -225,6 +233,20 @@ export async function POST(req: NextRequest) {
           status: "PENDING_PAYMENT",
         },
       });
+
+      // Persist additional services as BookingItem rows. The primary lives
+      // on Booking.serviceId for back-compat.
+      if (additional.length > 0) {
+        await tx.bookingItem.createMany({
+          data: additional.map((s, idx) => ({
+            bookingId: bk.id,
+            serviceId: s.id,
+            customPrice: s.customPrice,
+            durationMins: s.durationMins,
+            sortOrder: idx + 1,
+          })),
+        });
+      }
 
       // Mark gift card as redeemed (conditional to prevent double-redeem race)
       if (appliedGiftCard) {

@@ -53,9 +53,13 @@ export default function BookingPanel({
   zones,
 }: Props) {
   const router = useRouter();
-  const [selectedServiceId, setSelectedServiceId] = useState<string>(
-    preSelectedService?.id ?? "",
+  // Primary service id stays separate so the back-end can keep using
+  // Booking.serviceId; additional ids ride along in additionalServiceIds.
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(
+    preSelectedService?.id ? [preSelectedService.id] : [],
   );
+  const selectedServiceId = selectedServiceIds[0] ?? "";
+  const additionalServiceIds = selectedServiceIds.slice(1);
   const [isAsap, setIsAsap] = useState(true);
   const [scheduledFor, setScheduledFor] = useState("");
   const [slotDate, setSlotDate] = useState<string>(nextDay(todayYmd()));
@@ -67,13 +71,24 @@ export default function BookingPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedGs = proServices.find(
-    (gs) => gs.service.id === selectedServiceId,
+  function toggleService(id: string) {
+    setSelectedServiceIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+    setScheduledFor("");
+  }
+
+  const selectedItems = selectedServiceIds
+    .map((id) => proServices.find((gs) => gs.service.id === id))
+    .filter((x): x is ProServiceItem => Boolean(x));
+  const totalDurationMins = selectedItems.reduce(
+    (acc, gs) => acc + (gs.service.durationMins ?? 0),
+    0,
   );
-  const selectedService = selectedGs?.service;
-  const price = selectedGs
-    ? (selectedGs.customPrice ?? selectedGs.service.basePrice)
-    : 0;
+  const price = selectedItems.reduce(
+    (acc, gs) => acc + (gs.customPrice ?? gs.service.basePrice),
+    0,
+  );
 
   // Calculate surcharge based on booking time, not current time
   const bookingHour = isAsap
@@ -104,18 +119,17 @@ export default function BookingPanel({
   // know what service / day. Slots respect the pro's working hours, existing
   // bookings, and travel buffers from the customer's zone.
   useEffect(() => {
-    if (isAsap || !selectedServiceId) {
+    if (isAsap || selectedServiceIds.length === 0) {
       setSlots(null);
       setScheduledFor("");
       return;
     }
     const controller = new AbortController();
     setSlotsLoading(true);
-    const qs = new URLSearchParams({
-      date: `${slotDate}T12:00:00.000Z`,
-      serviceId: selectedServiceId,
-      ...(zoneId ? { zoneId } : {}),
-    });
+    const qs = new URLSearchParams();
+    qs.set("date", `${slotDate}T12:00:00.000Z`);
+    for (const id of selectedServiceIds) qs.append("serviceId", id);
+    if (zoneId) qs.set("zoneId", zoneId);
     fetch(`/api/pros/${pro.id}/availability?${qs.toString()}`, {
       signal: controller.signal,
     })
@@ -136,11 +150,11 @@ export default function BookingPanel({
       .finally(() => setSlotsLoading(false));
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAsap, selectedServiceId, slotDate, zoneId, pro.id]);
+  }, [isAsap, selectedServiceIds.join("|"), slotDate, zoneId, pro.id]);
 
   async function handleBook() {
-    if (!selectedServiceId) {
-      setError("Please select a service.");
+    if (selectedServiceIds.length === 0) {
+      setError("Please select at least one service.");
       return;
     }
     if (!address.trim()) {
@@ -160,6 +174,9 @@ export default function BookingPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           serviceId: selectedServiceId,
+          additionalServiceIds: additionalServiceIds.length
+            ? additionalServiceIds
+            : undefined,
           proId: pro.id,
           address,
           zoneId: zoneId || undefined,
@@ -261,33 +278,52 @@ export default function BookingPanel({
       </div>
 
       <div className="space-y-5 p-5">
-        {/* Service selector */}
+        {/* Service selector — multi-select. Tap to add or remove. */}
         <div>
-          <label className="input-label">Select service</label>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="input-label">Select services</label>
+            {selectedServiceIds.length > 1 && (
+              <span className="text-[10px] font-bold uppercase tracking-widest text-brand-600">
+                {selectedServiceIds.length} chained · {Math.floor(totalDurationMins / 60)}h
+                {totalDurationMins % 60 ? ` ${totalDurationMins % 60}m` : ""}
+              </span>
+            )}
+          </div>
           <div className="space-y-2">
             {proServices.map((gs) => {
               const p = gs.customPrice ?? gs.service.basePrice;
-              const isSelected = selectedServiceId === gs.service.id;
+              const isSelected = selectedServiceIds.includes(gs.service.id);
               return (
                 <button
                   key={gs.service.id}
                   type="button"
-                  onClick={() => setSelectedServiceId(gs.service.id)}
+                  onClick={() => toggleService(gs.service.id)}
                   className={`w-full flex items-center justify-between gap-3 rounded-2xl border-2 p-3 text-left transition-all ${
                     isSelected
                       ? "border-brand-500 bg-brand-50"
                       : "border-gray-100 bg-white hover:border-gray-200"
                   }`}
                 >
-                  <div>
-                    <p
-                      className={`font-semibold text-sm ${isSelected ? "text-brand-700" : "text-gray-800"}`}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 text-xs font-bold ${
+                        isSelected
+                          ? "border-brand-500 bg-brand-500 text-white"
+                          : "border-gray-200 text-transparent"
+                      }`}
                     >
-                      {gs.service.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      ~{gs.service.durationMins} mins
-                    </p>
+                      ✓
+                    </span>
+                    <div className="min-w-0">
+                      <p
+                        className={`font-semibold text-sm truncate ${isSelected ? "text-brand-700" : "text-gray-800"}`}
+                      >
+                        {gs.service.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        ~{gs.service.durationMins} mins
+                      </p>
+                    </div>
                   </div>
                   <div className="shrink-0 text-right">
                     <p
@@ -295,8 +331,11 @@ export default function BookingPanel({
                     >
                       {formatNaira(p)}
                     </p>
-                    {isSelected && (
-                      <p className="text-[10px] text-brand-500">Selected ✓</p>
+                    {isSelected && selectedServiceIds[0] === gs.service.id && (
+                      <p className="text-[10px] text-brand-500">Primary ★</p>
+                    )}
+                    {isSelected && selectedServiceIds[0] !== gs.service.id && (
+                      <p className="text-[10px] text-brand-500">Added ✓</p>
                     )}
                   </div>
                 </button>
@@ -440,12 +479,28 @@ export default function BookingPanel({
         </div>
 
         {/* Price summary */}
-        {selectedService && (
+        {selectedItems.length > 0 && (
           <div className="rounded-2xl bg-gray-50 p-4 space-y-2 text-sm border border-gray-100">
-            <div className="flex justify-between text-gray-600">
-              <span>{selectedService.name}</span>
-              <span className="font-medium">{formatNaira(price)}</span>
-            </div>
+            {selectedItems.map((gs) => (
+              <div
+                key={gs.service.id}
+                className="flex justify-between text-gray-600"
+              >
+                <span>{gs.service.name}</span>
+                <span className="font-medium">
+                  {formatNaira(gs.customPrice ?? gs.service.basePrice)}
+                </span>
+              </div>
+            ))}
+            {totalDurationMins > 0 && (
+              <div className="flex justify-between text-[11px] uppercase tracking-widest text-gray-400">
+                <span>Total duration</span>
+                <span>
+                  {Math.floor(totalDurationMins / 60)}h
+                  {totalDurationMins % 60 ? ` ${totalDurationMins % 60}m` : ""}
+                </span>
+              </div>
+            )}
             {surchargeAmt > 0 && (
               <div className="flex justify-between text-orange-600">
                 <span>{surchargeLabel}</span>

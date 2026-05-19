@@ -48,6 +48,10 @@ export default async function AdminBookingDetailPage({
       customer: true,
       pro: true,
       service: true,
+      items: {
+        include: { service: { select: { id: true, name: true, durationMins: true } } },
+        orderBy: { sortOrder: "asc" },
+      },
       zone: true,
       payment: true,
       dispute: true,
@@ -102,7 +106,20 @@ export default async function AdminBookingDetailPage({
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {booking.service.name}
+            {booking.items && booking.items.length > 0 && (
+              <span className="ml-2 align-middle text-sm font-semibold text-brand-600">
+                + {booking.items.length} more
+              </span>
+            )}
           </h1>
+          {booking.items && booking.items.length > 0 && (
+            <p className="mt-1 text-xs text-gray-500">
+              {booking.items.map((it) => it.service.name).join(", ")} ·{" "}
+              {Math.floor(booking.durationMins / 60)}h
+              {booking.durationMins % 60 ? ` ${booking.durationMins % 60}m` : ""}
+              {" total"}
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
             <span
               className="text-xs font-bold px-2.5 py-1 rounded-full"

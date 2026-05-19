@@ -54,6 +54,16 @@ export type BookingWithRelations = Booking & {
   customer: Pick<User, "id" | "name" | "phone">;
   pro: Pro | null;
   service: Service;
+  // Additional services chained to the booking (multi-service). Empty for
+  // single-service bookings.
+  items?: Array<{
+    id: string;
+    serviceId: string;
+    customPrice: number | null;
+    durationMins: number;
+    sortOrder: number;
+    service: Pick<Service, "id" | "name" | "durationMins">;
+  }>;
   zone: Zone | null;
   payment: Payment | null;
   dispute: Dispute | null;

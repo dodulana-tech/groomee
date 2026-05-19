@@ -25,6 +25,10 @@ export async function GET(
         },
         pro: true,
         service: true,
+        items: {
+          include: { service: { select: { id: true, name: true, durationMins: true } } },
+          orderBy: { sortOrder: "asc" },
+        },
         zone: true,
         payment: true,
         dispute: true,

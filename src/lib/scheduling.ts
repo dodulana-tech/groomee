@@ -43,6 +43,7 @@ export type SchedulingBooking = {
   isAsap: boolean;
   status: string;
   service: { name: string; durationMins: number };
+  items?: Array<{ id: string; serviceName: string; durationMins: number }>;
   customer: { id: string; name: string | null } | null;
   zone: { id: string; name: string; slug: string } | null;
 };
@@ -154,6 +155,10 @@ export async function getProBookingsInRange(
     },
     include: {
       service: { select: { name: true, durationMins: true } },
+      items: {
+        include: { service: { select: { name: true, durationMins: true } } },
+        orderBy: { sortOrder: "asc" },
+      },
       customer: { select: { id: true, name: true } },
       zone: { select: { id: true, name: true, slug: true } },
     },
@@ -169,6 +174,11 @@ export async function getProBookingsInRange(
     isAsap: r.isAsap,
     status: r.status,
     service: { name: r.service.name, durationMins: r.service.durationMins },
+    items: r.items.map((it) => ({
+      id: it.id,
+      serviceName: it.service.name,
+      durationMins: it.durationMins,
+    })),
     customer: r.customer ? { id: r.customer.id, name: r.customer.name } : null,
     zone: r.zone ? { id: r.zone.id, name: r.zone.name, slug: r.zone.slug } : null,
   }));

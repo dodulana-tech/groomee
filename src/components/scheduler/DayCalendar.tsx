@@ -10,6 +10,8 @@ export interface CalendarBlock {
   end: string | null; // ISO
   durationMins: number;
   service: string;
+  // All chained service names — primary first, then BookingItem rows.
+  services?: string[];
   customer: string;
   zone: string | null;
   zoneId: string | null;
@@ -211,7 +213,20 @@ export default function DayCalendar({
                   </div>
                   <div className="mt-0.5 text-sm font-bold leading-tight truncate">
                     {b.service}
+                    {b.services && b.services.length > 1 && (
+                      <span className="ml-1.5 text-[10px] font-bold opacity-60">
+                        +{b.services.length - 1}
+                      </span>
+                    )}
                   </div>
+                  {b.services && b.services.length > 1 && (
+                    <div
+                      className="text-[10px] opacity-60 truncate"
+                      title={b.services.join(" · ")}
+                    >
+                      {b.services.slice(1).join(" · ")}
+                    </div>
+                  )}
                   <div className="text-xs opacity-75 truncate">
                     {b.customer}
                     {b.zone ? ` · ${b.zone}` : ""}

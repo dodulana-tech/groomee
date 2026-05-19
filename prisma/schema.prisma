@@ -296,6 +296,7 @@ model Service {
   sortOrder    Int             @default(0)
   pros         ProService[]
   bookings     Booking[]
+  bookingItems BookingItem[]
   createdAt    DateTime        @default(now())
 
   @@map("services")
@@ -379,6 +380,7 @@ model Booking {
   review           Review?
   dispatchLog      DispatchLog[]
   strikes          Strike[]
+  items            BookingItem[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -386,6 +388,27 @@ model Booking {
   @@index([proId])
   @@index([status, createdAt])
   @@map("bookings")
+}
+
+// Additional services attached to a Booking. The primary service stays on
+// Booking.serviceId for backward compatibility; this table holds any extras
+// the customer chained (e.g. "loosen + wash + reloc"). Total booking duration
+// = Booking.durationMins, which is computed as primary.durationMins +
+// sum(items.durationMins) at create time.
+model BookingItem {
+  id           String   @id @default(cuid())
+  bookingId    String
+  serviceId    String
+  customPrice  Float?
+  durationMins Int
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  service      Service  @relation(fields: [serviceId], references: [id])
+
+  @@unique([bookingId, serviceId])
+  @@index([bookingId])
+  @@map("booking_items")
 }
 
 model DispatchLog {

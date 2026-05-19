@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
         end: w?.end ?? null,
         durationMins: effectiveDurationMins(b),
         service: b.service.name,
+        services: [b.service.name, ...(b.items?.map((it) => it.serviceName) ?? [])],
         customer: b.customer?.name ?? "Customer",
         zone: b.zone?.name ?? null,
         zoneId: b.zoneId,

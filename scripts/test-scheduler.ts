@@ -14,12 +14,12 @@
 import { PrismaClient } from "@prisma/client";
 import {
   bookingWindow,
-  effectiveDurationMins,
   findConflict,
   getAvailableSlots,
   getWorkingWindow,
   travelMinsBetween,
 } from "../src/lib/scheduling";
+import { resolveBookingServices } from "../src/lib/booking-items";
 
 const db = new PrismaClient();
 
@@ -90,25 +90,66 @@ async function main() {
     create: { proId: pro.id, zoneId: gudu.id },
   });
 
-  // Test service.
-  const service = await db.service.upsert({
-    where: { slug: "abuja-test-reloc" },
-    update: { isActive: true, durationMins: 285 },
+  // Test services — three discrete services matching the client's quote:
+  //   loosen (1h), wash (45min), reloc (3h). The booking chains them via
+  //   BookingItem so the total durationMins = 285.
+  const loosen = await db.service.upsert({
+    where: { slug: "abuja-test-loosen" },
+    update: { isActive: true, durationMins: 60 },
     create: {
-      slug: "abuja-test-reloc",
-      name: "Loosen + Wash + Reloc",
+      slug: "abuja-test-loosen",
+      name: "Loosen",
       category: "HAIR",
-      basePrice: 25000,
-      minPrice: 25000,
-      maxPrice: 35000,
-      durationMins: 285, // 1h + 45min + 3h = 4h45m
+      basePrice: 6000,
+      minPrice: 6000,
+      maxPrice: 8000,
+      durationMins: 60,
     },
   });
-  await db.proService.upsert({
-    where: { proId_serviceId: { proId: pro.id, serviceId: service.id } },
-    update: { customPrice: 30000 },
-    create: { proId: pro.id, serviceId: service.id, customPrice: 30000 },
+  const wash = await db.service.upsert({
+    where: { slug: "abuja-test-wash" },
+    update: { isActive: true, durationMins: 45 },
+    create: {
+      slug: "abuja-test-wash",
+      name: "Wash",
+      category: "HAIR",
+      basePrice: 4000,
+      minPrice: 4000,
+      maxPrice: 6000,
+      durationMins: 45,
+    },
   });
+  const reloc = await db.service.upsert({
+    where: { slug: "abuja-test-reloc" },
+    update: { isActive: true, durationMins: 180, name: "Reloc" },
+    create: {
+      slug: "abuja-test-reloc",
+      name: "Reloc",
+      category: "HAIR",
+      basePrice: 20000,
+      minPrice: 20000,
+      maxPrice: 28000,
+      durationMins: 180,
+    },
+  });
+  for (const s of [loosen, wash, reloc]) {
+    await db.proService.upsert({
+      where: { proId_serviceId: { proId: pro.id, serviceId: s.id } },
+      update: {},
+      create: { proId: pro.id, serviceId: s.id },
+    });
+  }
+  // Resolver should sum 60 + 45 + 180 = 285 minutes.
+  const resolved = await resolveBookingServices({
+    primaryServiceId: loosen.id,
+    additionalServiceIds: [wash.id, reloc.id],
+    proId: pro.id,
+  });
+  console.log(
+    `   Resolved chain: ${resolved.primary.name} + ${resolved.additional.map((a) => a.name).join(" + ")} = ${resolved.totalDurationMins} min @ ₦${resolved.totalBasePrice}`,
+  );
+  if (resolved.totalDurationMins !== 285)
+    throw new Error("Chain duration should be 285 min.");
 
   // Service for the Gudu customer (1h).
   const shorter = await db.service.upsert({
@@ -148,26 +189,38 @@ async function main() {
   const start10 = new Date(`${ymd}T10:00:00+01:00`);
   const end_1445 = new Date(start10.getTime() + 285 * 60_000);
 
-  // 4. Create the Jabi booking (10:00–14:45 = 4h45m).
+  // 4. Create the Jabi booking with the 3-service chain (10:00–14:45 = 4h45m).
   const ref1 = `TEST-${Date.now()}-1`;
   const jabiBooking = await db.booking.create({
     data: {
       reference: ref1,
       customerId: customer.id,
       proId: pro.id,
-      serviceId: service.id,
+      serviceId: resolved.primary.id,
       zoneId: jabi.id,
       address: "Jabi Lake, Abuja",
       isAsap: false,
       scheduledFor: start10,
-      durationMins: service.durationMins,
-      baseAmount: 25000,
-      totalAmount: 30000,
-      proEarning: 24000,
+      durationMins: resolved.totalDurationMins,
+      baseAmount: resolved.totalBasePrice,
+      totalAmount: resolved.totalBasePrice,
+      proEarning: resolved.totalBasePrice * 0.8,
       status: "ACCEPTED",
       acceptedAt: new Date(),
+      items: {
+        create: resolved.additional.map((s, idx) => ({
+          serviceId: s.id,
+          customPrice: s.customPrice,
+          durationMins: s.durationMins,
+          sortOrder: idx + 1,
+        })),
+      },
     },
+    include: { items: { include: { service: true } } },
   });
+  console.log(
+    `   Booking items persisted: primary "${resolved.primary.name}" + items [${jabiBooking.items.map((i) => i.service.name).join(", ")}]`,
+  );
   const w = bookingWindow({ scheduledFor: jabiBooking.scheduledFor, durationMins: jabiBooking.durationMins });
   console.log(`   Existing booking: ${jabiBooking.reference} ${w?.start.toISOString()} – ${w?.end.toISOString()} (Jabi)`);
 

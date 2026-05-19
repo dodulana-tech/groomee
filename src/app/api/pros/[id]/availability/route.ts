@@ -3,10 +3,14 @@ import { db } from "@/lib/db";
 import { getAvailableSlots, getWorkingWindow } from "@/lib/scheduling";
 
 // Customer-facing slot picker. Returns the available start times for a given
-// pro, day, and service. Honors:
+// pro, day, and chosen services. Honors:
 //   - the pro's working hours
 //   - existing bookings (with travel buffers from the customer's zone)
 //   - MIN_BOOKING_LEAD_MINUTES setting (minimum lead time before now)
+//
+// Multiple services are summed into a single block — pass them as repeated
+// `serviceId` params (?serviceId=a&serviceId=b) so a 1h+45m+3h chain becomes
+// a 4h45m duration on the calendar.
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -14,12 +18,12 @@ export async function GET(
   const { id } = await params;
   const sp = new URL(req.url).searchParams;
   const dateStr = sp.get("date");
-  const serviceId = sp.get("serviceId");
+  const serviceIds = sp.getAll("serviceId").filter(Boolean);
   const zoneId = sp.get("zoneId");
 
-  if (!dateStr || !serviceId) {
+  if (!dateStr || serviceIds.length === 0) {
     return NextResponse.json(
-      { error: "date and serviceId are required" },
+      { error: "date and at least one serviceId are required" },
       { status: 400 },
     );
   }
@@ -28,13 +32,13 @@ export async function GET(
     return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
-  const [pro, service, leadSetting] = await Promise.all([
+  const [pro, services, leadSetting] = await Promise.all([
     db.pro.findUnique({
       where: { id },
       select: { id: true, status: true, name: true },
     }),
-    db.service.findUnique({
-      where: { id: serviceId },
+    db.service.findMany({
+      where: { id: { in: serviceIds }, isActive: true },
       select: { id: true, durationMins: true, name: true },
     }),
     db.setting.findFirst({ where: { key: "MIN_BOOKING_LEAD_MINUTES" } }),
@@ -42,16 +46,17 @@ export async function GET(
   if (!pro || pro.status !== "ACTIVE") {
     return NextResponse.json({ error: "Pro not available" }, { status: 404 });
   }
-  if (!service) {
-    return NextResponse.json({ error: "Service not found" }, { status: 404 });
+  if (services.length === 0) {
+    return NextResponse.json({ error: "Services not found" }, { status: 404 });
   }
+  const totalDurationMins = services.reduce((acc, s) => acc + s.durationMins, 0);
 
   const minLead = parseInt(leadSetting?.value ?? "60", 10);
   const work = await getWorkingWindow(pro.id, anchor);
   const slots = await getAvailableSlots({
     proId: pro.id,
     date: anchor,
-    durationMins: service.durationMins,
+    durationMins: totalDurationMins,
     zoneId: zoneId ?? null,
     minLeadMins: minLead,
   });
@@ -61,7 +66,8 @@ export async function GET(
     data: {
       proId: pro.id,
       date: anchor.toISOString(),
-      durationMins: service.durationMins,
+      durationMins: totalDurationMins,
+      services: services.map((s) => ({ id: s.id, name: s.name, durationMins: s.durationMins })),
       workingWindow: work,
       slots: slots.map((s) => s.toISOString()),
     },
