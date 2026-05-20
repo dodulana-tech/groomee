@@ -135,7 +135,7 @@ export default async function AdminCustomerDetailPage({
                   <tr key={b.id} className="hover:bg-gray-50/50">
                     <td className="px-4 py-2.5">{b.service.name}</td>
                     <td className="px-4 py-2.5 text-gray-500">
-                      {b.pro?.name ?? <span className="text-gray-300">—</span>}
+                      {b.pro?.name ?? <span className="text-gray-300">-</span>}
                     </td>
                     <td className="px-4 py-2.5">
                       <span className={cn("status-pill", getBookingStatusColor(b.status))}>
@@ -195,7 +195,7 @@ export default async function AdminCustomerDetailPage({
                       {"★".repeat(r.rating)}
                       {"☆".repeat(5 - r.rating)}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{r.booking.pro?.name ?? "—"}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{r.booking.pro?.name ?? "-"}</p>
                     {r.text && (
                       <p className="text-sm text-gray-600 italic mt-1">"{r.text}"</p>
                     )}

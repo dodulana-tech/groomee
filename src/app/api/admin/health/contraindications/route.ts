@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Enforce uniqueness on (conditionCode, serviceId) — schema already has it,
+    // Enforce uniqueness on (conditionCode, serviceId) - schema already has it,
     // but we want a friendly 409 instead of a Prisma exception.
     const existing = await db.serviceContraindication.findFirst({
       where: { conditionCode: input.conditionCode, serviceId },

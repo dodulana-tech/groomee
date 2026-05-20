@@ -6,7 +6,7 @@ import { HEALTH_PERMISSIONS } from "@/lib/health";
 import { logAdminAction } from "@/lib/admin-audit";
 
 // PATCH only allows level + message. conditionCode and serviceId are
-// immutable — to repoint a rule, delete and recreate. Stops stealth
+// immutable - to repoint a rule, delete and recreate. Stops stealth
 // changes to policy and keeps the audit trail honest.
 const patchSchema = z
   .object({

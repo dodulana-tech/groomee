@@ -78,7 +78,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: `Cannot grant independence — ${incomplete.length} required module${incomplete.length === 1 ? "" : "s"} not yet completed and signed off.`,
+          error: `Cannot grant independence - ${incomplete.length} required module${incomplete.length === 1 ? "" : "s"} not yet completed and signed off.`,
           missing: incomplete.map((m) => ({ id: m.id, title: m.title })),
         },
         { status: 422 },

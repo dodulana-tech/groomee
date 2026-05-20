@@ -4,15 +4,15 @@
  *   npm run test:deep
  *
  * Sections:
- *   A — Page reachability (customer, partner, admin)
- *   B — API contract (auth/public/admin/partner)
- *   C — Apprenticeship full lifecycle E2E
- *   D — Booking + money lifecycle E2E
- *   E — Refund / clawback parity
- *   F — Admin override actions
- *   G — Edge cases & gating
- *   H — DB integrity audit
- *   I — Health profiles lifecycle (customer + booking + pro + admin)
+ *   A - Page reachability (customer, partner, admin)
+ *   B - API contract (auth/public/admin/partner)
+ *   C - Apprenticeship full lifecycle E2E
+ *   D - Booking + money lifecycle E2E
+ *   E - Refund / clawback parity
+ *   F - Admin override actions
+ *   G - Edge cases & gating
+ *   H - DB integrity audit
+ *   I - Health profiles lifecycle (customer + booking + pro + admin)
  *
  * Generates fixtures inline, exercises them via HTTP + Prisma, asserts
  * invariants, cleans up. Prints a section-by-section table at the end
@@ -45,7 +45,7 @@ function record(section: string, outcome: Outcome) {
   results[section].push(outcome);
   const icon = outcome.status === "PASS" ? "✓" : outcome.status === "SKIP" ? "·" : "✗";
   const ms = outcome.ms !== undefined ? `${String(outcome.ms).padStart(4)}ms ` : "       ";
-  console.log(`  ${icon} ${ms}${outcome.name}${outcome.detail ? `  — ${outcome.detail}` : ""}`);
+  console.log(`  ${icon} ${ms}${outcome.name}${outcome.detail ? `  - ${outcome.detail}` : ""}`);
 }
 
 async function check(
@@ -129,7 +129,7 @@ async function setupFixtures(): Promise<Fixtures> {
     where: { role: "ADMIN" },
     include: { adminRole: true },
   });
-  if (!admin) throw new Error("No ADMIN user in DB — seed first.");
+  if (!admin) throw new Error("No ADMIN user in DB - seed first.");
   const adminToken = await signSessionFor({
     id: admin.id,
     phone: admin.phone,
@@ -140,7 +140,7 @@ async function setupFixtures(): Promise<Fixtures> {
   });
 
   const service = await db.service.findFirst({ where: { isActive: true } });
-  if (!service) throw new Error("No active service — seed first.");
+  if (!service) throw new Error("No active service - seed first.");
   const zone = await db.zone.findFirst();
   if (!zone) throw new Error("No zones seeded.");
 
@@ -165,7 +165,7 @@ async function setupFixtures(): Promise<Fixtures> {
     role: "PRO",
   });
 
-  // Apprentice is intentionally NOT a Pro yet — the invitation flow creates
+  // Apprentice is intentionally NOT a Pro yet - the invitation flow creates
   // their Pro record. Once C accepts the invitation we backfill apprenticePro.
   const apprenticeUser = await db.user.create({
     data: { phone: `+23499${stamp}2`, role: "CUSTOMER", name: "Test Apprentice" },
@@ -222,7 +222,7 @@ async function setupFixtures(): Promise<Fixtures> {
     masterCookie: `${COOKIE_NAME}=${masterToken}`,
     apprenticeUser: { id: apprenticeUser.id, phone: apprenticeUser.phone! },
     get apprenticePro() {
-      if (!apprenticePro) throw new Error("apprenticePro not initialised — invite/accept must run first");
+      if (!apprenticePro) throw new Error("apprenticePro not initialised - invite/accept must run first");
       return apprenticePro;
     },
     setApprenticePro(p: { id: string; name: string }) { apprenticePro = p; },
@@ -235,11 +235,11 @@ async function setupFixtures(): Promise<Fixtures> {
   } as Fixtures & { setApprenticePro: (p: { id: string; name: string }) => void };
 }
 
-// ─── SECTION A — PAGE REACHABILITY ───────────────────────────────────────────
+// ─── SECTION A - PAGE REACHABILITY ───────────────────────────────────────────
 
 async function runPageReachability(f: Fixtures) {
-  console.log("\nA — Page reachability");
-  // Customer pages — most are public.
+  console.log("\nA - Page reachability");
+  // Customer pages - most are public.
   const customerPages = [
     "/",
     "/auth",
@@ -261,13 +261,13 @@ async function runPageReachability(f: Fixtures) {
     });
   }
 
-  // Public cert page (Slice 6) — should 404 for a missing code (acceptable).
+  // Public cert page (Slice 6) - should 404 for a missing code (acceptable).
   await check("A", "page /cert/MISSING (expect 404)", async () => {
     const { status } = await http("/cert/MISSING-CODE-AAAA");
     return { ok: status === 404, detail: `status=${status}` };
   });
 
-  // Partner pages — master cookie.
+  // Partner pages - master cookie.
   for (const p of [
     "/partner",
     "/partner/bookings",
@@ -286,7 +286,7 @@ async function runPageReachability(f: Fixtures) {
     });
   }
 
-  // Admin pages — admin cookie.
+  // Admin pages - admin cookie.
   for (const p of [
     "/admin",
     "/admin/bookings",
@@ -314,10 +314,10 @@ async function runPageReachability(f: Fixtures) {
   }
 }
 
-// ─── SECTION B — API CONTRACT ────────────────────────────────────────────────
+// ─── SECTION B - API CONTRACT ────────────────────────────────────────────────
 
 async function runApiContract(f: Fixtures) {
-  console.log("\nB — API contract");
+  console.log("\nB - API contract");
 
   // Public
   for (const p of ["/api/services", "/api/zones", "/api/pros"]) {
@@ -385,25 +385,25 @@ async function runApiContract(f: Fixtures) {
     });
   }
 
-  // Auth gating — admin endpoint with customer cookie → 403/401.
+  // Auth gating - admin endpoint with customer cookie → 403/401.
   await check("B", "GET /api/admin/stats (customer cookie) → 403/401", async () => {
     const { status } = await http("/api/admin/stats", { cookie: f.customerCookie });
     return { ok: status === 403 || status === 401, detail: `status=${status}` };
   });
 
-  // Unauthorised — no cookie → 401 or redirect.
+  // Unauthorised - no cookie → 401 or redirect.
   await check("B", "GET /api/admin/stats (no cookie) → 401/403", async () => {
     const { status } = await http("/api/admin/stats");
     return { ok: status === 401 || status === 403, detail: `status=${status}` };
   });
 }
 
-// ─── SECTION C — APPRENTICESHIP LIFECYCLE ────────────────────────────────────
+// ─── SECTION C - APPRENTICESHIP LIFECYCLE ────────────────────────────────────
 
 async function runApprenticeshipE2E(f: Fixtures) {
-  console.log("\nC — Apprenticeship lifecycle");
+  console.log("\nC - Apprenticeship lifecycle");
 
-  // 1. Invite — master invites apprentice.
+  // 1. Invite - master invites apprentice.
   let apprenticeshipId = "";
   const ok1 = await check("C", "master invites apprentice", async () => {
     const { status, data } = await http("/api/partner/apprentices/invite", {
@@ -440,7 +440,7 @@ async function runApprenticeshipE2E(f: Fixtures) {
   });
   if (apprenticeshipRow?.apprentice && (f as any).setApprenticePro) {
     (f as any).setApprenticePro({ id: apprenticeshipRow.apprentice.id, name: apprenticeshipRow.apprentice.name });
-    // The invite route creates a PENDING Pro — promote to ACTIVE so it can take bookings later.
+    // The invite route creates a PENDING Pro - promote to ACTIVE so it can take bookings later.
     await db.pro.update({
       where: { id: apprenticeshipRow.apprentice.id },
       data: {
@@ -492,7 +492,7 @@ async function runApprenticeshipE2E(f: Fixtures) {
     });
   }
 
-  // 4. Independence guard — should fail until non-gating advanced modules don't block.
+  // 4. Independence guard - should fail until non-gating advanced modules don't block.
   // Independence rule is: every required+gating module is complete+signedoff.
   // All gating done above, so granting independence should succeed now.
   await check("C", "master grants independence", async () => {
@@ -556,7 +556,7 @@ async function runApprenticeshipE2E(f: Fixtures) {
     return { ok: !!certCode, detail: `cert=${certCode}` };
   });
 
-  await check("C", "Pro graduated — freedUnder + INDEPENDENT", async () => {
+  await check("C", "Pro graduated - freedUnder + INDEPENDENT", async () => {
     const pro = await db.pro.findUnique({ where: { id: f.apprenticePro.id } });
     return {
       ok:
@@ -583,14 +583,14 @@ async function runApprenticeshipE2E(f: Fixtures) {
   });
 }
 
-// ─── SECTION D — BOOKING + MONEY LIFECYCLE ───────────────────────────────────
+// ─── SECTION D - BOOKING + MONEY LIFECYCLE ───────────────────────────────────
 
 async function runBookingE2E(f: Fixtures) {
-  console.log("\nD — Booking + money lifecycle");
+  console.log("\nD - Booking + money lifecycle");
 
   // Create an active apprentice for this section (decoupled from C, which freed theirs).
   // We'll reuse the apprentice Pro who is now INDEPENDENT (post-Freedom). That's fine
-  // for booking flow tests — the earnings split test we'll do separately by injecting
+  // for booking flow tests - the earnings split test we'll do separately by injecting
   // a new active apprenticeship.
   const proForBooking = f.apprenticePro.id;
 
@@ -659,7 +659,7 @@ async function runBookingE2E(f: Fixtures) {
     return { ok: (pro?.totalJobs ?? 0) >= 81, detail: `jobs=${pro?.totalJobs}` };
   });
 
-  // Earnings split — set up a separate active apprenticeship + booking.
+  // Earnings split - set up a separate active apprenticeship + booking.
   // Apprentice has just been freed; create a NEW apprentice user/pro for this test.
   const stamp2 = Date.now().toString().slice(-6);
   const splitApprenticeUser = await db.user.create({
@@ -716,7 +716,7 @@ async function runBookingE2E(f: Fixtures) {
     },
   });
 
-  await check("D", "apprentice booking confirms — both Earning rows created", async () => {
+  await check("D", "apprentice booking confirms - both Earning rows created", async () => {
     const { status } = await http(`/api/bookings/${splitBooking.id}/confirm`, {
       method: "POST",
       cookie: f.customerCookie,
@@ -751,10 +751,10 @@ async function runBookingE2E(f: Fixtures) {
   };
 }
 
-// ─── SECTION E — REFUND / CLAWBACK ───────────────────────────────────────────
+// ─── SECTION E - REFUND / CLAWBACK ───────────────────────────────────────────
 
 async function runRefundClawback(f: Fixtures) {
-  console.log("\nE — Refund / clawback parity");
+  console.log("\nE - Refund / clawback parity");
 
   // Create a fresh booking + earning to refund.
   const ref = `REFUND-${Date.now().toString(36).toUpperCase()}`;
@@ -834,10 +834,10 @@ async function runRefundClawback(f: Fixtures) {
   await db.booking.deleteMany({ where: { id: booking.id } });
 }
 
-// ─── SECTION F — ADMIN OVERRIDE ──────────────────────────────────────────────
+// ─── SECTION F - ADMIN OVERRIDE ──────────────────────────────────────────────
 
 async function runAdminOverrides(f: Fixtures) {
-  console.log("\nF — Admin overrides");
+  console.log("\nF - Admin overrides");
 
   // Build a fresh apprenticeship that admin can force-freedom on.
   const stamp = Date.now().toString().slice(-6);
@@ -954,10 +954,10 @@ async function runAdminOverrides(f: Fixtures) {
   await db.user.deleteMany({ where: { id: { in: [targetUser.id, t2User.id] } } });
 }
 
-// ─── SECTION G — EDGE CASES & GATING ─────────────────────────────────────────
+// ─── SECTION G - EDGE CASES & GATING ─────────────────────────────────────────
 
 async function runEdgeCases(f: Fixtures) {
-  console.log("\nG — Edge cases & gating");
+  console.log("\nG - Edge cases & gating");
 
   // Customer cookie hitting partner endpoint → 401/403.
   await check("G", "customer cookie on /api/partner/profile → 401/403", async () => {
@@ -1037,10 +1037,10 @@ async function runEdgeCases(f: Fixtures) {
   });
 }
 
-// ─── SECTION H — DB INTEGRITY ────────────────────────────────────────────────
+// ─── SECTION H - DB INTEGRITY ────────────────────────────────────────────────
 
 async function runIntegrity() {
-  console.log("\nH — DB integrity");
+  console.log("\nH - DB integrity");
 
   await check("H", "No legacy +234_email_* placeholder phones", async () => {
     const n = await db.user.count({ where: { phone: { startsWith: "+234_email_" } } });
@@ -1084,10 +1084,10 @@ async function runIntegrity() {
   });
 }
 
-// ─── SECTION I — HEALTH PROFILES ─────────────────────────────────────────────
+// ─── SECTION I - HEALTH PROFILES ─────────────────────────────────────────────
 
 async function runHealthProfilesE2E(f: Fixtures) {
-  console.log("\nI — Health profiles lifecycle");
+  console.log("\nI - Health profiles lifecycle");
 
   // 1. Customer lazy-init + add + edit + delete condition.
   await check("I", "GET /api/profile/health auto-creates profile", async () => {
@@ -1223,7 +1223,7 @@ async function runHealthProfilesE2E(f: Fixtures) {
     },
   });
 
-  // Use the apprentice Pro's user (who is the freed user from section C — INDEPENDENT pro).
+  // Use the apprentice Pro's user (who is the freed user from section C - INDEPENDENT pro).
   const proUser = await db.user.findFirst({ where: { id: f.apprenticeUser.id } });
   const proRoleToken = await signSessionFor({
     id: proUser!.id,
@@ -1371,7 +1371,7 @@ async function main() {
   if (totalFail > 0) {
     console.log("\nFailures:");
     for (const [section, list] of Object.entries(results)) {
-      for (const r of list) if (r.status === "FAIL") console.log(`  ${section} · ${r.name} — ${r.detail ?? ""}`);
+      for (const r of list) if (r.status === "FAIL") console.log(`  ${section} · ${r.name} - ${r.detail ?? ""}`);
     }
   }
   process.exit(totalFail === 0 ? 0 : 1);

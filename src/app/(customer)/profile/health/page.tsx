@@ -55,7 +55,7 @@ export default async function HealthPage() {
           Health & sensitivities
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Conditions that affect how a pro should treat you — allergies,
+          Conditions that affect how a pro should treat you - allergies,
           mobility, skin sensitivities, pregnancy, etc. Sharing this helps your
           pro arrive prepared and keeps you safe. It lives only on Groomee.
         </p>
@@ -131,7 +131,7 @@ export default async function HealthPage() {
           Anything else we should know?
         </h2>
         <p className="text-xs text-gray-500 mb-3">
-          Free-form notes — habits, recent procedures, anything that doesn't
+          Free-form notes - habits, recent procedures, anything that doesn't
           fit a tag above.
         </p>
         <HealthActions mode="notes" initialNotes={profile?.notes ?? ""} />
@@ -177,7 +177,7 @@ export default async function HealthPage() {
         <p className="font-semibold mb-2">Your privacy</p>
         <ul className="space-y-1.5">
           <li>
-            ↪ Only the pro assigned to your booking sees this — never the whole
+            ↪ Only the pro assigned to your booking sees this - never the whole
             marketplace.
           </li>
           <li>

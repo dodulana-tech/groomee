@@ -52,7 +52,7 @@ export async function clearSessionCookie() {
 // ─── SERVER-SIDE SESSION ──────────────────────────────────────────────────────
 
 // In-memory cache of `sessionsValidFrom` per user so we don't hit the DB on
-// every request. Short TTL — the goal is just to coalesce burst traffic.
+// every request. Short TTL - the goal is just to coalesce burst traffic.
 const SESSION_VALIDITY_TTL_MS = 30_000;
 const sessionValidityCache = new Map<string, { validFrom: number; checkedAt: number }>();
 
@@ -73,8 +73,8 @@ async function isSessionRevoked(payload: SessionPayload): Promise<boolean> {
       where: { id: payload.userId },
       select: { sessionsValidFrom: true, role: true },
     });
-    if (!user) return true; // user gone — kill the session
-    if (user.role !== "ADMIN") return true; // demoted — kill the session
+    if (!user) return true; // user gone - kill the session
+    if (user.role !== "ADMIN") return true; // demoted - kill the session
     validFrom = user.sessionsValidFrom ? Math.floor(user.sessionsValidFrom.getTime() / 1000) : 0;
     sessionValidityCache.set(payload.userId, { validFrom, checkedAt: now });
   }

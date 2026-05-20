@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Award the referred user 400 pts (≈ ₦2,000 equivalent at 100 pts = ₦500)
-      await awardPoints(newUserId, 400, "Welcome bonus — referred by a friend", referral.id).catch(() => {});
+      await awardPoints(newUserId, 400, "Welcome bonus - referred by a friend", referral.id).catch(() => {});
     }
 
     return NextResponse.json({ success: true });

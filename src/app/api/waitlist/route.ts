@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         phone,
         `🎉 You're on the Groomee waitlist for ${cityLabel}!\n\nWe'll notify you as soon as we launch in your area. Meanwhile, earn Groomee Points by completing our quick survey at groomee.ng\n\n💚 The Groomee Team`,
         "whatsapp",
-      ).catch(() => {}); // fire-and-forget — don't block the response
+      ).catch(() => {}); // fire-and-forget - don't block the response
     }
 
     return NextResponse.json({ success: true, data: { id: entry.id } });

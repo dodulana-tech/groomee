@@ -205,7 +205,7 @@ export default async function AdminHealthPage() {
                     key={r.id}
                     className="border-t border-gray-100 hover:bg-gray-50/30"
                   >
-                    <td className="px-4 py-3 text-gray-500">—</td>
+                    <td className="px-4 py-3 text-gray-500">-</td>
                     <td className="px-4 py-3">
                       {r.service ? (
                         <div>
@@ -320,7 +320,7 @@ export default async function AdminHealthPage() {
                     {log.profile?.user ? (
                       <div>
                         <div className="font-medium text-gray-900">
-                          {log.profile.user.name ?? "—"}
+                          {log.profile.user.name ?? "-"}
                         </div>
                         <div className="text-xs text-gray-400">
                           {log.profile.user.phone}

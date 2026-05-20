@@ -3,7 +3,7 @@ import { getSession, hasPermission, formatPhone, isValidEmail } from "@/lib/auth
 import { db } from "@/lib/db";
 import { ADMIN_CAP, countAdmins, logAdminAction } from "@/lib/admin-audit";
 
-// GET /api/admin/team — list all admin users
+// GET /api/admin/team - list all admin users
 export async function GET() {
   try {
     const session = await getSession();
@@ -38,7 +38,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/team — invite a new admin user
+// POST /api/admin/team - invite a new admin user
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     const existing = await db.user.findUnique({ where: { phone } });
     const isAlreadyAdmin = existing?.role === "ADMIN";
 
-    // Enforce the team-size cap. Upgrading an existing admin is fine —
+    // Enforce the team-size cap. Upgrading an existing admin is fine -
     // they're already in the count. Adding a brand-new admin counts.
     if (!isAlreadyAdmin) {
       const current = await countAdmins();
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
     }
 
     // If the email is already taken by another account, fail loudly rather
-    // than silently dropping it — admin emails matter for sign-in.
+    // than silently dropping it - admin emails matter for sign-in.
     if (email) {
       const emailTaken = await db.user.findFirst({
         where: { email, ...(existing ? { id: { not: existing.id } } : {}) },

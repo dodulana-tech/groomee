@@ -18,7 +18,7 @@ const postSchema = z
   })
   .strict();
 
-// POST /api/profile/health/conditions — add a condition to the caller's
+// POST /api/profile/health/conditions - add a condition to the caller's
 // profile. Auto-creates the parent profile if missing.
 export async function POST(req: NextRequest) {
   const session = await getSession();

@@ -37,7 +37,7 @@ export async function GET(
     }
 
     // Audit trail: both the PHI-specific access log and the generic
-    // ActivityLog. Best-effort — never block the read on a logging failure.
+    // ActivityLog. Best-effort - never block the read on a logging failure.
     try {
       await writeAccessLog(
         profile.id,

@@ -18,7 +18,7 @@ interface ProCardData {
   // ─── Apprenticeship lineage ───
   // INDEPENDENT: no badge. APPRENTICE (still training): amber pill with master's
   // name. FREED: gold pill with master's name + freedom year. Lineage is
-  // permanent — the freed pill stays for life as a status symbol.
+  // permanent - the freed pill stays for life as a status symbol.
   relationship?: "INDEPENDENT" | "APPRENTICE" | "STAFF";
   parentName?: string | null;
   freedUnderName?: string | null;
@@ -119,7 +119,7 @@ export default function ProCard({
   );
 }
 
-// Lineage pill — see comment on ProCardData. Inline-style to match existing
+// Lineage pill - see comment on ProCardData. Inline-style to match existing
 // trust-badge vocabulary (verified ✓, top-rated ★ are stylistic models).
 function LineageBadge({
   relationship,

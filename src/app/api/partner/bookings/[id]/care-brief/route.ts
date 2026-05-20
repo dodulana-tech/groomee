@@ -14,16 +14,16 @@ import {
  *
  * Behaviour:
  *  - If a HealthAcknowledgment already exists for this booking, return the
- *    frozen snapshot exactly as captured. This is the contract — once the
+ *    frozen snapshot exactly as captured. This is the contract - once the
  *    pro has acknowledged, the view they're shown is the view they agreed
  *    to, even if the customer subsequently edits the profile.
  *  - Otherwise compose a live brief: customer's active conditions + the
  *    contraindications that apply to the service(s) on this booking.
  *  - Return 404 when no profile, profile is PRIVATE, or visibility is
  *    ASK_PER_BOOKING (until customer-side opt-in lands in a follow-up
- *    slice — see TODO below).
+ *    slice - see TODO below).
  *
- * Every successful brief fetch writes a HealthAccessLog row — PHI access
+ * Every successful brief fetch writes a HealthAccessLog row - PHI access
  * trail. We do this BEFORE returning the response.
  */
 export async function GET(
@@ -137,7 +137,7 @@ export async function GET(
       });
     }
 
-    // ─── Live brief — conditions + contraindications ────────────────────────
+    // ─── Live brief - conditions + contraindications ────────────────────────
     const serviceIds: string[] = [
       booking.serviceId,
       ...booking.items.map((i) => i.serviceId),

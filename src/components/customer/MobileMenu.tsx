@@ -44,7 +44,7 @@ export default function MobileMenu({ session }: Props) {
         )}
       </button>
 
-      {/* Overlay + drawer — portaled to body to escape navbar's backdrop-filter containing block */}
+      {/* Overlay + drawer - portaled to body to escape navbar's backdrop-filter containing block */}
       {open && createPortal(
         <>
           <div

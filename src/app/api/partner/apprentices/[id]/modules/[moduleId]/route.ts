@@ -19,7 +19,7 @@ const patchSchema = z.object({
   gatesIndependence: z.boolean().optional(),
   sortOrder: z.number().int().optional(),
   notes: z.string().max(2000).nullable().optional(),
-  // Toggle controls — when present (boolean), set the timestamp accordingly.
+  // Toggle controls - when present (boolean), set the timestamp accordingly.
   completed: z.boolean().optional(),
   signedOff: z.boolean().optional(),
 }).strict();
@@ -106,7 +106,7 @@ export async function PATCH(
     }
     if (input.completed !== undefined) {
       data.completedAt = input.completed ? (existing.completedAt ?? now) : null;
-      // If marking incomplete, also revoke any existing sign-off — sign-off implies completion.
+      // If marking incomplete, also revoke any existing sign-off - sign-off implies completion.
       if (!input.completed) data.masterSignoffAt = null;
     }
     // Sign-off transition is handled separately below as an atomic

@@ -1,6 +1,6 @@
 /**
  * Edge-runtime-safe slice of auth. Imports nothing that touches Prisma so it
- * can be used from middleware. JWT verification only — DB-backed revocation
+ * can be used from middleware. JWT verification only - DB-backed revocation
  * checks remain in `auth.ts` (Node runtime, used by RSC and route handlers).
  */
 import { jwtVerify } from "jose";

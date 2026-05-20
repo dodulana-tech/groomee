@@ -121,7 +121,7 @@ async function main() {
       slug: "abuja",
       status: "WAITLIST",
       sortOrder: 1,
-      tagline: "Launching soon — be first in line.",
+      tagline: "Launching soon - be first in line.",
     },
   });
   console.log(`✅ Cities: ${lagosCity.name} (LIVE), ${abujaCity.name} (WAITLIST)`);

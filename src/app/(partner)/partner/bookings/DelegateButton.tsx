@@ -179,7 +179,7 @@ export function DelegateButton({ bookingId, dependents }: DelegateProps) {
             </div>
 
             <p className="mt-4 text-xs text-gray-500 text-center">
-              Earnings split as agreed in the apprenticeship — your master cut
+              Earnings split as agreed in the apprenticeship - your master cut
               comes through automatically when the booking confirms.
             </p>
           </div>
@@ -203,7 +203,7 @@ export function RescindButton({ bookingId, dependentName }: RescindProps) {
   async function rescind() {
     if (
       !confirm(
-        `Take this booking back from ${dependentName}? They will be told it was rescinded — no strike, no penalty.`,
+        `Take this booking back from ${dependentName}? They will be told it was rescinded - no strike, no penalty.`,
       )
     )
       return;

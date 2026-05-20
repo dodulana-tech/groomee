@@ -20,7 +20,7 @@ const STATUS_TOOLTIP: Record<string, string> = {
   EN_ROUTE: "Your pro is on the way",
   ARRIVED: "Your pro has arrived at your location",
   IN_SERVICE: "Your service is in progress",
-  COMPLETED: "Service completed — please confirm",
+  COMPLETED: "Service completed - please confirm",
   CONFIRMED: "All done! Thanks for using Groomee",
   CANCELLED: "This booking was cancelled",
   NO_GROOMER: "We couldn't find a pro for this booking",

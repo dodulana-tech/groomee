@@ -159,12 +159,12 @@ export async function handleProResponse(
   response: "YES" | "NO",
   bookingId?: string,
 ) {
-  // Find the booking — prefer explicit bookingId, fall back to most recent offer to THIS pro
+  // Find the booking - prefer explicit bookingId, fall back to most recent offer to THIS pro
   let booking;
   if (bookingId) {
     booking = await db.booking.findUnique({ where: { id: bookingId } });
   } else {
-    // Look up from dispatch log — find the most recent offer to this specific pro
+    // Look up from dispatch log - find the most recent offer to this specific pro
     const latestOffer = await db.dispatchLog.findFirst({
       where: { proId, response: null },
       orderBy: { offeredAt: "desc" },
@@ -185,7 +185,7 @@ export async function handleProResponse(
   });
 
   if (response === "YES") {
-    // Transactional accept — atomic booking + pro update
+    // Transactional accept - atomic booking + pro update
     await db.$transaction([
       db.booking.update({
         where: { id: booking.id },
@@ -202,7 +202,7 @@ export async function handleProResponse(
       }),
     ]);
 
-    // Fire-and-forget health care-notes email — only if the customer has
+    // Fire-and-forget health care-notes email - only if the customer has
     // shareable conditions that actually apply to the chosen service set.
     import("@/lib/health-notify")
       .then(({ notifyProCareNotes }) => notifyProCareNotes(booking.id))

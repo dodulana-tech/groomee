@@ -21,10 +21,10 @@ interface HeroCity {
 
 interface Props {
   services: Service[];
-  // First LIVE city — drives "Book a pro in {name}" CTA. Defaults if not
+  // First LIVE city - drives "Book a pro in {name}" CTA. Defaults if not
   // provided so the component still renders sensibly without props.
   liveCity?: HeroCity;
-  // First WAITLIST city — drives the secondary "Join … waitlist" CTA.
+  // First WAITLIST city - drives the secondary "Join … waitlist" CTA.
   // Omitted when there are no waitlist cities (every city LIVE).
   waitlistCity?: HeroCity;
 }

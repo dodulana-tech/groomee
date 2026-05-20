@@ -16,7 +16,7 @@ const patchSchema = z
   .strict()
   .refine((d) => Object.keys(d).length > 0, "Empty patch");
 
-// PATCH /api/admin/cities/[slug] — toggle status / edit metadata.
+// PATCH /api/admin/cities/[slug] - toggle status / edit metadata.
 //
 // Flipping a city from non-LIVE → LIVE auto-stamps launchedAt (if not set)
 // and queues a best-effort notification to the existing waitlist for that
@@ -91,7 +91,7 @@ export async function PATCH(
     });
 
     // Fire-and-forget waitlist notification. Same pattern as the care-notes
-    // hook — never block the admin response on a delivery failure.
+    // hook - never block the admin response on a delivery failure.
     if (isGoingLive) {
       import("@/lib/city-notify")
         .then(({ notifyCityLive }) =>

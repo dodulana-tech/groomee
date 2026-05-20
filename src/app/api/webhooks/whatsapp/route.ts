@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
             maskedPhone: maskPhone(booking.customer.phone ?? ""),
           });
 
-          // Notify customer (skip when customer has no phone — email-only signup)
+          // Notify customer (skip when customer has no phone - email-only signup)
           if (booking.customer.phone) {
             const { notifyCustomerBookingConfirmed } =
               await import("@/lib/whatsapp");
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
           // If the customer has a HealthProfile with ALWAYS_SHARE visibility
           // and any active (unresolved) conditions, hint the pro to review the
           // care brief in the app. We deliberately do NOT include the
-          // condition data here — PHI doesn't belong in WhatsApp logs.
+          // condition data here - PHI doesn't belong in WhatsApp logs.
           const healthProfile = await db.healthProfile.findUnique({
             where: { userId: booking.customerId },
             select: {

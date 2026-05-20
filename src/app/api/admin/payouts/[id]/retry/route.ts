@@ -37,14 +37,14 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: "Payout is still processing — wait for the Paystack callback before retrying.",
+          error: "Payout is still processing - wait for the Paystack callback before retrying.",
         },
         { status: 400 },
       );
     }
     if (!payout.pro.bankAccount || !payout.pro.bankName) {
       return NextResponse.json(
-        { success: false, error: "Pro bank details are missing — ask them to update before retrying." },
+        { success: false, error: "Pro bank details are missing - ask them to update before retrying." },
         { status: 400 },
       );
     }
@@ -60,7 +60,7 @@ export async function POST(
       const transfer = (await initiateTransfer({
         amount: payout.amount,
         recipientCode,
-        reason: `Groomee payout retry — ${payout.id}`,
+        reason: `Groomee payout retry - ${payout.id}`,
         reference: transferRef,
       })) as { data: { transfer_code: string } };
 

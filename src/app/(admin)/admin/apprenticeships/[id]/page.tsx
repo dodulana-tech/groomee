@@ -318,7 +318,7 @@ export default async function AdminApprenticeshipDetailPage({
                 >
                   <div className="min-w-0">
                     <p className="font-medium text-gray-800 truncate">
-                      from {e.sourcePro?.name ?? "—"}
+                      from {e.sourcePro?.name ?? "-"}
                     </p>
                     <p className="text-xs text-gray-400">
                       {format(new Date(e.createdAt), "dd MMM, HH:mm")}

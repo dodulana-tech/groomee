@@ -3,7 +3,7 @@ import { getSession, hasPermission, invalidateSessionCache } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logAdminAction } from "@/lib/admin-audit";
 
-// PATCH /api/admin/team/[id] — update team member's role or deactivate
+// PATCH /api/admin/team/[id] - update team member's role or deactivate
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -79,7 +79,7 @@ export async function PATCH(
       meta.fromRoleId = user.adminRoleId;
       meta.toRoleId = body.roleId;
       meta.toRoleName = role.name;
-      // Permission changes invalidate the user's existing JWT — their token
+      // Permission changes invalidate the user's existing JWT - their token
       // carries the *old* permissions until it expires (up to 30 days).
       update.sessionsValidFrom = new Date();
     }

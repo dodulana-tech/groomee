@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         console.error("Email send error:", err),
       );
     } else {
-      console.warn(`[WARN] No SMTP_USER set — email OTP for ${email} not delivered`);
+      console.warn(`[WARN] No SMTP_USER set - email OTP for ${email} not delivered`);
     }
 
     return NextResponse.json({

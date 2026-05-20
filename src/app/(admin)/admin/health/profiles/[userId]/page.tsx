@@ -16,7 +16,7 @@ const SEVERITY_PILL: Record<string, string> = {
 const VISIBILITY_LABEL: Record<string, string> = {
   ALWAYS_SHARE: "Always shared with assigned pro",
   ASK_PER_BOOKING: "Ask per booking",
-  PRIVATE: "Private — admin/customer only",
+  PRIVATE: "Private - admin/customer only",
 };
 
 interface Props {
@@ -48,7 +48,7 @@ export default async function AdminHealthProfilePage({ params }: Props) {
     notFound();
   }
 
-  // Audit trail — write both the PHI access log AND an ActivityLog row
+  // Audit trail - write both the PHI access log AND an ActivityLog row
   // on every render. Best-effort; failures must not block the read.
   try {
     await writeAccessLog(profile.id, "ADMIN", session.userId, "admin_view");
@@ -86,7 +86,7 @@ export default async function AdminHealthProfilePage({ params }: Props) {
           </p>
         </div>
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          PHI — every view is logged.
+          PHI - every view is logged.
         </div>
       </div>
 
@@ -203,13 +203,13 @@ export default async function AdminHealthProfilePage({ params }: Props) {
                       {c.notes ? (
                         <span className="line-clamp-2">{c.notes}</span>
                       ) : (
-                        <span className="text-gray-300">—</span>
+                        <span className="text-gray-300">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs">
                       {c.startedAt
                         ? new Date(c.startedAt).toLocaleDateString("en-NG")
-                        : "—"}
+                        : "-"}
                     </td>
                   </tr>
                 );

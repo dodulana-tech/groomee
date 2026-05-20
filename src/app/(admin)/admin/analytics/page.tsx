@@ -93,7 +93,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
       by: ["city"],
       _count: { id: true },
     }),
-    // Booking trend — last 30 days (fetch lightweight records, aggregate in JS)
+    // Booking trend - last 30 days (fetch lightweight records, aggregate in JS)
     db.booking.findMany({
       where: { createdAt: { gte: thirtyDaysAgo } },
       select: { createdAt: true, totalAmount: true },

@@ -6,7 +6,7 @@
  * No-op when:
  *   - the customer has no profile, no active conditions, no notes
  *   - the profile is PRIVATE or ASK_PER_BOOKING (until per-booking consent
- *     UI lands — same gate as the care-brief endpoint)
+ *     UI lands - same gate as the care-brief endpoint)
  *   - the chosen pro has no contactable email
  *   - none of the booking's services would actually trigger a hit
  */
@@ -57,7 +57,7 @@ export async function notifyProCareNotes(bookingId: string): Promise<void> {
       bookingRef: booking.reference,
     });
   } catch (err) {
-    // Best-effort — never block assignment on a notification failure.
+    // Best-effort - never block assignment on a notification failure.
     console.error("[notifyProCareNotes] failed", err);
   }
 }

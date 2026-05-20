@@ -55,7 +55,7 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        {/* Mobile compact steps — 4 circles in a row */}
+        {/* Mobile compact steps - 4 circles in a row */}
         <div className="md:hidden mb-8">
           <div className="relative flex items-start justify-between">
             {/* Connecting line */}
@@ -78,7 +78,7 @@ export default function HowItWorks() {
           </div>
         </div>
 
-        {/* Steps — full cards on md+ */}
+        {/* Steps - full cards on md+ */}
         <div className="hidden md:grid gap-px sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, i) => (
             <div

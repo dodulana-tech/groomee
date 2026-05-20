@@ -94,7 +94,7 @@ export default function InviteApprenticePage() {
             autoComplete="off"
           />
           <p className="text-xs text-gray-400 mt-1">
-            Nigerian mobile number — they&apos;ll get the invite via WhatsApp.
+            Nigerian mobile number - they&apos;ll get the invite via WhatsApp.
           </p>
         </div>
 

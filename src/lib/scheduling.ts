@@ -1,5 +1,5 @@
 /**
- * Scheduler — single source of truth for "is this pro free at this time?"
+ * Scheduler - single source of truth for "is this pro free at this time?"
  *
  * Used by:
  *   - POST /api/bookings  (customer creates a scheduled booking on a pro)

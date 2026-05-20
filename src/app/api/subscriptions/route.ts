@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     const periodEnd = addMonths(now, 1);
     const ref = generatePaymentReference(`SUB-${planId.slice(-6)}`);
 
-    // Create subscription as PENDING — credits granted only after payment verification
+    // Create subscription as PENDING - credits granted only after payment verification
     const subscription = await db.subscription.create({
       data: {
         userId: session.userId,

@@ -7,7 +7,7 @@ export default function PartnerCalendarPage({
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
-  // searchParams is async in Next 15 — pass it through.
+  // searchParams is async in Next 15 - pass it through.
   return <Wrapper searchParams={searchParams} />;
 }
 

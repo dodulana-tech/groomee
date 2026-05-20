@@ -243,7 +243,7 @@ export default function ApprenticeshipActions({
               Admin overrides
             </p>
             <p className="text-xs text-amber-700/80 mt-0.5">
-              Use carefully — every action is audit-logged.
+              Use carefully - every action is audit-logged.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -335,7 +335,7 @@ export default function ApprenticeshipActions({
                 onChange={(e) => setFreedomNote(e.target.value)}
                 rows={3}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-                placeholder="e.g. Manual freedom — master signed off offline"
+                placeholder="e.g. Manual freedom - master signed off offline"
               />
             </label>
             <div className="mt-4 flex justify-end gap-2">

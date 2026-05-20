@@ -161,7 +161,7 @@ export default function PartnerOnboardingPage() {
       if (!result.ok && result.needsPhone) {
         if (!isValidNigerianPhone(phone)) {
           setError(
-            "Please enter a valid Nigerian phone number on the first step — we need it linked to your account.",
+            "Please enter a valid Nigerian phone number on the first step - we need it linked to your account.",
           );
           setStep("info");
           return;
@@ -345,7 +345,7 @@ export default function PartnerOnboardingPage() {
                 />
                 {sessionPhone && (
                   <p className="mt-1 text-xs text-gray-400">
-                    Linked to your account — change it later from your profile.
+                    Linked to your account - change it later from your profile.
                   </p>
                 )}
               </div>

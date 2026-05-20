@@ -20,7 +20,7 @@ const VISIBILITY_PILL: Record<string, string> = {
 };
 
 function timeAgo(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);
   if (m < 60) return `${m}m ago`;
@@ -97,7 +97,7 @@ export default function ProfileSearch() {
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
         {!rows ? (
           <div className="p-10 text-center text-sm text-gray-400">
-            {loading ? "Loading…" : "—"}
+            {loading ? "Loading…" : "-"}
           </div>
         ) : rows.length === 0 ? (
           <div className="p-10 text-center text-sm text-gray-400">
@@ -119,10 +119,10 @@ export default function ProfileSearch() {
                 <tr key={p.id} className="border-t border-gray-100">
                   <td className="px-4 py-3">
                     <p className="font-semibold text-gray-900">
-                      {p.user?.name ?? "—"}
+                      {p.user?.name ?? "-"}
                     </p>
                     <p className="text-xs text-gray-400">
-                      {p.user?.phone ?? "—"}
+                      {p.user?.phone ?? "-"}
                     </p>
                   </td>
                   <td className="px-4 py-3 font-bold text-gray-700">

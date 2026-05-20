@@ -34,7 +34,7 @@ export const DEFAULT_CURRICULUM: ModuleTemplate[] = [
   {
     title: "Core technique fundamentals",
     description:
-      "Foundational skills for the master's primary specialty — completed under direct supervision until master sign-off.",
+      "Foundational skills for the master's primary specialty - completed under direct supervision until master sign-off.",
     required: true,
     gatesIndependence: true,
   },
@@ -53,14 +53,14 @@ export const DEFAULT_CURRICULUM: ModuleTemplate[] = [
     gatesIndependence: false,
   },
   {
-    title: "Advanced technique — speciality 1",
+    title: "Advanced technique - speciality 1",
     description:
       "First advanced skill set unique to the master's practice. Required for Freedom; not required for independence.",
     required: true,
     gatesIndependence: false,
   },
   {
-    title: "Advanced technique — speciality 2",
+    title: "Advanced technique - speciality 2",
     description:
       "Second advanced skill set. Required for Freedom; not required for independence.",
     required: true,
@@ -74,7 +74,7 @@ export const DEFAULT_MASTER_COMMISSION = 0.30;
 export const FREEDOM_MIN_COMPLETED_JOBS = 60;
 export const FREEDOM_MIN_AVG_RATING = 4.5;
 
-// Permissions added to seed roles in this slice — reused by the admin pages.
+// Permissions added to seed roles in this slice - reused by the admin pages.
 export const APPRENTICESHIP_PERMISSIONS = {
   view: "apprenticeships.view",
   manage: "apprenticeships.manage",
@@ -247,11 +247,11 @@ export async function withFreedomCertCode<T>(
 /**
  * Compute the apprenticeship earnings split using a *snapshotted* apprenticeship
  * id, ignoring the apprenticeship's current status. Used at confirm time when a
- * booking was delegated by a master to an apprentice — the snapshot is durable
+ * booking was delegated by a master to an apprentice - the snapshot is durable
  * even if the apprenticeship has since transitioned to FREED / TERMINATED.
  *
- * Returns null if the apprenticeship row is missing (shouldn't happen — they
- * are append-only — but guard so we degrade gracefully to a single SERVICE row
+ * Returns null if the apprenticeship row is missing (shouldn't happen - they
+ * are append-only - but guard so we degrade gracefully to a single SERVICE row
  * on the apprentice rather than 500-ing).
  */
 export async function computeEarningsSplitFromApprenticeshipId(

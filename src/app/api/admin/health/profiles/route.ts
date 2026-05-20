@@ -9,7 +9,7 @@ const PAGE_SIZE = 25;
 //
 // Lists health profiles that have at least one unresolved condition (the
 // only ones interesting for care work). Searchable by customer name/phone.
-// No PHI is leaked here — only summary counts + visibility — and reads are
+// No PHI is leaked here - only summary counts + visibility - and reads are
 // not access-logged because we don't return condition rows. The per-profile
 // detail endpoint logs.
 export async function GET(req: NextRequest) {

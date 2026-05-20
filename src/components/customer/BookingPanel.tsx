@@ -37,7 +37,7 @@ interface Props {
     availability: string;
     commissionRate: number;
     // ─── Apprenticeship gating (Slice 5) ───
-    // When false, the apprentice has not earned independence yet — booking is
+    // When false, the apprentice has not earned independence yet - booking is
     // disabled here and the customer is sent to the master's profile instead.
     canTakeIndependent?: boolean;
     parent?: { id: string; name: string; slug?: string | null } | null;
@@ -164,7 +164,7 @@ export default function BookingPanel({
 
   // ─── Live health-profile contraindication check ───
   // Debounced so rapid toggling doesn't spam the endpoint. 401 (not signed
-  // in) is fine — we just hide the notice; the customer will be sent to
+  // in) is fine - we just hide the notice; the customer will be sent to
   // /auth on submit anyway.
   useEffect(() => {
     if (selectedServiceIds.length === 0) {
@@ -245,7 +245,7 @@ export default function BookingPanel({
           );
           return;
         }
-        // Server-side health gate fired — mirror the block in the UI even if
+        // Server-side health gate fired - mirror the block in the UI even if
         // the live preview hadn't surfaced yet (e.g. profile updated in
         // another tab between preview and submit).
         if (res.status === 422 && data.code === "HEALTH_BLOCK") {
@@ -271,7 +271,7 @@ export default function BookingPanel({
     }
   }
 
-  // Apprentice not yet cleared for independent bookings — route customers to
+  // Apprentice not yet cleared for independent bookings - route customers to
   // their master, who can deploy the apprentice on this job. We hide pricing
   // and the booking form entirely; the master's profile handles the booking.
   if (pro.canTakeIndependent === false && pro.parent) {
@@ -300,7 +300,7 @@ export default function BookingPanel({
             still in training under{" "}
             <span className="font-semibold">{pro.parent.name}</span> and isn't
             taking independent bookings yet. Book{" "}
-            <span className="font-semibold">{pro.parent.name}</span> instead —
+            <span className="font-semibold">{pro.parent.name}</span> instead -
             they may deploy {pro.name.split(" ")[0]} for your job.
           </p>
           <Link
@@ -341,7 +341,7 @@ export default function BookingPanel({
       </div>
 
       <div className="space-y-5 p-5">
-        {/* Service selector — multi-select. Tap to add or remove. */}
+        {/* Service selector - multi-select. Tap to add or remove. */}
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <label className="input-label">Select services</label>
@@ -591,7 +591,7 @@ export default function BookingPanel({
           </div>
         )}
 
-        {/* Health contraindication preview — surface BLOCK / WARN / INFO
+        {/* Health contraindication preview - surface BLOCK / WARN / INFO
             against the customer's health profile before they pay. */}
         {healthHits.length > 0 && (
           <HealthWarningNotice
@@ -618,7 +618,7 @@ export default function BookingPanel({
               Processing…
             </span>
           ) : healthLevel === "BLOCK" ? (
-            "Can't book safely — pick another service"
+            "Can't book safely - pick another service"
           ) : selectedServiceId ? (
             `Confirm & Pay ${formatNaira(total)} →`
           ) : (

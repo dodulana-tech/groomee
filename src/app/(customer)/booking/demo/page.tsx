@@ -16,7 +16,7 @@ export default function BookingDemoPage() {
           <span className="text-2xl shrink-0">🎭</span>
           <div>
             <p className="font-semibold text-amber-800 text-sm">
-              This is a demo — book a real service to get started!
+              This is a demo - book a real service to get started!
             </p>
             <p className="text-xs text-amber-600 mt-0.5">
               Below is a preview of what your booking tracking looks like in

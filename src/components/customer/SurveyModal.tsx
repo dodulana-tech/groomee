@@ -11,8 +11,8 @@ const CUSTOMER_QUESTIONS = [
   {
     label: "1. Where are you based?",
     options: [
-      "Lagos — Island (Lekki, VI, Ikoyi)",
-      "Lagos — Mainland (Yaba, Surulere, Ikeja)",
+      "Lagos - Island (Lekki, VI, Ikoyi)",
+      "Lagos - Mainland (Yaba, Surulere, Ikeja)",
       "Abuja",
       "Other city",
     ],
@@ -36,16 +36,16 @@ const CUSTOMER_QUESTIONS = [
       "I find someone on Instagram each time",
       "I go to a salon / shop near me",
       "I get referrals from friends",
-      "It's always a scramble — no system",
+      "It's always a scramble - no system",
     ],
   },
   {
     label: "4. How often do you have a last-minute beauty emergency?",
     options: [
-      "Rarely — maybe once or twice a year",
-      "Occasionally — a few times a year",
-      "Regularly — at least once a month",
-      "Constantly — it's a running theme",
+      "Rarely - maybe once or twice a year",
+      "Occasionally - a few times a year",
+      "Regularly - at least once a month",
+      "Constantly - it's a running theme",
     ],
   },
   {
@@ -60,8 +60,8 @@ const VENDOR_QUESTIONS = [
   {
     label: "1. Where is your business based?",
     options: [
-      "Lagos — Island (Lekki, VI, Ikoyi)",
-      "Lagos — Mainland (Yaba, Surulere, Ikeja)",
+      "Lagos - Island (Lekki, VI, Ikoyi)",
+      "Lagos - Mainland (Yaba, Surulere, Ikeja)",
       "Abuja",
       "Other city",
     ],
@@ -82,9 +82,9 @@ const VENDOR_QUESTIONS = [
     label: "3. What is your average charge for your main service?",
     options: [
       "Under ₦5,000",
-      "₦5,000 — ₦15,000",
-      "₦15,000 — ₦40,000",
-      "₦40,000 — ₦100,000",
+      "₦5,000 - ₦15,000",
+      "₦15,000 - ₦40,000",
+      "₦40,000 - ₦100,000",
       "Above ₦100,000",
     ],
   },
@@ -95,7 +95,7 @@ const VENDOR_QUESTIONS = [
       "Instagram DMs",
       "Walk-ins only",
       "I use a booking platform",
-      "Mostly referrals — no system",
+      "Mostly referrals - no system",
     ],
   },
   {

@@ -18,7 +18,7 @@ import {
 
 /**
  * Master deploys an accepted booking to one of their dependents (apprentice
- * or staff). This is a direct hand-off — the dispatch lottery is bypassed.
+ * or staff). This is a direct hand-off - the dispatch lottery is bypassed.
  *
  *   booking.proId             →  apprentice.id
  *   master.availability       →  ONLINE, currentBookingId cleared
@@ -111,7 +111,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: `This booking is already ${booking.status.toLowerCase().replace(/_/g, " ")} — too late to deploy.`,
+          error: `This booking is already ${booking.status.toLowerCase().replace(/_/g, " ")} - too late to deploy.`,
         },
         { status: 422 },
       );

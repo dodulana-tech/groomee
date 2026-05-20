@@ -11,7 +11,7 @@
  *        to the winner.
  *      - Delete the loser.
  *   3. Groups where two or more users have *different* phones are flagged for
- *      manual review and skipped — we won't merge two real accounts blindly.
+ *      manual review and skipped - we won't merge two real accounts blindly.
  *
  * Idempotent: re-running after a clean pass is a no-op.
  *
@@ -48,7 +48,7 @@ async function reassign(loserId: string, winnerId: string) {
   await db.activityLog.updateMany({ where: { adminId: loserId }, data: { adminId: winnerId } });
   await db.pointsLedger.updateMany({ where: { userId: loserId }, data: { userId: winnerId } });
 
-  // 1:1 relations — only move if winner doesn't already have one.
+  // 1:1 relations - only move if winner doesn't already have one.
   const winnerBeauty = await db.beautyProfile.findUnique({ where: { userId: winnerId } });
   if (!winnerBeauty) {
     await db.beautyProfile.updateMany({ where: { userId: loserId }, data: { userId: winnerId } });
@@ -60,7 +60,7 @@ async function reassign(loserId: string, winnerId: string) {
   if (!winnerPro) {
     await db.pro.updateMany({ where: { userId: loserId }, data: { userId: winnerId } });
   } else {
-    // Two pro records for the "same" person. Don't pick a winner blindly —
+    // Two pro records for the "same" person. Don't pick a winner blindly -
     // unhook the loser pro from this user and let an admin decide.
     await db.pro.updateMany({ where: { userId: loserId }, data: { userId: null } });
   }
@@ -91,7 +91,7 @@ async function run() {
     const phones = new Set(rows.map((r) => r.phone).filter(Boolean));
     if (phones.size > 1) {
       console.warn(
-        `[FLAG] Email "${email}" has ${rows.length} users with ${phones.size} different phones — skipping. IDs: ${rows.map((r) => r.id).join(", ")}`,
+        `[FLAG] Email "${email}" has ${rows.length} users with ${phones.size} different phones - skipping. IDs: ${rows.map((r) => r.id).join(", ")}`,
       );
       flagged++;
       continue;
@@ -135,7 +135,7 @@ async function run() {
   console.log(`Duplicate email groups: ${dupGroups}`);
   console.log(`Users merged into winners: ${merged}`);
   console.log(`Groups flagged for manual review: ${flagged}`);
-  console.log(APPLY ? "[applied]" : "[dry run — pass --apply to make changes]");
+  console.log(APPLY ? "[applied]" : "[dry run - pass --apply to make changes]");
 }
 
 run()

@@ -83,7 +83,7 @@ export default async function PartnerBookingsPage({
   const tab: Tab =
     sp?.tab === "upcoming" || sp?.tab === "completed" ? sp.tab : "active";
 
-  // All ACTIVE dependents of this pro — they're both the deploy-target list
+  // All ACTIVE dependents of this pro - they're both the deploy-target list
   // and the "watched" list (any booking currently held by one of these is
   // a deployment we made and can rescind while still ACCEPTED).
   const dependents = await db.pro.findMany({
@@ -308,7 +308,7 @@ export default async function PartnerBookingsPage({
                   </div>
                 )}
 
-                {/* PHI care brief — pros only see their own held bookings. */}
+                {/* PHI care brief - pros only see their own held bookings. */}
                 {isMine && (
                   <CareBrief
                     bookingId={b.id}

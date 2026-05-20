@@ -1,7 +1,7 @@
 import { db } from "./db";
 
 /**
- * Persist an admin action to ActivityLog. Best-effort — we never want a
+ * Persist an admin action to ActivityLog. Best-effort - we never want a
  * logging failure to break the underlying mutation, so all errors are
  * swallowed (with a console.error breadcrumb).
  */
@@ -35,7 +35,7 @@ export async function logAdminAction({
 
 /**
  * Best-effort touch of an admin's lastActiveAt timestamp. Cheap, but only
- * worth running for ADMIN users — non-admin lastActive isn't surfaced
+ * worth running for ADMIN users - non-admin lastActive isn't surfaced
  * anywhere yet.
  *
  * Gated by an in-memory throttle so we don't hit the DB on every request.

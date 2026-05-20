@@ -115,8 +115,8 @@ export default async function PartnerApprenticeDetailPage({
     "Core technique fundamentals",
     "Punctuality, scheduling & ETA discipline",
     "Money, savings & business basics",
-    "Advanced technique — speciality 1",
-    "Advanced technique — speciality 2",
+    "Advanced technique - speciality 1",
+    "Advanced technique - speciality 2",
   ]);
 
   const initials = a.apprentice.name
@@ -219,7 +219,7 @@ export default async function PartnerApprenticeDetailPage({
         </div>
       </div>
 
-      {/* Freedom card — only when the apprenticeship has cleared the gate */}
+      {/* Freedom card - only when the apprenticeship has cleared the gate */}
       {a.status === "READY_FOR_FREEDOM" && (
         <FreedomCard
           apprenticeshipId={a.id}

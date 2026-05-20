@@ -24,7 +24,7 @@ export interface ResolvedItems {
 /**
  * Look up the primary service + any additional services chosen for a booking,
  * applying the requesting pro's customPrice when available. `proId` is
- * optional — when omitted, base prices are used.
+ * optional - when omitted, base prices are used.
  *
  * Throws if any service is missing or inactive, or if `additionalServiceIds`
  * contains the primary id (callers should not dedupe themselves so we catch

@@ -18,7 +18,7 @@ async function getOrCreateProfile(userId: string) {
   });
 }
 
-// GET /api/profile/health — read own profile (lazy-init).
+// GET /api/profile/health - read own profile (lazy-init).
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -48,7 +48,7 @@ const putSchema = z
   })
   .strict();
 
-// PUT /api/profile/health — upsert notes/visibility. Auto-creates row.
+// PUT /api/profile/health - upsert notes/visibility. Auto-creates row.
 export async function PUT(req: NextRequest) {
   const session = await getSession();
   if (!session) {

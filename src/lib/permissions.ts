@@ -62,12 +62,12 @@ export const PERMISSIONS = {
   // Activity log
   ACTIVITY_VIEW: "activity.view",
 
-  // Health (PHI) — view = read care briefs / profiles; manage = edit
+  // Health (PHI) - view = read care briefs / profiles; manage = edit
   // contraindication catalog. Access is always audit-logged.
   HEALTH_VIEW: "health.view",
   HEALTH_MANAGE: "health.manage",
 
-  // Cities — view the list; manage = flip status (WAITLIST → LIVE etc.)
+  // Cities - view the list; manage = flip status (WAITLIST → LIVE etc.)
   // and edit tagline / launchedAt. Manage gates the landing-page rollout.
   CITIES_VIEW: "cities.view",
   CITIES_MANAGE: "cities.manage",
