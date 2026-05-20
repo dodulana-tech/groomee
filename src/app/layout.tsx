@@ -156,7 +156,14 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <script
           dangerouslySetInnerHTML={{
-            __html: `if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js")})}`,
+            // In production: register the PWA SW. In development: actively
+            // unregister any leftover SW + flush its caches so stale dev
+            // chunks can't survive a rebuild (was causing hydration crashes
+            // on /profile after the dev server rotated chunk hashes).
+            __html:
+              process.env.NODE_ENV === "production"
+                ? `if("serviceWorker"in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js")})}`
+                : `if("serviceWorker"in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));if(self.caches){caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))}}`,
           }}
         />
       </body>
