@@ -12,6 +12,7 @@
  *   F — Admin override actions
  *   G — Edge cases & gating
  *   H — DB integrity audit
+ *   I — Health profiles lifecycle (customer + booking + pro + admin)
  *
  * Generates fixtures inline, exercises them via HTTP + Prisma, asserts
  * invariants, cleans up. Prints a section-by-section table at the end
@@ -1083,6 +1084,246 @@ async function runIntegrity() {
   });
 }
 
+// ─── SECTION I — HEALTH PROFILES ─────────────────────────────────────────────
+
+async function runHealthProfilesE2E(f: Fixtures) {
+  console.log("\nI — Health profiles lifecycle");
+
+  // 1. Customer lazy-init + add + edit + delete condition.
+  await check("I", "GET /api/profile/health auto-creates profile", async () => {
+    const { status, data } = await http("/api/profile/health", { cookie: f.customerCookie });
+    const profile = data?.data?.profile ?? data?.data;
+    return { ok: status === 200 && !!profile?.id, detail: `status=${status} id=${profile?.id?.slice(0, 10)}` };
+  });
+
+  await check("I", "POST condition with bogus code rejected", async () => {
+    const { status } = await http("/api/profile/health/conditions", {
+      method: "POST",
+      cookie: f.customerCookie,
+      body: { code: "BOGUS_CODE", severity: "MILD" },
+    });
+    return { ok: status === 400, detail: `status=${status}` };
+  });
+
+  let conditionId = "";
+  await check("I", "POST plantar-fasciitis condition succeeds", async () => {
+    const { status, data } = await http("/api/profile/health/conditions", {
+      method: "POST",
+      cookie: f.customerCookie,
+      body: { code: "MOBILITY_PLANTAR_FASCIITIS", severity: "MODERATE" },
+    });
+    conditionId =
+      data?.data?.condition?.id ??
+      data?.data?.id ??
+      data?.condition?.id ??
+      data?.id ??
+      "";
+    if (!conditionId) {
+      const row = await db.healthCondition.findFirst({
+        where: { profile: { userId: f.customerUser.id }, code: "MOBILITY_PLANTAR_FASCIITIS" },
+        orderBy: { createdAt: "desc" },
+      });
+      conditionId = row?.id ?? "";
+    }
+    return { ok: (status === 200 || status === 201) && !!conditionId, detail: `status=${status} id=${conditionId.slice(0, 10)}` };
+  });
+
+  await check("I", "POST condition rejects unknown body keys (.strict)", async () => {
+    const { status } = await http("/api/profile/health/conditions", {
+      method: "POST",
+      cookie: f.customerCookie,
+      body: { code: "CHRONIC_DIABETES", severity: "MILD", attemptedHack: "yes" },
+    });
+    return { ok: status === 400, detail: `status=${status}` };
+  });
+
+  await check("I", "PATCH condition.resolved=true", async () => {
+    const { status } = await http(`/api/profile/health/conditions/${conditionId}`, {
+      method: "PATCH",
+      cookie: f.customerCookie,
+      body: { resolved: true },
+    });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const row = await db.healthCondition.findUnique({ where: { id: conditionId } });
+    return { ok: row?.resolved === true, detail: `resolved=${row?.resolved}` };
+  });
+
+  await check("I", "Cross-user PATCH condition → 403/404", async () => {
+    const { status } = await http(`/api/profile/health/conditions/${conditionId}`, {
+      method: "PATCH",
+      cookie: f.masterCookie,
+      body: { resolved: false },
+    });
+    return { ok: status === 403 || status === 404, detail: `status=${status}` };
+  });
+
+  await check("I", "DELETE condition succeeds", async () => {
+    const { status } = await http(`/api/profile/health/conditions/${conditionId}`, {
+      method: "DELETE",
+      cookie: f.customerCookie,
+    });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const row = await db.healthCondition.findUnique({ where: { id: conditionId } });
+    return { ok: row === null, detail: `gone=${row === null}` };
+  });
+
+  await check("I", "PUT notes + visibility=ASK_PER_BOOKING", async () => {
+    const { status } = await http("/api/profile/health", {
+      method: "PUT",
+      cookie: f.customerCookie,
+      body: { notes: "Allergic to certain dyes", visibility: "ASK_PER_BOOKING" },
+    });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const p = await db.healthProfile.findUnique({ where: { userId: f.customerUser.id } });
+    return { ok: p?.visibility === "ASK_PER_BOOKING" && p?.notes === "Allergic to certain dyes", detail: `vis=${p?.visibility}` };
+  });
+
+  // 2. Booking-time contraindication check.
+  // Inject an accutane condition → BLOCK on any service.
+  await db.healthProfile.update({
+    where: { userId: f.customerUser.id },
+    data: { visibility: "ALWAYS_SHARE" },
+  });
+  await db.healthCondition.create({
+    data: {
+      profile: { connect: { userId: f.customerUser.id } },
+      code: "MED_ACCUTANE",
+      label: "Currently on accutane / isotretinoin",
+      category: "MEDICATION",
+      severity: "SEVERE",
+    },
+  });
+
+  await check("I", "Preview /api/profile/health/check returns BLOCK on accutane", async () => {
+    const { status, data } = await http("/api/profile/health/check", {
+      method: "POST",
+      cookie: f.customerCookie,
+      body: { serviceIds: [f.service.id] },
+    });
+    const level = data?.data?.level ?? data?.level;
+    return { ok: status === 200 && level === "BLOCK", detail: `status=${status} level=${level}` };
+  });
+
+  // 3. Pro care brief (use the apprentice Pro from earlier sections which is INDEPENDENT now).
+  // Create a quick booking owned by that Pro for this customer.
+  const briefRef = `BRIEF-${Date.now().toString(36).toUpperCase()}`;
+  const briefBooking = await db.booking.create({
+    data: {
+      reference: briefRef,
+      customerId: f.customerUser.id,
+      proId: f.apprenticePro.id,
+      serviceId: f.service.id,
+      zoneId: f.zone.id,
+      status: "ACCEPTED",
+      address: "Health test address",
+      totalAmount: 10000,
+      baseAmount: 10000,
+      proEarning: 8000,
+      acceptedAt: new Date(),
+    },
+  });
+
+  // Use the apprentice Pro's user (who is the freed user from section C — INDEPENDENT pro).
+  const proUser = await db.user.findFirst({ where: { id: f.apprenticeUser.id } });
+  const proRoleToken = await signSessionFor({
+    id: proUser!.id,
+    phone: proUser!.phone,
+    role: "PRO",
+  });
+  const proCookie = `${COOKIE_NAME}=${proRoleToken}`;
+
+  await check("I", "Pro can GET care-brief", async () => {
+    const { status, data } = await http(`/api/partner/bookings/${briefBooking.id}/care-brief`, { cookie: proCookie });
+    const conditions = data?.data?.snapshot?.conditions ?? [];
+    return { ok: status === 200 && conditions.length > 0, detail: `status=${status} conds=${conditions.length}` };
+  });
+
+  await check("I", "HealthAccessLog row written on brief read", async () => {
+    const logs = await db.healthAccessLog.count({
+      where: { profile: { userId: f.customerUser.id }, accessorRole: "PRO" },
+    });
+    return { ok: logs >= 1, detail: `logs=${logs}` };
+  });
+
+  await check("I", "POST acknowledge writes HealthAcknowledgment", async () => {
+    const { status } = await http(`/api/partner/bookings/${briefBooking.id}/care-brief/acknowledge`, {
+      method: "POST",
+      cookie: proCookie,
+    });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const ack = await db.healthAcknowledgment.findUnique({ where: { bookingId: briefBooking.id } });
+    return { ok: !!ack && !!ack.snapshot, detail: `ack=${ack?.id?.slice(0, 10)}` };
+  });
+
+  await check("I", "Second GET returns frozen snapshot", async () => {
+    const { status, data } = await http(`/api/partner/bookings/${briefBooking.id}/care-brief`, { cookie: proCookie });
+    return { ok: status === 200 && data?.data?.frozen === true, detail: `frozen=${data?.data?.frozen}` };
+  });
+
+  // 4. Admin contraindication CRUD.
+  let ruleId = "";
+  await check("I", "Admin POST contraindication writes ActivityLog", async () => {
+    const { status, data } = await http("/api/admin/health/contraindications", {
+      method: "POST",
+      cookie: f.adminCookie,
+      body: { conditionCode: "CHRONIC_HEART", serviceId: null, level: "WARN", message: "Mention to pro before strenuous service." },
+    });
+    ruleId = data?.data?.contraindication?.id ?? data?.data?.id ?? data?.contraindication?.id ?? data?.id ?? "";
+    if (!ruleId) {
+      const row = await db.serviceContraindication.findFirst({
+        where: { conditionCode: "CHRONIC_HEART", serviceId: null },
+        orderBy: { createdAt: "desc" },
+      });
+      ruleId = row?.id ?? "";
+    }
+    const log = await db.activityLog.findFirst({
+      where: { entityType: "service_contraindication", entityId: ruleId },
+    });
+    return { ok: (status === 200 || status === 201) && !!ruleId && !!log, detail: `id=${ruleId.slice(0, 10)} log=${!!log}` };
+  });
+
+  await check("I", "Admin PATCH contraindication updates level", async () => {
+    const { status } = await http(`/api/admin/health/contraindications/${ruleId}`, {
+      method: "PATCH",
+      cookie: f.adminCookie,
+      body: { level: "INFO" },
+    });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const row = await db.serviceContraindication.findUnique({ where: { id: ruleId } });
+    return { ok: row?.level === "INFO", detail: `level=${row?.level}` };
+  });
+
+  await check("I", "Admin DELETE contraindication", async () => {
+    const { status } = await http(`/api/admin/health/contraindications/${ruleId}`, {
+      method: "DELETE",
+      cookie: f.adminCookie,
+    });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const row = await db.serviceContraindication.findUnique({ where: { id: ruleId } });
+    return { ok: row === null, detail: `gone=${row === null}` };
+  });
+
+  await check("I", "Admin viewing customer profile writes access log", async () => {
+    const before = await db.healthAccessLog.count({
+      where: { profile: { userId: f.customerUser.id }, accessorRole: "ADMIN" },
+    });
+    const { status } = await http(`/api/admin/health/profiles/${f.customerUser.id}`, { cookie: f.adminCookie });
+    if (status !== 200) return { ok: false, detail: `status=${status}` };
+    const after = await db.healthAccessLog.count({
+      where: { profile: { userId: f.customerUser.id }, accessorRole: "ADMIN" },
+    });
+    return { ok: after === before + 1, detail: `before=${before} after=${after}` };
+  });
+
+  await check("I", "Customer cookie can't hit admin health endpoint → 403", async () => {
+    const { status } = await http("/api/admin/health/contraindications", { cookie: f.customerCookie });
+    return { ok: status === 403 || status === 401, detail: `status=${status}` };
+  });
+
+  // Stash for cleanup.
+  (f as any).__healthBookingId = briefBooking.id;
+}
+
 // ─── MAIN ───────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -1096,8 +1337,17 @@ async function main() {
     await runRefundClawback(f);
     await runAdminOverrides(f);
     await runEdgeCases(f);
+    await runHealthProfilesE2E(f);
     await runIntegrity();
   } finally {
+    // Health-test booking + ack + access logs + profile + condition.
+    if ((f as any).__healthBookingId) {
+      await db.healthAcknowledgment.deleteMany({ where: { bookingId: (f as any).__healthBookingId } }).catch(() => {});
+      await db.booking.deleteMany({ where: { id: (f as any).__healthBookingId } }).catch(() => {});
+    }
+    await db.healthAccessLog.deleteMany({ where: { profile: { userId: f.customerUser.id } } }).catch(() => {});
+    await db.healthCondition.deleteMany({ where: { profile: { userId: f.customerUser.id } } }).catch(() => {});
+    await db.healthProfile.deleteMany({ where: { userId: f.customerUser.id } }).catch(() => {});
     if ((f as any).__extraCleanup) await (f as any).__extraCleanup().catch(() => {});
     await f.cleanup().catch(() => {});
     await db.$disconnect();

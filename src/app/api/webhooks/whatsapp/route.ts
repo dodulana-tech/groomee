@@ -114,6 +114,46 @@ export async function POST(req: NextRequest) {
               "20–45 minutes",
             );
           }
+
+          // If the customer has a HealthProfile with ALWAYS_SHARE visibility
+          // and any active (unresolved) conditions, hint the pro to review the
+          // care brief in the app. We deliberately do NOT include the
+          // condition data here — PHI doesn't belong in WhatsApp logs.
+          const healthProfile = await db.healthProfile.findUnique({
+            where: { userId: booking.customerId },
+            select: {
+              visibility: true,
+              _count: { select: { conditions: { where: { resolved: false } } } },
+            },
+          });
+          if (
+            healthProfile?.visibility === "ALWAYS_SHARE" &&
+            (healthProfile?._count?.conditions ?? 0) > 0
+          ) {
+            const { notifyProCareNotes } = await import("@/lib/whatsapp");
+            notifyProCareNotes({
+              phone: pro.phone,
+              bookingRef: booking.reference,
+            }).catch((err) =>
+              console.error("[whatsapp YES] notifyProCareNotes failed:", err),
+            );
+            if (pro.userId) {
+              const u = await db.user.findUnique({
+                where: { id: pro.userId },
+                select: { email: true },
+              });
+              if (u?.email) {
+                const { emailProCareNotes } = await import("@/lib/email-notify");
+                emailProCareNotes({
+                  to: u.email,
+                  proName: pro.name,
+                  bookingRef: booking.reference,
+                }).catch((err) =>
+                  console.error("[whatsapp YES] emailProCareNotes failed:", err),
+                );
+              }
+            }
+          }
         }
       }
       return NextResponse.json({ ok: true });
