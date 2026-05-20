@@ -5,7 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/utils";
 import ReviewModal from "@/components/customer/ReviewModal";
 import LiveBookingTracker from "@/components/customer/LiveBookingTracker";
+import HealthWarningNotice from "@/components/customer/HealthWarningNotice";
 import type { BookingWithRelations } from "@/types";
+import type { ContraindicationHit } from "@/lib/health";
 import Link from "next/link";
 
 export default function BookingPage() {
@@ -19,6 +21,15 @@ export default function BookingPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
+  // ─── Health contraindications (Slice H3) ───
+  // Re-check server-side at render time against the booking's services so
+  // the customer sees the same heads-up their pro will be briefed on. The
+  // booking row itself doesn't store this (skipped per slice scope), so we
+  // derive it from the current profile each visit.
+  const [healthHits, setHealthHits] = useState<ContraindicationHit[]>([]);
+  const [healthLevel, setHealthLevel] = useState<
+    "INFO" | "WARN" | "BLOCK" | null
+  >(null);
 
   const fetchBooking = useCallback(async () => {
     const res = await fetch(`/api/bookings/${id}`);
@@ -37,6 +48,33 @@ export default function BookingPage() {
   useEffect(() => {
     if (booking?.status === "CONFIRMED" && !booking.review) setShowReview(true);
   }, [booking?.status, booking?.review]);
+
+  // Re-derive contraindications for this booking's services once the booking
+  // loads. We don't persist these on the booking row (intentional — slice
+  // scope) so we re-run the check each visit. Cheap: handful of indexed reads.
+  useEffect(() => {
+    if (!booking) return;
+    const serviceIds = [
+      booking.serviceId,
+      ...((booking.items ?? []).map((it) => it.serviceId)),
+    ].filter((x): x is string => Boolean(x));
+    if (serviceIds.length === 0) return;
+    const controller = new AbortController();
+    fetch("/api/profile/health/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ serviceIds }),
+      signal: controller.signal,
+    })
+      .then(async (r) => {
+        if (!r.ok) return;
+        const d = await r.json();
+        setHealthHits(d.data?.hits ?? []);
+        setHealthLevel(d.data?.level ?? null);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [booking]);
 
   async function confirmService() {
     setConfirming(true);
@@ -98,6 +136,17 @@ export default function BookingPage() {
       </div>
 
       <div className="px-4 space-y-3">
+        {/* Health contraindication notice — what the pro will be briefed on
+            for this booking. Derived from the customer's current profile
+            against the booking's services. */}
+        {healthHits.length > 0 && (
+          <HealthWarningNotice
+            hits={healthHits}
+            level={healthLevel}
+            context="post-booking"
+          />
+        )}
+
         {/* Live booking tracker (handles status header, timeline, pro card, location) */}
         <LiveBookingTracker bookingId={id} initialData={booking} />
 

@@ -61,6 +61,11 @@ export const PERMISSIONS = {
 
   // Activity log
   ACTIVITY_VIEW: "activity.view",
+
+  // Health (PHI) — view = read care briefs / profiles; manage = edit
+  // contraindication catalog. Access is always audit-logged.
+  HEALTH_VIEW: "health.view",
+  HEALTH_MANAGE: "health.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -169,6 +174,13 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: PERMISSIONS.ACTIVITY_VIEW, label: "View activity log" },
     ],
   },
+  health: {
+    label: "Health & care (PHI)",
+    permissions: [
+      { key: PERMISSIONS.HEALTH_VIEW, label: "View customer health profiles + care briefs" },
+      { key: PERMISSIONS.HEALTH_MANAGE, label: "Manage contraindication catalog" },
+    ],
+  },
 };
 
 /** Default role definitions used for seeding */
@@ -201,6 +213,8 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.SETTINGS_MANAGE_OPS,
       PERMISSIONS.NOTES_VIEW,
       PERMISSIONS.NOTES_MANAGE,
+      PERMISSIONS.HEALTH_VIEW,
+      PERMISSIONS.HEALTH_MANAGE,
     ],
     isSystem: false,
   },
@@ -229,6 +243,7 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.CUSTOMERS_VIEW,
       PERMISSIONS.NOTES_VIEW,
       PERMISSIONS.NOTES_MANAGE,
+      PERMISSIONS.HEALTH_VIEW,
     ],
     isSystem: false,
   },

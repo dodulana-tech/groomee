@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/utils";
 import type { Service, Zone } from "@/types";
+import type { ContraindicationHit } from "@/lib/health";
+import HealthWarningNotice from "@/components/customer/HealthWarningNotice";
 
 function nextDay(ymd: string): string {
   const d = new Date(`${ymd}T00:00:00+01:00`);
@@ -70,6 +72,14 @@ export default function BookingPanel({
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // ─── Health contraindication preview (Slice H3) ───
+  // We poll /api/profile/health/check whenever the selected service set
+  // changes so the customer sees BLOCK / WARN / INFO notices BEFORE they
+  // tap Confirm & Pay. BLOCK also disables the submit button.
+  const [healthHits, setHealthHits] = useState<ContraindicationHit[]>([]);
+  const [healthLevel, setHealthLevel] = useState<
+    "INFO" | "WARN" | "BLOCK" | null
+  >(null);
 
   function toggleService(id: string) {
     setSelectedServiceIds((prev) =>
@@ -152,6 +162,48 @@ export default function BookingPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAsap, selectedServiceIds.join("|"), slotDate, zoneId, pro.id]);
 
+  // ─── Live health-profile contraindication check ───
+  // Debounced so rapid toggling doesn't spam the endpoint. 401 (not signed
+  // in) is fine — we just hide the notice; the customer will be sent to
+  // /auth on submit anyway.
+  useEffect(() => {
+    if (selectedServiceIds.length === 0) {
+      setHealthHits([]);
+      setHealthLevel(null);
+      return;
+    }
+    const controller = new AbortController();
+    const t = setTimeout(() => {
+      fetch("/api/profile/health/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceIds: selectedServiceIds }),
+        signal: controller.signal,
+      })
+        .then(async (r) => {
+          if (!r.ok) {
+            setHealthHits([]);
+            setHealthLevel(null);
+            return;
+          }
+          const d = await r.json();
+          setHealthHits(d.data?.hits ?? []);
+          setHealthLevel(d.data?.level ?? null);
+        })
+        .catch((err) => {
+          if (err?.name !== "AbortError") {
+            setHealthHits([]);
+            setHealthLevel(null);
+          }
+        });
+    }, 250);
+    return () => {
+      clearTimeout(t);
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedServiceIds.join("|")]);
+
   async function handleBook() {
     if (selectedServiceIds.length === 0) {
       setError("Please select at least one service.");
@@ -191,6 +243,17 @@ export default function BookingPanel({
           router.push(
             "/auth?redirect=" + encodeURIComponent(window.location.pathname),
           );
+          return;
+        }
+        // Server-side health gate fired — mirror the block in the UI even if
+        // the live preview hadn't surfaced yet (e.g. profile updated in
+        // another tab between preview and submit).
+        if (res.status === 422 && data.code === "HEALTH_BLOCK") {
+          if (Array.isArray(data.blocks)) {
+            setHealthHits(data.blocks);
+            setHealthLevel("BLOCK");
+          }
+          setError(data.error ?? "This booking can't go ahead safely.");
           return;
         }
         setError(data.error ?? "Failed to create booking.");
@@ -528,6 +591,16 @@ export default function BookingPanel({
           </div>
         )}
 
+        {/* Health contraindication preview — surface BLOCK / WARN / INFO
+            against the customer's health profile before they pay. */}
+        {healthHits.length > 0 && (
+          <HealthWarningNotice
+            hits={healthHits}
+            level={healthLevel}
+            context="preview"
+          />
+        )}
+
         {error && (
           <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
             {error}
@@ -536,7 +609,7 @@ export default function BookingPanel({
 
         <button
           onClick={handleBook}
-          disabled={loading || !selectedServiceId}
+          disabled={loading || !selectedServiceId || healthLevel === "BLOCK"}
           className="btn-primary btn-lg w-full"
         >
           {loading ? (
@@ -544,6 +617,8 @@ export default function BookingPanel({
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
               Processing…
             </span>
+          ) : healthLevel === "BLOCK" ? (
+            "Can't book safely — pick another service"
           ) : selectedServiceId ? (
             `Confirm & Pay ${formatNaira(total)} →`
           ) : (

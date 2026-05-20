@@ -8,6 +8,7 @@ const PUBLIC_PREFIX = [
   "/pro/",      // /pro/[slug] pages — NOT /profile
   "/groomer/",  // legacy redirect to /pro/[slug]
   "/api/auth",
+  "/api/health",
   "/api/webhooks",
   "/api/services",
   "/api/pros",

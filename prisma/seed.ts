@@ -25,6 +25,7 @@ const DEFAULT_ROLES = [
       "customers.view", "customers.manage", "catalog.view", "catalog.manage",
       "settings.view", "settings.manage_ops", "notes.view", "notes.manage",
       "apprenticeships.view", "apprenticeships.manage",
+      "health.view", "health.manage",
     ],
     isSystem: false,
   },
@@ -46,6 +47,7 @@ const DEFAULT_ROLES = [
     permissions: [
       "dashboard.view", "bookings.view", "disputes.view", "disputes.manage",
       "customers.view", "notes.view", "notes.manage",
+      "health.view",
     ],
     isSystem: false,
   },
@@ -669,6 +671,29 @@ async function main() {
     });
   }
   console.log(`✅ ${subscriptionPlans.length} subscription plans`);
+
+  // ── HEALTH CONTRAINDICATIONS ────────────────────────────────────────
+  const { DEFAULT_CONTRAINDICATIONS } = await import("../src/lib/health");
+  for (const c of DEFAULT_CONTRAINDICATIONS) {
+    const serviceId = c.serviceSlug
+      ? (await prisma.service.findUnique({ where: { slug: c.serviceSlug } }))?.id ?? null
+      : null;
+    if (c.serviceSlug && !serviceId) continue;
+    const existing = await prisma.serviceContraindication.findFirst({
+      where: { conditionCode: c.conditionCode, serviceId },
+    });
+    if (existing) {
+      await prisma.serviceContraindication.update({
+        where: { id: existing.id },
+        data: { level: c.level, message: c.message },
+      });
+    } else {
+      await prisma.serviceContraindication.create({
+        data: { conditionCode: c.conditionCode, serviceId, level: c.level, message: c.message },
+      });
+    }
+  }
+  console.log(`✅ ${DEFAULT_CONTRAINDICATIONS.length} health contraindications`);
 
   console.log("🎉 Seeding complete!");
 }

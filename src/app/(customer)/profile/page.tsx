@@ -12,14 +12,35 @@ export default async function ProfilePage() {
   const session = await getSession();
   if (!session) redirect('/auth?redirect=/profile');
 
-  const [user, bookingCount, completedCount] = await Promise.all([
+  const [user, bookingCount, completedCount, healthProfile] = await Promise.all([
     db.user.findUnique({
       where:  { id: session.userId },
       select: { id: true, name: true, phone: true, email: true, createdAt: true, points: true },
     }),
     db.booking.count({ where: { customerId: session.userId } }),
     db.booking.count({ where: { customerId: session.userId, status: 'CONFIRMED' } }),
+    db.healthProfile.findUnique({
+      where: { userId: session.userId },
+      select: {
+        visibility: true,
+        _count: { select: { conditions: { where: { resolved: false } } } },
+      },
+    }),
   ]);
+  const healthConditionCount = healthProfile?._count.conditions ?? 0;
+  const healthVisibility = healthProfile?.visibility ?? null;
+  const healthBadge = healthVisibility === 'PRIVATE'
+    ? 'Private'
+    : healthVisibility === 'ASK_PER_BOOKING'
+      ? 'Ask per booking'
+      : healthConditionCount > 0
+        ? `${healthConditionCount} active`
+        : 'Add';
+  const healthBadgeTone = healthVisibility === 'PRIVATE'
+    ? 'gray'
+    : healthConditionCount > 0
+      ? 'green'
+      : 'orange';
 
   // These features are coming soon - stubbed until models are added
   const subscription = null;
@@ -108,6 +129,7 @@ export default async function ProfilePage() {
         {[
           { href: '/bookings',       icon: '📋', label: 'My bookings',        badge: bookingCount > 0 ? `${bookingCount}` : null, bc: 'gray' },
           { href: '/profile/beauty', icon: '✨', label: 'Beauty profile',      badge: profileComplete ? '✓ Complete' : 'Incomplete', bc: profileComplete ? 'green' : 'orange' },
+          { href: '/profile/health', icon: '🩺', label: 'Health & sensitivities', badge: healthBadge, bc: healthBadgeTone },
           { href: '/profile/squad',  icon: '💇', label: 'My Squad',            badge: `${squadCount}/3`, bc: squadCount > 0 ? 'green' : 'gray' },
           { href: '/subscriptions',  icon: '🌿', label: 'Subscription plans',  badge: 'Save 15%', bc: 'brand' },
           { href: '/gift',           icon: '🎁', label: 'Gift a Glow-up',       badge: null, bc: 'gray' },

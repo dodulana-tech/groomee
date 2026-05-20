@@ -202,6 +202,12 @@ export async function handleProResponse(
       }),
     ]);
 
+    // Fire-and-forget health care-notes email — only if the customer has
+    // shareable conditions that actually apply to the chosen service set.
+    import("@/lib/health-notify")
+      .then(({ notifyProCareNotes }) => notifyProCareNotes(booking.id))
+      .catch(() => {});
+
     return { found: true, accepted: true, bookingId: booking.id };
   } else {
     // Declined - try next pro

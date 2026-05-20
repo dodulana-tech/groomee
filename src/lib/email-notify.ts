@@ -17,6 +17,7 @@ import {
   apprenticeBookingDeployedEmail,
   customerBookingDeployedEmail,
   apprenticeDeploymentRescindedEmail,
+  proCareNotesEmail,
 } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/utils";
 
@@ -366,6 +367,23 @@ export async function emailApprenticeDeploymentRescinded(data: {
     apprenticeDeploymentRescindedEmail({
       apprenticeName: data.apprenticeName,
       masterName: data.masterName,
+    }),
+  );
+}
+
+// ─── HEALTH CARE-NOTES PRE-BRIEF ─────────────────────────────────────────────
+
+export async function emailProCareNotes(data: {
+  to: string;
+  proName: string;
+  bookingRef: string;
+}) {
+  if (!data.to) return;
+  fireEmail(
+    data.to,
+    proCareNotesEmail({
+      proName: data.proName,
+      bookingRef: data.bookingRef,
     }),
   );
 }

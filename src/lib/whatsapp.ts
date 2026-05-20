@@ -270,3 +270,24 @@ export async function notifyApprenticeDeploymentRescinded({
     `↩️ Heads up — *${masterName}* has rescinded the booking deployment they sent you. The booking is back with them.\n\nYou are now back online and free to receive other jobs. No strike, no penalty.`,
   );
 }
+
+// ─── HEALTH CARE-NOTES PRE-BRIEF ─────────────────────────────────────────────
+//
+// Hint-only message — PHI never appears in WhatsApp logs. The pro must open
+// the app to read the actual condition list.
+
+export async function notifyProCareNotes({
+  phone,
+  bookingRef,
+  briefHint,
+}: {
+  phone: string;
+  bookingRef: string;
+  briefHint?: string;
+}) {
+  const hint = briefHint ? `\n\n${briefHint}` : "";
+  return sendMessage(
+    phone,
+    `⚠️ The customer for booking ${bookingRef} has care notes — please review in the app before arriving.${hint}`,
+  );
+}

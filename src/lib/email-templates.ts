@@ -558,6 +558,35 @@ export function apprenticeDeploymentRescindedEmail(data: {
   };
 }
 
+// ── PRO CARE NOTES PRE-BRIEF ─────────────────────────────
+//
+// Hint-only — PHI lives in the app, never in the email body.
+
+export function proCareNotesEmail(data: {
+  proName: string;
+  bookingRef: string;
+}): { subject: string; html: string } {
+  const greeting = data.proName ? data.proName.split(" ")[0] : "there";
+  return {
+    subject: `Care notes on booking ${data.bookingRef}`,
+    html: layout(`
+      <p class="hero-text">Care notes to review, ${greeting}.</p>
+      <p class="body-text">
+        The customer for booking <span class="highlight">${data.bookingRef}</span> has shared health-relevant care notes that may affect how the service should run.
+      </p>
+      <p class="body-text">
+        Please open the Groomee app and review the brief on this booking before you set off. Acknowledge it from the booking card.
+      </p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${APP_URL}/partner/bookings" class="cta">Review in the app</a>
+      </div>
+      <p class="muted" style="text-align: center;">
+        We keep the details inside the app to protect the customer&rsquo;s privacy. Thanks for taking care.
+      </p>
+    `),
+  };
+}
+
 // ── NO PRO AVAILABLE ─────────────────────────────────────
 
 export function noProEmail(data: {

@@ -96,6 +96,34 @@ enum ServiceCategory {
   OTHER
 }
 
+enum HealthCategory {
+  SKIN_SENSITIVITY
+  ALLERGY
+  MOBILITY
+  REPRODUCTIVE
+  CHRONIC
+  MEDICATION
+  OTHER
+}
+
+enum HealthSeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
+enum ContraindicationLevel {
+  INFO
+  WARN
+  BLOCK
+}
+
+enum HealthVisibility {
+  ALWAYS_SHARE
+  ASK_PER_BOOKING
+  PRIVATE
+}
+
 model User {
   id                String         @id @default(cuid())
   phone             String?        @unique
@@ -119,6 +147,7 @@ model User {
   activityLogs      ActivityLog[]
   pointsLedger      PointsLedger[]
   pro               Pro?
+  healthProfile     HealthProfile?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
@@ -202,21 +231,22 @@ model Pro {
   schedule         ProSchedule[]
 
   // ─── Apprenticeship / sub-account ───
-  relationship       ProRelationship @default(INDEPENDENT)
-  parentProId        String?
-  parent             Pro?            @relation("ParentPro", fields: [parentProId], references: [id])
-  dependents         Pro[]           @relation("ParentPro")
-  freedUnderProId    String?
-  freedUnder         Pro?            @relation("FreedomLineage", fields: [freedUnderProId], references: [id])
-  freedDependents    Pro[]           @relation("FreedomLineage")
-  freedAt            DateTime?
-  freedomCertCode    String?         @unique
-  apprenticeshipsAsApprentice Apprenticeship[] @relation("ApprenticeshipApprentice")
-  apprenticeshipsAsMaster     Apprenticeship[] @relation("ApprenticeshipMaster")
-  earningsFromDependents      Earning[]        @relation("SourcePro")
+  relationship                ProRelationship        @default(INDEPENDENT)
+  parentProId                 String?
+  parent                      Pro?                   @relation("ParentPro", fields: [parentProId], references: [id])
+  dependents                  Pro[]                  @relation("ParentPro")
+  freedUnderProId             String?
+  freedUnder                  Pro?                   @relation("FreedomLineage", fields: [freedUnderProId], references: [id])
+  freedDependents             Pro[]                  @relation("FreedomLineage")
+  freedAt                     DateTime?
+  freedomCertCode             String?                @unique
+  apprenticeshipsAsApprentice Apprenticeship[]       @relation("ApprenticeshipApprentice")
+  apprenticeshipsAsMaster     Apprenticeship[]       @relation("ApprenticeshipMaster")
+  earningsFromDependents      Earning[]              @relation("SourcePro")
+  healthAcks                  HealthAcknowledgment[]
 
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([parentProId])
   @@index([freedUnderProId])
@@ -224,26 +254,26 @@ model Pro {
 }
 
 model Apprenticeship {
-  id                          String               @id @default(cuid())
-  apprenticeId                String
-  apprentice                  Pro                  @relation("ApprenticeshipApprentice", fields: [apprenticeId], references: [id])
-  masterId                    String
-  master                      Pro                  @relation("ApprenticeshipMaster", fields: [masterId], references: [id])
-  status                      ApprenticeshipStatus @default(PENDING_ACCEPT)
+  id                         String               @id @default(cuid())
+  apprenticeId               String
+  apprentice                 Pro                  @relation("ApprenticeshipApprentice", fields: [apprenticeId], references: [id])
+  masterId                   String
+  master                     Pro                  @relation("ApprenticeshipMaster", fields: [masterId], references: [id])
+  status                     ApprenticeshipStatus @default(PENDING_ACCEPT)
   // Master's cut of (totalAmount − platform commission) on every dependent activity. Default 30%, configurable.
-  masterCommission            Float                @default(0.30)
+  masterCommission           Float                @default(0.30)
   // Master must explicitly approve independence; combined with curriculum gates this unlocks self-bookings.
-  masterApprovedIndependence  DateTime?
-  invitedAt                   DateTime             @default(now())
-  acceptedAt                  DateTime?
-  expectedFreedom             DateTime?
-  readyForFreedomAt           DateTime?
-  freedomDate                 DateTime?
-  freedomCertCode             String?              @unique
-  terminatedAt                DateTime?
-  terminationReason           String?
-  modules                     CurriculumModule[]
-  earnings                    Earning[]
+  masterApprovedIndependence DateTime?
+  invitedAt                  DateTime             @default(now())
+  acceptedAt                 DateTime?
+  expectedFreedom            DateTime?
+  readyForFreedomAt          DateTime?
+  freedomDate                DateTime?
+  freedomCertCode            String?              @unique
+  terminatedAt               DateTime?
+  terminationReason          String?
+  modules                    CurriculumModule[]
+  earnings                   Earning[]
 
   @@index([apprenticeId])
   @@index([masterId])
@@ -283,34 +313,35 @@ model FavouritePro {
 }
 
 model Service {
-  id           String          @id @default(cuid())
-  name         String
-  slug         String          @unique
-  category     ServiceCategory
-  basePrice    Float
-  minPrice     Float
-  maxPrice     Float
-  durationMins Int
-  description  String?
-  isActive     Boolean         @default(true)
-  sortOrder    Int             @default(0)
-  pros         ProService[]
-  bookings     Booking[]
-  bookingItems BookingItem[]
-  createdAt    DateTime        @default(now())
+  id                String                    @id @default(cuid())
+  name              String
+  slug              String                    @unique
+  category          ServiceCategory
+  basePrice         Float
+  minPrice          Float
+  maxPrice          Float
+  durationMins      Int
+  description       String?
+  isActive          Boolean                   @default(true)
+  sortOrder         Int                       @default(0)
+  pros              ProService[]
+  bookings          Booking[]
+  bookingItems      BookingItem[]
+  contraindications ServiceContraindication[]
+  createdAt         DateTime                  @default(now())
 
   @@map("services")
 }
 
 model Zone {
-  id          String       @id @default(cuid())
-  name        String
-  slug        String       @unique
-  city        String       @default("Lagos")
-  pros        ProZone[]
-  bookings    Booking[]
-  travelFrom  ZoneTravel[] @relation("ZoneTravelFrom")
-  travelTo    ZoneTravel[] @relation("ZoneTravelTo")
+  id         String       @id @default(cuid())
+  name       String
+  slug       String       @unique
+  city       String       @default("Lagos")
+  pros       ProZone[]
+  bookings   Booking[]
+  travelFrom ZoneTravel[] @relation("ZoneTravelFrom")
+  travelTo   ZoneTravel[] @relation("ZoneTravelTo")
 
   @@map("zones")
 }
@@ -337,52 +368,53 @@ model ProZone {
 }
 
 model Booking {
-  id               String        @id @default(cuid())
-  reference        String        @unique
-  customerId       String
-  proId            String?       @map("groomerId")
-  serviceId        String
-  zoneId           String?
-  status           BookingStatus @default(PENDING_PAYMENT)
-  address          String
-  latitude         Float?
-  longitude        Float?
-  isAsap           Boolean       @default(false)
-  scheduledFor     DateTime?
+  id                        String                @id @default(cuid())
+  reference                 String                @unique
+  customerId                String
+  proId                     String?               @map("groomerId")
+  serviceId                 String
+  zoneId                    String?
+  status                    BookingStatus         @default(PENDING_PAYMENT)
+  address                   String
+  latitude                  Float?
+  longitude                 Float?
+  isAsap                    Boolean               @default(false)
+  scheduledFor              DateTime?
   // Cached total duration in minutes (sum of service durations). Computed at
   // booking creation; falls back to service.durationMins when zero/legacy.
   // Drives calendar block sizes and conflict detection.
-  durationMins     Int           @default(0)
-  customerNotes    String?
-  totalAmount      Float
-  baseAmount       Float
-  surchargeAmount  Float         @default(0)
-  surchargeType    String?
-  proEarning       Float         @default(0) @map("groomerEarning")
-  dispatchAttempts Int           @default(0)
-  acceptedAt       DateTime?
-  enRouteAt        DateTime?
-  arrivedAt        DateTime?
-  completedAt      DateTime?
-  confirmedAt      DateTime?
-  cancelledAt      DateTime?
+  durationMins              Int                   @default(0)
+  customerNotes             String?
+  totalAmount               Float
+  baseAmount                Float
+  surchargeAmount           Float                 @default(0)
+  surchargeType             String?
+  proEarning                Float                 @default(0) @map("groomerEarning")
+  dispatchAttempts          Int                   @default(0)
+  acceptedAt                DateTime?
+  enRouteAt                 DateTime?
+  arrivedAt                 DateTime?
+  completedAt               DateTime?
+  confirmedAt               DateTime?
+  cancelledAt               DateTime?
   // When a master delegates a booking to an apprentice (or staff), we
   // snapshot the apprenticeship id so the earnings split at confirm time
   // is durable even if the apprenticeship later transitions to FREED or
   // TERMINATED. Null for non-delegated bookings.
   delegatedApprenticeshipId String?
-  customer         User          @relation(fields: [customerId], references: [id])
-  pro              Pro?          @relation(fields: [proId], references: [id])
-  service          Service       @relation(fields: [serviceId], references: [id])
-  zone             Zone?         @relation(fields: [zoneId], references: [id])
-  payment          Payment?
-  dispute          Dispute?
-  review           Review?
-  dispatchLog      DispatchLog[]
-  strikes          Strike[]
-  items            BookingItem[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  customer                  User                  @relation(fields: [customerId], references: [id])
+  pro                       Pro?                  @relation(fields: [proId], references: [id])
+  service                   Service               @relation(fields: [serviceId], references: [id])
+  zone                      Zone?                 @relation(fields: [zoneId], references: [id])
+  payment                   Payment?
+  dispute                   Dispute?
+  review                    Review?
+  dispatchLog               DispatchLog[]
+  strikes                   Strike[]
+  items                     BookingItem[]
+  healthAck                 HealthAcknowledgment?
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
 
   @@index([customerId, createdAt])
   @@index([proId])
@@ -471,22 +503,22 @@ model Review {
 }
 
 model Earning {
-  proId           String      @map("groomerId")
-  id              String      @id @default(cuid())
-  bookingId       String
-  amount          Float
-  paid            Boolean     @default(false)
-  payoutId        String?
-  pro             Pro         @relation(fields: [proId], references: [id], onDelete: Cascade)
-  createdAt       DateTime    @default(now())
+  proId     String   @map("groomerId")
+  id        String   @id @default(cuid())
+  bookingId String
+  amount    Float
+  paid      Boolean  @default(false)
+  payoutId  String?
+  pro       Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
   // ─── Apprenticeship support ───
   // SERVICE: pro's own work earning (default).
   // APPRENTICE_COMMISSION: master's cut from a dependent's booking.
-  type             EarningType    @default(SERVICE)
+  type             EarningType     @default(SERVICE)
   // For APPRENTICE_COMMISSION rows, the dependent who actually performed the work.
   sourceProId      String?
-  sourcePro        Pro?           @relation("SourcePro", fields: [sourceProId], references: [id])
+  sourcePro        Pro?            @relation("SourcePro", fields: [sourceProId], references: [id])
   // Tags master-commission earnings to the apprenticeship that produced them; useful for audit / freedom-cutoff queries.
   apprenticeshipId String?
   apprenticeship   Apprenticeship? @relation(fields: [apprenticeshipId], references: [id])
@@ -731,15 +763,15 @@ model Payout {
 // transit buffers between consecutive bookings for the same pro. Missing pairs
 // fall back to scheduling.DEFAULT_CROSS_ZONE_MINS; same-zone pairs are 0.
 model ZoneTravel {
-  id          String   @id @default(cuid())
-  fromZoneId  String
-  toZoneId    String
-  travelMins  Int
-  isActive    Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
-  fromZone    Zone     @relation("ZoneTravelFrom", fields: [fromZoneId], references: [id], onDelete: Cascade)
-  toZone      Zone     @relation("ZoneTravelTo", fields: [toZoneId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  fromZoneId String
+  toZoneId   String
+  travelMins Int
+  isActive   Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  fromZone   Zone     @relation("ZoneTravelFrom", fields: [fromZoneId], references: [id], onDelete: Cascade)
+  toZone     Zone     @relation("ZoneTravelTo", fields: [toZoneId], references: [id], onDelete: Cascade)
 
   @@unique([fromZoneId, toZoneId])
   @@index([fromZoneId])
@@ -757,4 +789,95 @@ model ProSchedule {
 
   @@unique([proId, dayOfWeek])
   @@map("pro_schedules")
+}
+
+// ─── HEALTH PROFILES ─────────────────────────────────────────────────────────
+//
+// Customers may share health information (allergies, sensitivities, mobility
+// conditions, pregnancy status, chronic conditions) that affects how a pro
+// should perform a service. Sensitive — treat as health-adjacent PHI. Every
+// pro/admin read is access-logged.
+
+model HealthProfile {
+  id              String                 @id @default(cuid())
+  userId          String                 @unique
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes           String? // free-text "anything else we should know?"
+  visibility      HealthVisibility       @default(ALWAYS_SHARE)
+  conditions      HealthCondition[]
+  acknowledgments HealthAcknowledgment[]
+  accessLogs      HealthAccessLog[]
+  lastReviewedAt  DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@map("health_profiles")
+}
+
+model HealthCondition {
+  id        String         @id @default(cuid())
+  profileId String
+  profile   HealthProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  // Controlled vocab — see HEALTH_CONDITIONS in src/lib/health.ts. Free text
+  // sits in `notes` on the profile itself.
+  code      String
+  // Snapshot of the user-facing label at creation time (in case vocab changes).
+  label     String
+  category  HealthCategory
+  severity  HealthSeverity @default(MODERATE)
+  notes     String?
+  startedAt DateTime?
+  resolved  Boolean        @default(false)
+  createdAt DateTime       @default(now())
+
+  @@index([profileId])
+  @@index([code])
+  @@map("health_conditions")
+}
+
+model ServiceContraindication {
+  id            String                @id @default(cuid())
+  conditionCode String
+  // Null serviceId = applies to ANY service offering. Useful for general
+  // allergies (latex) where the warning is uniform across categories.
+  serviceId     String?
+  service       Service?              @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  level         ContraindicationLevel
+  message       String
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@unique([conditionCode, serviceId])
+  @@index([conditionCode])
+  @@map("service_contraindications")
+}
+
+model HealthAcknowledgment {
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  booking        Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  profileId      String
+  profile        HealthProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  proId          String
+  pro            Pro           @relation(fields: [proId], references: [id])
+  // Frozen view of the profile + conditions at acknowledgement time, so
+  // changes to the profile later don't rewrite history.
+  snapshot       Json
+  acknowledgedAt DateTime      @default(now())
+
+  @@index([proId])
+  @@map("health_acknowledgments")
+}
+
+model HealthAccessLog {
+  id           String        @id @default(cuid())
+  profileId    String
+  profile      HealthProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  accessorRole String
+  accessorId   String?
+  context      String
+  createdAt    DateTime      @default(now())
+
+  @@index([profileId, createdAt])
+  @@map("health_access_logs")
 }

@@ -12,6 +12,7 @@ const NAV = [
   { href: "/admin/calendar", label: "Calendar", icon: "📆", permission: "pros.view" },
   { href: "/admin/pros", label: "Beauty Pros", icon: "💇", permission: "pros.view" },
   { href: "/admin/apprenticeships", label: "Apprenticeships", icon: "🎓", permission: "apprenticeships.view" },
+  { href: "/admin/health", label: "Health & care", icon: "🩺", permission: "health.view" },
   { href: "/admin/customers", label: "Customers", icon: "👥", permission: "customers.view" },
   { href: "/admin/disputes", label: "Disputes", icon: "⚠️", permission: "disputes.view" },
   { href: "/admin/advances", label: "Advances", icon: "💰", permission: "advances.view" },

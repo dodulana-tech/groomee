@@ -30,6 +30,7 @@ const PAGES = [
   "/admin/pros",
   "/admin/pros/new",
   "/admin/apprenticeships",
+  "/admin/health",
   "/admin/customers",
   "/admin/disputes",
   "/admin/advances",
@@ -54,6 +55,8 @@ const GET_APIS = [
   "/api/admin/stats",
   "/api/admin/pros/list",
   "/api/admin/apprenticeships",
+  "/api/admin/health/contraindications",
+  "/api/admin/health/access-logs",
 ];
 
 async function main() {

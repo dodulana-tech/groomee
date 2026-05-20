@@ -11,6 +11,7 @@ import {
   type DependentForBooking,
   type EligibleDependent,
 } from "./DelegateButton";
+import CareBrief from "./CareBrief";
 
 export const revalidate = 0;
 
@@ -305,6 +306,16 @@ export default async function PartnerBookingsPage({
                       />
                     )}
                   </div>
+                )}
+
+                {/* PHI care brief — pros only see their own held bookings. */}
+                {isMine && (
+                  <CareBrief
+                    bookingId={b.id}
+                    isAccepted={["ACCEPTED", "EN_ROUTE", "ARRIVED", "IN_SERVICE"].includes(
+                      b.status as string,
+                    )}
+                  />
                 )}
               </div>
             );

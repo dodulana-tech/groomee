@@ -11,6 +11,7 @@ import {
 import { tryNextPro } from "@/lib/dispatch";
 import { findConflict, inWorkingHours } from "@/lib/scheduling";
 import { resolveBookingServices } from "@/lib/booking-items";
+import { checkContraindications, highestLevel } from "@/lib/health";
 import { z } from "zod";
 
 const createBookingSchema = z.object({
@@ -147,6 +148,36 @@ export async function POST(req: NextRequest) {
           { status: 409 },
         );
       }
+    }
+
+    // ─── Health contraindication gate ───
+    // Run the customer's active health conditions against the catalog of
+    // contraindications for every service in this booking (primary + items).
+    // BLOCK ⇒ refuse the booking outright (422). WARN / INFO are non-blocking
+    // and ride along in the success response so the UI can surface them on
+    // the confirmation screen. We do this BEFORE the Prisma transaction (it's
+    // a pure read) and BEFORE charging Paystack, so a blocked booking never
+    // incurs a payment intent.
+    const allServiceIds = [primary.id, ...additional.map((s) => s.id)];
+    const healthHits = await checkContraindications(
+      session.userId,
+      allServiceIds,
+    );
+    const healthLevel = highestLevel(healthHits);
+    if (healthLevel === "BLOCK") {
+      const blocks = healthHits.filter((h) => h.level === "BLOCK");
+      const labels = Array.from(
+        new Set(blocks.map((b) => b.conditionLabel)),
+      ).join(", ");
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Based on your health profile (${labels}), this booking can't go ahead safely. Please pick a different service or update your profile.`,
+          code: "HEALTH_BLOCK",
+          blocks,
+        },
+        { status: 422 },
+      );
     }
 
     const user = await db.user.findUnique({
@@ -323,6 +354,12 @@ export async function POST(req: NextRequest) {
           surcharge,
           ...(pointsDiscount > 0 && { pointsDiscount }),
           ...(giftDiscount > 0 && { giftDiscount }),
+          // WARN / INFO hits ride along so the success screen + post-booking
+          // page can show the customer what the pro will be briefed on. A
+          // null `warningLevel` means the customer has nothing on their
+          // profile that affects this booking.
+          warnings: healthHits,
+          warningLevel: healthLevel,
         },
       },
       { status: 201 },

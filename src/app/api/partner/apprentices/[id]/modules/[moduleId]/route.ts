@@ -22,7 +22,7 @@ const patchSchema = z.object({
   // Toggle controls — when present (boolean), set the timestamp accordingly.
   completed: z.boolean().optional(),
   signedOff: z.boolean().optional(),
-});
+}).strict();
 
 async function authMaster(id: string) {
   const session = await getSession();
