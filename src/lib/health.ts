@@ -49,11 +49,11 @@ export const HEALTH_CONDITIONS: ConditionDef[] = [
   { code: "REPRO_PREGNANT", label: "Pregnant", category: "REPRODUCTIVE", hint: "Avoid chemical relaxers, certain essential oils, and some peels." },
   { code: "REPRO_BREASTFEEDING", label: "Breastfeeding", category: "REPRODUCTIVE" },
   // Chronic
-  { code: "CHRONIC_DIABETES", label: "Diabetes", category: "CHRONIC", hint: "Extra care with cuticles - small cuts can become serious." },
+  { code: "CHRONIC_DIABETES", label: "Diabetes", category: "CHRONIC", hint: "Extra care with cuticles — small cuts can become serious." },
   { code: "CHRONIC_HEART", label: "Heart condition", category: "CHRONIC" },
   { code: "CHRONIC_BLOOD_THINNERS", label: "On blood thinners", category: "CHRONIC", hint: "Even minor cuts may bleed longer." },
   // Medication
-  { code: "MED_ACCUTANE", label: "Currently on accutane / isotretinoin", category: "MEDICATION", hint: "Skin is fragile - no waxing." },
+  { code: "MED_ACCUTANE", label: "Currently on accutane / isotretinoin", category: "MEDICATION", hint: "Skin is fragile — no waxing." },
   { code: "MED_CHEMO", label: "Receiving chemotherapy", category: "MEDICATION", hint: "Hair is fragile; skin is sensitive." },
 ];
 
@@ -75,29 +75,29 @@ export interface ContraindicationSeed {
 
 export const DEFAULT_CONTRAINDICATIONS: ContraindicationSeed[] = [
   // Latex applies to every service
-  { conditionCode: "ALLERGY_LATEX", serviceSlug: null, level: "WARN", message: "Customer is allergic to latex - use nitrile gloves." },
-  { conditionCode: "ALLERGY_FRAGRANCE", serviceSlug: null, level: "INFO", message: "Customer is sensitive to fragrance - use unscented products where possible." },
+  { conditionCode: "ALLERGY_LATEX", serviceSlug: null, level: "WARN", message: "Customer is allergic to latex — use nitrile gloves." },
+  { conditionCode: "ALLERGY_FRAGRANCE", serviceSlug: null, level: "INFO", message: "Customer is sensitive to fragrance — use unscented products where possible." },
 
   // Reproductive
-  { conditionCode: "REPRO_PREGNANT", serviceSlug: null, level: "WARN", message: "Customer is pregnant - avoid chemical relaxers, strong dyes, and certain essential oils." },
+  { conditionCode: "REPRO_PREGNANT", serviceSlug: null, level: "WARN", message: "Customer is pregnant — avoid chemical relaxers, strong dyes, and certain essential oils." },
 
   // Skin
-  { conditionCode: "SKIN_RECENT_PEEL", serviceSlug: null, level: "WARN", message: "Customer has had a recent chemical peel or laser - skin barrier is compromised. Be gentle, avoid exfoliation." },
-  { conditionCode: "SKIN_ECZEMA", serviceSlug: null, level: "INFO", message: "Customer has eczema - avoid harsh products; ask before applying anything new." },
+  { conditionCode: "SKIN_RECENT_PEEL", serviceSlug: null, level: "WARN", message: "Customer has had a recent chemical peel or laser — skin barrier is compromised. Be gentle, avoid exfoliation." },
+  { conditionCode: "SKIN_ECZEMA", serviceSlug: null, level: "INFO", message: "Customer has eczema — avoid harsh products; ask before applying anything new." },
 
   // Diabetes / blood thinners around nails
-  { conditionCode: "CHRONIC_DIABETES", serviceSlug: null, level: "WARN", message: "Customer has diabetes - do not cut cuticles, do not push aggressively, no foot pressure if any sensation loss." },
-  { conditionCode: "CHRONIC_BLOOD_THINNERS", serviceSlug: null, level: "WARN", message: "Customer is on blood thinners - even minor cuts will bleed longer than usual." },
+  { conditionCode: "CHRONIC_DIABETES", serviceSlug: null, level: "WARN", message: "Customer has diabetes — do not cut cuticles, do not push aggressively, no foot pressure if any sensation loss." },
+  { conditionCode: "CHRONIC_BLOOD_THINNERS", serviceSlug: null, level: "WARN", message: "Customer is on blood thinners — even minor cuts will bleed longer than usual." },
 
-  // Mobility - plantar fasciitis on pedicure-adjacent
-  { conditionCode: "MOBILITY_PLANTAR_FASCIITIS", serviceSlug: null, level: "WARN", message: "Customer has plantar fasciitis - avoid sustained foot pressure or stretching during pedicure." },
-  { conditionCode: "MOBILITY_RECENT_SURGERY", serviceSlug: null, level: "INFO", message: "Customer had recent surgery - confirm the recovery area before starting." },
+  // Mobility — plantar fasciitis on pedicure-adjacent
+  { conditionCode: "MOBILITY_PLANTAR_FASCIITIS", serviceSlug: null, level: "WARN", message: "Customer has plantar fasciitis — avoid sustained foot pressure or stretching during pedicure." },
+  { conditionCode: "MOBILITY_RECENT_SURGERY", serviceSlug: null, level: "INFO", message: "Customer had recent surgery — confirm the recovery area before starting." },
 
   // Accutane → no waxing
-  { conditionCode: "MED_ACCUTANE", serviceSlug: null, level: "BLOCK", message: "Customer is on accutane - waxing is unsafe; skin will tear. Refuse and suggest an alternative." },
+  { conditionCode: "MED_ACCUTANE", serviceSlug: null, level: "BLOCK", message: "Customer is on accutane — waxing is unsafe; skin will tear. Refuse and suggest an alternative." },
 
   // Chemo
-  { conditionCode: "MED_CHEMO", serviceSlug: null, level: "WARN", message: "Customer is on chemotherapy - hair and skin are fragile. Be extra gentle." },
+  { conditionCode: "MED_CHEMO", serviceSlug: null, level: "WARN", message: "Customer is on chemotherapy — hair and skin are fragile. Be extra gentle." },
 ];
 
 // ─── LOOKUPS & ACCESS ────────────────────────────────────────────────────────

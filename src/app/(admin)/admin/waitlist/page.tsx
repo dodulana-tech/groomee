@@ -60,7 +60,7 @@ export default async function AdminWaitlistPage() {
         <ExportCsvButton entries={serialised} />
       </div>
 
-      {/* Summary stats - two rows */}
+      {/* Summary stats — two rows */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 col-span-2 sm:col-span-1 lg:col-span-1">
           <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total</p>
@@ -145,13 +145,13 @@ export default async function AdminWaitlistPage() {
                       {format(new Date(e.createdAt), "dd MMM yyyy, HH:mm")}
                     </td>
                     <td className="py-3 px-3 text-gray-800 font-medium">
-                      {e.name ?? <span className="text-gray-300">-</span>}
+                      {e.name ?? <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-3 text-gray-700 whitespace-nowrap">
-                      {e.phone ?? <span className="text-gray-300">-</span>}
+                      {e.phone ?? <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-3 text-gray-700">
-                      {e.email ?? <span className="text-gray-300">-</span>}
+                      {e.email ?? <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-3 whitespace-nowrap">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
@@ -159,7 +159,7 @@ export default async function AdminWaitlistPage() {
                       </span>
                     </td>
                     <td className="py-3 px-3 text-gray-600 text-xs">
-                      {e.area ?? <span className="text-gray-300">-</span>}
+                      {e.area ?? <span className="text-gray-300">—</span>}
                     </td>
                     <td className="py-3 px-3 whitespace-nowrap">
                       <span

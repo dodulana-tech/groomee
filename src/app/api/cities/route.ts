@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPublicCities } from "@/lib/cities";
 
-// GET /api/cities - public list of LIVE + WAITLIST cities. HIDDEN never
+// GET /api/cities — public list of LIVE + WAITLIST cities. HIDDEN never
 // appears here. Drives the landing-page nav + city selector + jsonLd.
 export async function GET() {
   try {

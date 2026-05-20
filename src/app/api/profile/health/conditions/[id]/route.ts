@@ -113,7 +113,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/profile/health/conditions/[id] - hard delete.
+// DELETE /api/profile/health/conditions/[id] — hard delete.
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

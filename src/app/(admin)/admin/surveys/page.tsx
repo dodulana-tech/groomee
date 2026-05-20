@@ -118,10 +118,10 @@ export default async function AdminSurveysPage() {
                         </span>
                       </td>
                       <td className="py-3 px-3 text-gray-700">
-                        {r.phone ?? <span className="text-gray-300">-</span>}
+                        {r.phone ?? <span className="text-gray-300">—</span>}
                       </td>
                       <td className="py-3 px-3 text-gray-700">
-                        {r.email ?? <span className="text-gray-300">-</span>}
+                        {r.email ?? <span className="text-gray-300">—</span>}
                       </td>
                       <td className="py-3 px-3">
                         <div className="space-y-0.5">
@@ -138,7 +138,7 @@ export default async function AdminSurveysPage() {
                             </div>
                           ))}
                           {Object.keys(answers).length === 0 && (
-                            <span className="text-gray-300 text-xs">-</span>
+                            <span className="text-gray-300 text-xs">—</span>
                           )}
                         </div>
                       </td>

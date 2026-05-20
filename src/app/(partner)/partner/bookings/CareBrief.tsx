@@ -28,7 +28,7 @@ interface BriefResponse {
     visibility?: "ALWAYS_SHARE" | "ASK_PER_BOOKING" | "PRIVATE";
     notes?: string | null;
     conditions: BriefCondition[];
-    // only present on live (non-frozen) briefs - once acknowledged, the
+    // only present on live (non-frozen) briefs — once acknowledged, the
     // ack snapshot freezes only conditions, not rules
     contraindications?: BriefRule[];
   };
@@ -156,7 +156,7 @@ export default function CareBrief({ bookingId, isAccepted }: Props) {
 
           {brief && (
             <>
-              {/* Actionable rules - only meaningful on live (non-frozen) briefs */}
+              {/* Actionable rules — only meaningful on live (non-frozen) briefs */}
               {rules.length > 0 &&
                 rules.map((r, i) => {
                   const s = LEVEL_STYLE[r.level];
@@ -251,7 +251,7 @@ export default function CareBrief({ bookingId, isAccepted }: Props) {
                 >
                   {ackLoading
                     ? "Acknowledging…"
-                    : "✓ I've read this - acknowledge"}
+                    : "✓ I've read this — acknowledge"}
                 </button>
               )}
               {acknowledged && brief.acknowledgedAt && (

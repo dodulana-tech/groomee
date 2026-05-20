@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, bio, services, zones, bankName, bankAccount } = body;
 
-    // Use the authenticated user's phone - never trust the request body
+    // Use the authenticated user's phone — never trust the request body
     const sessionUser = await db.user.findUnique({
       where: { id: session.userId },
       select: { phone: true, email: true },
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     // The signUserToken function auto-detects approved Pro records and upgrades the role.
 
     // Update the user email if provided AND it's different from what's set.
-    // Surface a warning instead of silently swallowing - duplicates have
+    // Surface a warning instead of silently swallowing — duplicates have
     // historically masked real problems.
     let emailWarning: string | null = null;
     if (email && email !== sessionUser.email) {
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       });
       if (taken) {
         emailWarning =
-          "We kept your existing email - the one you entered is already linked to another account.";
+          "We kept your existing email — the one you entered is already linked to another account.";
       } else {
         try {
           await db.user.update({
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
           });
         } catch (err) {
           console.error("partner onboarding: email update failed", err);
-          emailWarning = "We couldn't update your email - please change it later from your profile.";
+          emailWarning = "We couldn't update your email — please change it later from your profile.";
         }
       }
     }

@@ -59,7 +59,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: "This booking is already with you - nothing to rescind.",
+          error: "This booking is already with you — nothing to rescind.",
         },
         { status: 422 },
       );
@@ -85,12 +85,12 @@ export async function POST(
       );
     }
 
-    // Status must still be ACCEPTED - once they're EN_ROUTE+ it's too late.
+    // Status must still be ACCEPTED — once they're EN_ROUTE+ it's too late.
     if (booking.status !== "ACCEPTED") {
       return NextResponse.json(
         {
           success: false,
-          error: `Too late to rescind - ${dependent.name} is already ${booking.status.toLowerCase().replace(/_/g, " ")}.`,
+          error: `Too late to rescind — ${dependent.name} is already ${booking.status.toLowerCase().replace(/_/g, " ")}.`,
         },
         { status: 422 },
       );
@@ -113,7 +113,7 @@ export async function POST(
         where: { id: booking.id },
         data: {
           proId: master.id,
-          // Clear the delegation snapshot - the booking is back with the
+          // Clear the delegation snapshot — the booking is back with the
           // master and earnings should not split.
           delegatedApprenticeshipId: null,
         },

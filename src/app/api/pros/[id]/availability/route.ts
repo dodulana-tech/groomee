@@ -8,7 +8,7 @@ import { getAvailableSlots, getWorkingWindow } from "@/lib/scheduling";
 //   - existing bookings (with travel buffers from the customer's zone)
 //   - MIN_BOOKING_LEAD_MINUTES setting (minimum lead time before now)
 //
-// Multiple services are summed into a single block - pass them as repeated
+// Multiple services are summed into a single block — pass them as repeated
 // `serviceId` params (?serviceId=a&serviceId=b) so a 1h+45m+3h chain becomes
 // a 4h45m duration on the calendar.
 export async function GET(

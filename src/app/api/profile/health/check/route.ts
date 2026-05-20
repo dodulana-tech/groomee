@@ -3,7 +3,7 @@
  *
  * Live preview of contraindications between the signed-in customer's health
  * profile and a candidate list of services. Used by BookingPanel to surface
- * BLOCK / WARN / INFO notices BEFORE the customer attempts to book - better
+ * BLOCK / WARN / INFO notices BEFORE the customer attempts to book — better
  * UX than failing on submit.
  *
  * This is a pure read: it does NOT write an access log (that happens at

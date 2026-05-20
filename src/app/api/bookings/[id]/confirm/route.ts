@@ -113,7 +113,7 @@ export async function POST(
     });
 
     if (!confirmed) {
-      return NextResponse.json({ success: true }); // Idempotent - already confirmed
+      return NextResponse.json({ success: true }); // Idempotent — already confirmed
     }
 
     // Award points for booking confirmation
@@ -131,7 +131,7 @@ export async function POST(
       }),
     ).catch(() => {});
 
-    // Check for unpaid referral - award referrer on first confirmed booking
+    // Check for unpaid referral — award referrer on first confirmed booking
     const referral = await db.referral.findFirst({
       where: { referredUserId: session.userId, bonusPaid: false },
     });

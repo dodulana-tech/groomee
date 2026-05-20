@@ -5,7 +5,7 @@ import { getSessionFromRequestEdge } from "@/lib/auth-edge";
 const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [
-  "/pro/",      // /pro/[slug] pages - NOT /profile
+  "/pro/",      // /pro/[slug] pages — NOT /profile
   "/groomer/",  // legacy redirect to /pro/[slug]
   "/api/auth",
   "/api/health",

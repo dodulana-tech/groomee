@@ -46,7 +46,7 @@ function AuthPageContent() {
           ? `We just sent a code to ${phone}`
           : `We just sent a code to ${email}`;
       case "link-phone":
-        return "One more thing - we need your number for booking updates and WhatsApp notifications";
+        return "One more thing — we need your number for booking updates and WhatsApp notifications";
       case "name":
         return "Almost done! What should we call you?";
       default:
@@ -213,7 +213,7 @@ function AuthPageContent() {
         return;
       }
       // If the API merged this email onto the existing phone-linked account,
-      // there is no fresh signup - drop the user back into their account.
+      // there is no fresh signup — drop the user back into their account.
       if (data.data?.merged) {
         router.push(redirect);
         router.refresh();

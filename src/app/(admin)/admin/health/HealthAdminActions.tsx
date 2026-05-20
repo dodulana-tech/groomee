@@ -34,7 +34,7 @@ const LEVELS: Array<"INFO" | "WARN" | "BLOCK"> = ["INFO", "WARN", "BLOCK"];
 const LEVEL_HINT: Record<string, string> = {
   INFO: "Heads-up only. Pro sees a note.",
   WARN: "Pro must acknowledge before starting.",
-  BLOCK: "Booking is refused - pro should not proceed.",
+  BLOCK: "Booking is refused — pro should not proceed.",
 };
 
 export default function HealthAdminActions({
@@ -203,7 +203,7 @@ export default function HealthAdminActions({
 
         {editOpen && (
           <Modal
-            title={`Edit rule - ${editRule.conditionLabel}`}
+            title={`Edit rule — ${editRule.conditionLabel}`}
             subtitle={
               editRule.serviceName
                 ? `Service: ${editRule.serviceName}`
@@ -269,7 +269,7 @@ export default function HealthAdminActions({
   if (!canManage) {
     return (
       <div className="text-xs text-gray-400 italic">
-        Read-only - needs <code>health.manage</code> to edit.
+        Read-only — needs <code>health.manage</code> to edit.
       </div>
     );
   }
@@ -318,7 +318,7 @@ export default function HealthAdminActions({
               <option value="">Any service (catalog-wide)</option>
               {services.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} - {s.category}
+                  {s.name} — {s.category}
                 </option>
               ))}
             </select>

@@ -10,7 +10,7 @@ export default async function autoConfirm(bookingId: string) {
   });
 
   if (!booking || booking.status !== "COMPLETED") return;
-  if (!booking.proId) return; // No pro assigned - can't confirm
+  if (!booking.proId) return; // No pro assigned — can't confirm
 
   // Compute apprenticeship split BEFORE the transaction (does its own reads).
   const split = await computeEarningsSplit(booking.proId, booking.proEarning);
@@ -49,7 +49,7 @@ export default async function autoConfirm(bookingId: string) {
           type: "SERVICE",
         },
       });
-      // Master's commission row - race-safe via the same compound unique.
+      // Master's commission row — race-safe via the same compound unique.
       await tx.earning.upsert({
         where: {
           bookingId_proId_type: {

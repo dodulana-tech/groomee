@@ -16,7 +16,7 @@ export const revalidate = 300;
 async function getHomeData() {
   // Apprenticeship gating (Slice 5): apprentices who haven't earned
   // independence don't appear in the top-pros section. Same filter as
-  // /api/pros - see comment there.
+  // /api/pros — see comment there.
   const independenceGate: Prisma.ProWhereInput = {
     OR: [
       { relationship: { not: "APPRENTICE" } },

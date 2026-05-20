@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-// GET /api/admin/roles - list all roles
+// GET /api/admin/roles — list all roles
 export async function GET() {
   try {
     const session = await getSession();
@@ -22,7 +22,7 @@ export async function GET() {
   }
 }
 
-// POST /api/admin/roles - create a new role
+// POST /api/admin/roles — create a new role
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();

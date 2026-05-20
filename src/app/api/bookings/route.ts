@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     // Back-compat: existing helpers still expect a single `service` reference.
     const service = primary;
 
-    // City gate - bookings only land for zones whose city is LIVE. Refusal
+    // City gate — bookings only land for zones whose city is LIVE. Refusal
     // here keeps WAITLIST cities clean (no orphan paid bookings to refund).
     if (input.zoneId) {
       try {
@@ -340,7 +340,7 @@ export async function POST(req: NextRequest) {
       return bk;
     });
 
-    // Initialize Paystack payment (network call - outside transaction)
+    // Initialize Paystack payment (network call — outside transaction)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const paystack = await initializeTransaction({
       email: paystackEmailFor(user),

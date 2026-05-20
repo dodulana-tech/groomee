@@ -84,7 +84,7 @@ function VisibilityControl({ initial }: { initial: Visibility }) {
     {
       value: "ALWAYS_SHARE",
       label: "Always share",
-      sub: "Recommended - pros always see it.",
+      sub: "Recommended — pros always see it.",
     },
     {
       value: "ASK_PER_BOOKING",

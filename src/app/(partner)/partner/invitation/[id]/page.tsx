@@ -207,7 +207,7 @@ export default async function ApprenticeInvitationPage({
                 Graduate to Freedom
               </p>
               <p className="text-xs text-gray-500">
-                Once you&apos;ve completed the full curriculum, hit the milestone thresholds, and your master signs off, you graduate with a verified Freedom certificate - fully independent.
+                Once you&apos;ve completed the full curriculum, hit the milestone thresholds, and your master signs off, you graduate with a verified Freedom certificate — fully independent.
               </p>
             </div>
           </div>
@@ -236,7 +236,7 @@ export default async function ApprenticeInvitationPage({
           Your curriculum ({apprenticeship.modules.length} modules)
         </h2>
         <p className="text-xs text-gray-500 mb-4">
-          Defaults from Groomee - your master can adjust these anytime to fit your specialty.
+          Defaults from Groomee — your master can adjust these anytime to fit your specialty.
         </p>
         <div className="space-y-3">
           {gatingModules.length > 0 && (

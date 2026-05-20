@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { CITY_PERMISSIONS } from "@/lib/cities";
 import { logAdminAction } from "@/lib/admin-audit";
 
-// GET /api/admin/cities - list ALL cities for the admin (incl. HIDDEN).
+// GET /api/admin/cities — list ALL cities for the admin (incl. HIDDEN).
 export async function GET() {
   const session = await getSession();
   if (!hasPermission(session, CITY_PERMISSIONS.view)) {
@@ -50,7 +50,7 @@ const createSchema = z
   })
   .strict();
 
-// POST /api/admin/cities - create a new city (defaults to WAITLIST).
+// POST /api/admin/cities — create a new city (defaults to WAITLIST).
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!hasPermission(session, CITY_PERMISSIONS.manage)) {

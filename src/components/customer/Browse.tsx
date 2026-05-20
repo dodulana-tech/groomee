@@ -75,7 +75,7 @@ export default function Browse({ services, pros }: Props) {
             <span className="text-brand-600">at your doorstep</span>
           </h2>
           <p className="mt-4 max-w-lg text-base text-gray-500">
-            Vetted pros across every service - pick a category to narrow the list.
+            Vetted pros across every service — pick a category to narrow the list.
           </p>
         </div>
 

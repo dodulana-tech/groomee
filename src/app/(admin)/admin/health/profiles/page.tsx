@@ -30,7 +30,7 @@ export default async function AdminHealthProfilesPage() {
           Customer health profiles
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Customers with at least one active condition. Profiles are PHI - only
+          Customers with at least one active condition. Profiles are PHI — only
           open one when you have a care-related reason. Every open is logged.
         </p>
       </div>

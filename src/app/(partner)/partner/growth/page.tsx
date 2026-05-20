@@ -86,7 +86,7 @@ export default async function PartnerGrowthPage() {
           <div className="ml-auto text-right">
             <p className="text-xs text-gray-500">{totalJobs} jobs completed</p>
             <p className="text-xs text-gray-500">
-              {avgRating > 0 ? avgRating.toFixed(1) : "-"} avg rating
+              {avgRating > 0 ? avgRating.toFixed(1) : "—"} avg rating
             </p>
             <p className="text-xs text-gray-500">
               {Math.round(acceptanceRate * 100)}% acceptance

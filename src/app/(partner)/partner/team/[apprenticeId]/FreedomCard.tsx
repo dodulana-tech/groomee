@@ -10,7 +10,7 @@ interface Props {
 }
 
 /**
- * Master-only Freedom card - shown on the apprentice detail page when the
+ * Master-only Freedom card — shown on the apprentice detail page when the
  * apprenticeship status is READY_FOR_FREEDOM. Confirming POSTs to
  * /api/partner/apprentices/[id]/freedom which generates the permanent cert,
  * flips the apprentice to INDEPENDENT, ends master commission, and fires
@@ -85,7 +85,7 @@ export default function FreedomCard({
               </h2>
               <p className="mt-2 text-sm text-white/80 max-w-prose leading-relaxed">
                 Curriculum complete. Jobs and ratings cleared. When you confirm,
-                a permanent Certificate of Freedom is issued in your name -
+                a permanent Certificate of Freedom is issued in your name —
                 "Freed under {masterName}". This is the moment that turns your
                 apprentice into a fully independent pro.
               </p>
@@ -140,7 +140,7 @@ export default function FreedomCard({
                   Your master commission ends on every future booking they take.
                 </li>
                 <li>
-                  Lineage stays forever - their cert reads "Freed under{" "}
+                  Lineage stays forever — their cert reads "Freed under{" "}
                   {masterName}". You keep the bragging rights.
                 </li>
                 <li>

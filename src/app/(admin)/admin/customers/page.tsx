@@ -134,7 +134,7 @@ export default async function AdminCustomersPage({ searchParams }: Props) {
                       <p className="text-xs text-gray-400">{c.email ?? ""}</p>
                     </td>
                     <td className="px-4 py-3 text-gray-600 font-mono text-xs">
-                      {c.phone ?? <span className="text-gray-300">-</span>}
+                      {c.phone ?? <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3 font-semibold text-gray-800">{c._count.bookings}</td>
                     <td className="px-4 py-3 font-bold text-gray-900">

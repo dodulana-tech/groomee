@@ -71,7 +71,7 @@ export async function POST(
     const freedUnderProId =
       apprentice?.parentProId ?? apprenticeship.masterId;
 
-    // Atomic freedom grant - helper retries on cert code unique collision.
+    // Atomic freedom grant — helper retries on cert code unique collision.
     const { certCode } = await withFreedomCertCode(async (code, tx) => {
       await tx.apprenticeship.update({
         where: { id },

@@ -6,7 +6,7 @@
  * admin_roles row.
  *
  * Why we don't reuse the full seed on deploy:
- *   - seed.ts also creates zones, services, demo pros, etc. - we want NONE
+ *   - seed.ts also creates zones, services, demo pros, etc. — we want NONE
  *     of that running against production.
  *   - Permission changes are additive and safe to re-apply.
  *
@@ -27,7 +27,7 @@ async function main() {
     });
     if (existing) {
       // Additive-only: union the seeded perms with whatever's already in
-      // the DB. We never strip - a permission an op may have been granted
+      // the DB. We never strip — a permission an op may have been granted
       // out-of-band (e.g. via /admin/team) shouldn't disappear on deploy.
       // Use the seeded `permissions.ts` as a floor, not a ceiling.
       const before = existing.permissions ?? [];
@@ -52,7 +52,7 @@ async function main() {
     }
   }
   console.log(
-    `✅ Done - ${synced} role(s) updated, ${created} created, ${
+    `✅ Done — ${synced} role(s) updated, ${created} created, ${
       DEFAULT_ROLES.length - synced - created
     } already in sync.`,
   );

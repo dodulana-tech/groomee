@@ -2,10 +2,10 @@
  * City lifecycle helpers.
  *
  * Cities drive the landing page (which CTAs render, which waitlists appear)
- * AND gate booking acceptance - non-LIVE cities cannot accept new bookings.
+ * AND gate booking acceptance — non-LIVE cities cannot accept new bookings.
  *
  * The CityStatus enum has three states (HIDDEN / WAITLIST / LIVE) chosen
- * deliberately small. A SOFT_LAUNCH state can be added later - adding states
+ * deliberately small. A SOFT_LAUNCH state can be added later — adding states
  * is cheap; introducing one prematurely litters the codebase with branches
  * that mean nothing yet.
  */
@@ -20,7 +20,7 @@ export const CITY_PERMISSIONS = {
 } as const;
 
 /**
- * All cities, sorted by sortOrder then name. Includes HIDDEN - callers that
+ * All cities, sorted by sortOrder then name. Includes HIDDEN — callers that
  * only want what's visible to customers should use `getPublicCities`.
  */
 export async function getAllCities(): Promise<City[]> {
@@ -30,7 +30,7 @@ export async function getAllCities(): Promise<City[]> {
 }
 
 /**
- * Cities the landing page should know about - LIVE and WAITLIST only.
+ * Cities the landing page should know about — LIVE and WAITLIST only.
  * HIDDEN cities never appear in public listings.
  */
 export async function getPublicCities(): Promise<City[]> {
@@ -50,7 +50,7 @@ export async function getLiveCities(): Promise<City[]> {
 
 /**
  * Look up the city that owns a given zone. Returns null when the zone has
- * no cityId backfilled (legacy rows) - callers should treat null as
+ * no cityId backfilled (legacy rows) — callers should treat null as
  * "unknown, do not accept bookings" if they care about gating.
  */
 export async function getCityForZone(zoneId: string): Promise<City | null> {

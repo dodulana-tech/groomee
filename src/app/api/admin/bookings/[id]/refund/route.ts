@@ -70,7 +70,7 @@ export async function POST(
       );
     }
 
-    // Trigger the Paystack refund first - if it fails we don't want a
+    // Trigger the Paystack refund first — if it fails we don't want a
     // refunded record in our DB without a real refund attached.
     let paystackOk = true;
     let paystackError: string | null = null;
@@ -118,7 +118,7 @@ export async function POST(
           entityType: "booking",
           entityId: id,
           authorId: session!.userId,
-          content: `Refund: ₦${amount.toLocaleString()} - ${reason.trim()}`,
+          content: `Refund: ₦${amount.toLocaleString()} — ${reason.trim()}`,
         },
       });
       await reverseEarningsForBooking(id, refundFraction, tx);

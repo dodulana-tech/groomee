@@ -102,7 +102,7 @@ export async function PATCH(
       metadata: { proId, proName: pro.name, previousStatus: booking.status },
     });
 
-    // Fire-and-forget care-notes email - same gate as dispatch path.
+    // Fire-and-forget care-notes email — same gate as dispatch path.
     import("@/lib/health-notify")
       .then(({ notifyProCareNotes }) => notifyProCareNotes(id))
       .catch(() => {});

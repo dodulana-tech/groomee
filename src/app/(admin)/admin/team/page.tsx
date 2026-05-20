@@ -678,7 +678,7 @@ function InviteModal({
 
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1">
-            Email <span className="font-normal text-gray-400">(optional - for invite & email login)</span>
+            Email <span className="font-normal text-gray-400">(optional — for invite & email login)</span>
           </label>
           <input
             type="email"

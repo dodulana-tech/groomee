@@ -104,7 +104,7 @@ async function main() {
       console.log(`  ${tag} ${String(res.status).padEnd(3)}  ${ms.toString().padStart(4)}ms  ${label.padEnd(8)}  ${path}${flag}`);
       if (!ok) failures++;
     } catch (err: any) {
-      console.log(`  ✗ ERR        ${label.padEnd(8)}  ${path} - ${err.message}`);
+      console.log(`  ✗ ERR        ${label.padEnd(8)}  ${path} — ${err.message}`);
       failures++;
     }
   }
@@ -115,7 +115,7 @@ async function main() {
   console.log("\nGET APIs:");
   for (const p of GET_APIS) await hit(p, "api");
 
-  console.log(`\n${failures === 0 ? "✓ All routes responded 2xx/3xx." : `✗ ${failures} failure(s) - see above.`}`);
+  console.log(`\n${failures === 0 ? "✓ All routes responded 2xx/3xx." : `✗ ${failures} failure(s) — see above.`}`);
 
   await db.$disconnect();
   process.exit(failures === 0 ? 0 : 1);

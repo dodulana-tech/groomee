@@ -10,7 +10,7 @@ export interface CalendarBlock {
   end: string | null; // ISO
   durationMins: number;
   service: string;
-  // All chained service names - primary first, then BookingItem rows.
+  // All chained service names — primary first, then BookingItem rows.
   services?: string[];
   customer: string;
   zone: string | null;
@@ -19,7 +19,7 @@ export interface CalendarBlock {
 }
 
 interface Props {
-  /** Anchor day in WAT - used to derive the grid's calendar day. */
+  /** Anchor day in WAT — used to derive the grid's calendar day. */
   date: Date;
   /** Working hours window (from ProSchedule) in UTC instants. */
   workingWindow: { start: string; end: string } | null;

@@ -50,7 +50,7 @@ export default function BookingPage() {
   }, [booking?.status, booking?.review]);
 
   // Re-derive contraindications for this booking's services once the booking
-  // loads. We don't persist these on the booking row (intentional - slice
+  // loads. We don't persist these on the booking row (intentional — slice
   // scope) so we re-run the check each visit. Cheap: handful of indexed reads.
   useEffect(() => {
     if (!booking) return;
@@ -136,7 +136,7 @@ export default function BookingPage() {
       </div>
 
       <div className="px-4 space-y-3">
-        {/* Health contraindication notice - what the pro will be briefed on
+        {/* Health contraindication notice — what the pro will be briefed on
             for this booking. Derived from the customer's current profile
             against the booking's services. */}
         {healthHits.length > 0 && (

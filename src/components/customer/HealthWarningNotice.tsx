@@ -12,7 +12,7 @@ interface Props {
   /**
    * Optional tighter wording for context. e.g. on the success screen we say
    * "your pro will be briefed on the following…", on the booking panel we
-   * say "heads up - this affects your booking".
+   * say "heads up — this affects your booking".
    */
   context?: "preview" | "post-booking";
   className?: string;

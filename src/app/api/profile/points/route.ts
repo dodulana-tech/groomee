@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-// GET /api/profile/points - return balance + last 20 ledger entries
+// GET /api/profile/points — return balance + last 20 ledger entries
 export async function GET() {
   try {
     const session = await getSession();

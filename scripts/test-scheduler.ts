@@ -4,8 +4,8 @@
  * Creates an Abuja pro (Kemi), gives her a working schedule, gives her
  * Jabi as a service zone, then:
  *   1. Creates a confirmed Jabi booking that spans 10:00–14:45 (4h45m)
- *   2. Tries to schedule a Gudu booking at 14:50 - expects rejection
- *   3. Tries to schedule a Gudu booking at 15:30 - expects success
+ *   2. Tries to schedule a Gudu booking at 14:50 — expects rejection
+ *   3. Tries to schedule a Gudu booking at 15:30 — expects success
  *   4. Pulls /api/admin/pros/:id/calendar feed for the day
  *   5. Pulls /api/pros/:id/availability for tomorrow to verify slots
  *
@@ -32,7 +32,7 @@ async function main() {
     db.zone.findUnique({ where: { slug: "gudu" } }),
     db.zone.findUnique({ where: { slug: "wuse" } }),
   ]);
-  if (!jabi || !gudu || !wuse) throw new Error("Abuja zones missing - run prisma seed.");
+  if (!jabi || !gudu || !wuse) throw new Error("Abuja zones missing — run prisma seed.");
 
   // Sanity: travel matrix populated?
   const j2g = await travelMinsBetween(jabi.id, gudu.id);
@@ -90,7 +90,7 @@ async function main() {
     create: { proId: pro.id, zoneId: gudu.id },
   });
 
-  // Test services - three discrete services matching the client's quote:
+  // Test services — three discrete services matching the client's quote:
   //   loosen (1h), wash (45min), reloc (3h). The booking chains them via
   //   BookingItem so the total durationMins = 285.
   const loosen = await db.service.upsert({
@@ -224,7 +224,7 @@ async function main() {
   const w = bookingWindow({ scheduledFor: jabiBooking.scheduledFor, durationMins: jabiBooking.durationMins });
   console.log(`   Existing booking: ${jabiBooking.reference} ${w?.start.toISOString()} – ${w?.end.toISOString()} (Jabi)`);
 
-  // 5. Conflict probe - 14:50 in Gudu (5 min after Jabi ends). Should fail.
+  // 5. Conflict probe — 14:50 in Gudu (5 min after Jabi ends). Should fail.
   const probe1Start = new Date(end_1445.getTime() + 5 * 60_000);
   const probe1End = new Date(probe1Start.getTime() + 60 * 60_000);
   const hit1 = await findConflict({
@@ -234,9 +234,9 @@ async function main() {
     zoneId: gudu.id,
   });
   console.log(`\n   Probe @ ${probe1Start.toISOString()} Gudu:`);
-  console.log(`   → ${hit1.conflict ? `❌ REJECTED · ${hit1.reason}` : "✅ accepted (BUG - should be rejected)"}`);
+  console.log(`   → ${hit1.conflict ? `❌ REJECTED · ${hit1.reason}` : "✅ accepted (BUG — should be rejected)"}`);
 
-  // 6. Conflict probe - 15:30 in Gudu (45 min after Jabi ends, > 25 min travel). Should pass.
+  // 6. Conflict probe — 15:30 in Gudu (45 min after Jabi ends, > 25 min travel). Should pass.
   const probe2Start = new Date(`${ymd}T15:30:00+01:00`);
   const probe2End = new Date(probe2Start.getTime() + 60 * 60_000);
   const hit2 = await findConflict({
@@ -246,7 +246,7 @@ async function main() {
     zoneId: gudu.id,
   });
   console.log(`\n   Probe @ ${probe2Start.toISOString()} Gudu:`);
-  console.log(`   → ${hit2.conflict ? `❌ rejected · ${hit2.reason} (BUG - should be accepted)` : "✅ ACCEPTED"}`);
+  console.log(`   → ${hit2.conflict ? `❌ rejected · ${hit2.reason} (BUG — should be accepted)` : "✅ ACCEPTED"}`);
 
   // 7. Working window
   const win = await getWorkingWindow(pro.id, tomorrow);

@@ -64,7 +64,7 @@ export default async function AdvancesPage({ searchParams }: Props) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Pro Advances</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Early payout requests from pros - repaid via deductions on weekly payouts.
+          Early payout requests from pros — repaid via deductions on weekly payouts.
         </p>
       </div>
 

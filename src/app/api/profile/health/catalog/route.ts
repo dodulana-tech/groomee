@@ -24,7 +24,7 @@ const CATEGORY_ORDER: HealthCategoryKey[] = [
   "OTHER",
 ];
 
-// GET /api/profile/health/catalog - controlled vocab for the picker modal.
+// GET /api/profile/health/catalog — controlled vocab for the picker modal.
 // Auth required (signed-in user) but does not need to own a profile yet.
 export async function GET() {
   const session = await getSession();

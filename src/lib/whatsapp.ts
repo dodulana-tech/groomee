@@ -153,7 +153,7 @@ export async function notifyMasterInviteAccepted(masterPhone: string, apprentice
 export async function notifyMasterInviteDeclined(masterPhone: string, apprenticeName: string) {
   return sendMessage(
     masterPhone,
-    `Your apprenticeship invitation to *${apprenticeName}* was declined.\n\nNo stress - you can invite someone else any time from your partner portal.`,
+    `Your apprenticeship invitation to *${apprenticeName}* was declined.\n\nNo stress — you can invite someone else any time from your partner portal.`,
   );
 }
 
@@ -170,7 +170,7 @@ export async function notifyApprenticeModuleCompleted(
 ) {
   return sendMessage(
     apprenticePhone,
-    `📘 Your master signed off another module: *${moduleTitle}*.\n\nKeep going - every module brings you closer to independence and Freedom. Track progress in your portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner`,
+    `📘 Your master signed off another module: *${moduleTitle}*.\n\nKeep going — every module brings you closer to independence and Freedom. Track progress in your portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner`,
   );
 }
 
@@ -190,7 +190,7 @@ export async function notifyMasterApprenticeReadyForFreedom(
 ) {
   return sendMessage(
     masterPhone,
-    `🎓 *${apprenticeName}* has met every Freedom requirement - curriculum complete, jobs and ratings on track.\n\nWhen you're ready, bestow Freedom from your partner portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
+    `🎓 *${apprenticeName}* has met every Freedom requirement — curriculum complete, jobs and ratings on track.\n\nWhen you're ready, bestow Freedom from your partner portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
   );
 }
 
@@ -204,7 +204,7 @@ export async function notifyMasterFreedomComplete(
 ) {
   return sendMessage(
     masterPhone,
-    `🎓 Freedom complete - *${apprenticeName}* is now an independent pro on Groomee.\n\nYou trained them up. The lineage stays with you forever - their cert reads "Freed under you".\n\nCert: *${certCode}*\nView: ${certUrl}\n\nFrom today, no more master commission on their bookings. But the bond - and the bragging rights - are permanent. 💚`,
+    `🎓 Freedom complete — *${apprenticeName}* is now an independent pro on Groomee.\n\nYou trained them up. The lineage stays with you forever — their cert reads "Freed under you".\n\nCert: *${certCode}*\nView: ${certUrl}\n\nFrom today, no more master commission on their bookings. But the bond — and the bragging rights — are permanent. 💚`,
   );
 }
 
@@ -216,7 +216,7 @@ export async function notifyApprenticeFreedomGranted(
 ) {
   return sendMessage(
     apprenticePhone,
-    `🎓✨ *FREEDOM!*\n\nYou've done it. *${masterName}* has bestowed your Freedom - you are now a fully independent Groomee pro.\n\nYour Certificate of Freedom is permanent and verifiable:\n🪪 Code: *${certCode}*\n🌐 ${certUrl}\n\nShare it with the world. Print it. Frame it. You earned every line of it.\n\nFrom today: every naira from your bookings is yours alone. Stay sharp. Build your name. We're proud of you. 💚`,
+    `🎓✨ *FREEDOM!*\n\nYou've done it. *${masterName}* has bestowed your Freedom — you are now a fully independent Groomee pro.\n\nYour Certificate of Freedom is permanent and verifiable:\n🪪 Code: *${certCode}*\n🌐 ${certUrl}\n\nShare it with the world. Print it. Frame it. You earned every line of it.\n\nFrom today: every naira from your bookings is yours alone. Stay sharp. Build your name. We're proud of you. 💚`,
   );
 }
 
@@ -239,7 +239,7 @@ export async function notifyApprenticeBookingDeployed({
 }) {
   return sendMessage(
     apprenticePhone,
-    `🎯 *${masterName}* has deployed you on a live booking - same booking, your hands now.\n\n👤 Customer: ${customerName}\n📍 Address: ${address}\n🗺️ Maps: ${mapsLink}\n📞 Contact: ${maskedCustomerPhone}\n\nCommands:\n• Text *OTWAY* when you leave\n• Text *ARRIVED* when you get there\n• Text *DONE* when finished\n• Text *CANCEL* to cancel (penalty applies)\n• Text *HELP* for admin assistance\n\nMake your master proud. 💚`,
+    `🎯 *${masterName}* has deployed you on a live booking — same booking, your hands now.\n\n👤 Customer: ${customerName}\n📍 Address: ${address}\n🗺️ Maps: ${mapsLink}\n📞 Contact: ${maskedCustomerPhone}\n\nCommands:\n• Text *OTWAY* when you leave\n• Text *ARRIVED* when you get there\n• Text *DONE* when finished\n• Text *CANCEL* to cancel (penalty applies)\n• Text *HELP* for admin assistance\n\nMake your master proud. 💚`,
   );
 }
 
@@ -254,7 +254,7 @@ export async function notifyCustomerBookingDeployed({
 }) {
   return sendMessage(
     customerPhone,
-    `📣 Quick update on your booking:\n\n*${masterName}* has sent her trained pro *${apprenticeName}* - same booking, different hands. ${apprenticeName} is fully trained under ${masterName} and your booking is unchanged.\n\nYou'll get the usual notifications when ${apprenticeName} is on the way and when they arrive. 💚`,
+    `📣 Quick update on your booking:\n\n*${masterName}* has sent her trained pro *${apprenticeName}* — same booking, different hands. ${apprenticeName} is fully trained under ${masterName} and your booking is unchanged.\n\nYou'll get the usual notifications when ${apprenticeName} is on the way and when they arrive. 💚`,
   );
 }
 
@@ -267,13 +267,13 @@ export async function notifyApprenticeDeploymentRescinded({
 }) {
   return sendMessage(
     apprenticePhone,
-    `↩️ Heads up - *${masterName}* has rescinded the booking deployment they sent you. The booking is back with them.\n\nYou are now back online and free to receive other jobs. No strike, no penalty.`,
+    `↩️ Heads up — *${masterName}* has rescinded the booking deployment they sent you. The booking is back with them.\n\nYou are now back online and free to receive other jobs. No strike, no penalty.`,
   );
 }
 
 // ─── HEALTH CARE-NOTES PRE-BRIEF ─────────────────────────────────────────────
 //
-// Hint-only message - PHI never appears in WhatsApp logs. The pro must open
+// Hint-only message — PHI never appears in WhatsApp logs. The pro must open
 // the app to read the actual condition list.
 
 export async function notifyProCareNotes({
@@ -288,6 +288,6 @@ export async function notifyProCareNotes({
   const hint = briefHint ? `\n\n${briefHint}` : "";
   return sendMessage(
     phone,
-    `⚠️ The customer for booking ${bookingRef} has care notes - please review in the app before arriving.${hint}`,
+    `⚠️ The customer for booking ${bookingRef} has care notes — please review in the app before arriving.${hint}`,
   );
 }

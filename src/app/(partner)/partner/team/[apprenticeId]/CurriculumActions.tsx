@@ -272,7 +272,7 @@ export default function CurriculumActions({
                 <p className="font-bold text-gray-700">Not yet independent</p>
                 <p className="text-xs text-gray-500 mt-0.5">
                   {allGatingDone
-                    ? "All gating modules are complete - you can grant independence."
+                    ? "All gating modules are complete — you can grant independence."
                     : `Need to sign off ${gatingTotal - gatingComplete} more gating module${gatingTotal - gatingComplete === 1 ? "" : "s"}.`}
                 </p>
               </>

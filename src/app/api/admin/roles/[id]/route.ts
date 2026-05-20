@@ -33,7 +33,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/admin/roles/[id] - update role name, description, or permissions
+// PATCH /api/admin/roles/[id] — update role name, description, or permissions
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

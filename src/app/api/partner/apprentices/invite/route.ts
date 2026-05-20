@@ -15,7 +15,7 @@ const inviteSchema = z.object({
   notes: z.string().max(500).optional().nullable(),
 });
 
-// GET - list this master's pending invitations.
+// GET — list this master's pending invitations.
 export async function GET() {
   try {
     const session = await getSession();
@@ -186,11 +186,11 @@ export async function POST(request: Request) {
       return created;
     });
 
-    // Build accept URL - apprentice clicks this from WhatsApp/email.
+    // Build accept URL — apprentice clicks this from WhatsApp/email.
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
     const acceptUrl = `${appUrl}/partner/invitation/${apprenticeship.id}`;
 
-    // Fire notifications. Don't block on WhatsApp failure - record was created.
+    // Fire notifications. Don't block on WhatsApp failure — record was created.
     notifyApprenticeInvited(phone, master.name, acceptUrl).catch((err) =>
       console.error("[invite] WA send failed:", err),
     );

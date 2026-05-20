@@ -12,12 +12,12 @@ import {
 const BodySchema = z.object({}).strict();
 
 /**
- * POST - pro acknowledges the care brief for a booking.
+ * POST — pro acknowledges the care brief for a booking.
  *
  * Idempotent: upsert keyed on bookingId (the unique constraint on
  * HealthAcknowledgment). A second POST returns the existing row unchanged.
  *
- * The pro recorded on the ack row is THE PRO CURRENTLY HOLDING THE BOOKING -
+ * The pro recorded on the ack row is THE PRO CURRENTLY HOLDING THE BOOKING —
  * for apprentice deployments this is the apprentice, not the master, even
  * though the master may have delegated the booking.
  */
@@ -41,7 +41,7 @@ export async function POST(
       );
     }
 
-    // Validate (empty) body - strict so any junk in the payload is rejected.
+    // Validate (empty) body — strict so any junk in the payload is rejected.
     try {
       const raw = await req.json().catch(() => ({}));
       BodySchema.parse(raw ?? {});
@@ -115,7 +115,7 @@ export async function POST(
     }
     if (profile.visibility === "ASK_PER_BOOKING") {
       // TODO: customer per-booking opt-in is a follow-up slice. Until then,
-      // treat this branch the same as no-share - nothing to acknowledge.
+      // treat this branch the same as no-share — nothing to acknowledge.
       return NextResponse.json(
         { success: false, error: "Profile requires customer consent" },
         { status: 403 },
@@ -123,7 +123,7 @@ export async function POST(
     }
 
     // Build a snapshot that includes the contraindication picture the pro
-    // actually saw - conditions + per-service warnings - so the frozen view
+    // actually saw — conditions + per-service warnings — so the frozen view
     // is a faithful record of what was briefed.
     const base = await buildAckSnapshot(profile.id);
     if (!base) {

@@ -411,7 +411,7 @@ function PayoutHistoryView({
                           hour: "2-digit",
                           minute: "2-digit",
                         })
-                      : "-"}
+                      : "—"}
                   </td>
                   <td className="px-4 py-3">
                     {r.status === "FAILED" && (

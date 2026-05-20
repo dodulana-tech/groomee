@@ -24,13 +24,13 @@ const bodySchema = z.object({
  * Master-initiated Freedom ceremony. Mirrors the mechanics of the admin
  * force-freedom override (slice 7) with two key differences:
  *
- *   1. Status MUST be READY_FOR_FREEDOM - masters can't bypass the gate;
+ *   1. Status MUST be READY_FOR_FREEDOM — masters can't bypass the gate;
  *      only admins can (slice 7's force-freedom does that).
  *   2. After commit, fires celebration notifications to BOTH master and
- *      apprentice (admin override does NOT - those notifications are
+ *      apprentice (admin override does NOT — those notifications are
  *      this slice's responsibility).
  *
- * The transactional updates here intentionally mirror slice 7 - copy-paste
+ * The transactional updates here intentionally mirror slice 7 — copy-paste
  * with comments rather than a shared helper, since the pre-conditions and
  * post-commit semantics differ enough that abstracting would obscure intent.
  */
@@ -107,7 +107,7 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: `Cannot bestow Freedom - apprenticeship is in ${apprenticeship.status}, not READY_FOR_FREEDOM. The Freedom gate has not been cleared.`,
+          error: `Cannot bestow Freedom — apprenticeship is in ${apprenticeship.status}, not READY_FOR_FREEDOM. The Freedom gate has not been cleared.`,
         },
         { status: 422 },
       );
@@ -121,7 +121,7 @@ export async function POST(
       apprenticeship.apprentice.parentProId ?? apprenticeship.masterId;
 
     // Atomic freedom grant. The helper retries with a fresh cert code if the
-    // unique index on freedomCertCode collides - handles the rare race where
+    // unique index on freedomCertCode collides — handles the rare race where
     // two concurrent freedom grants generate the same code.
     const { certCode } = await withFreedomCertCode(async (code, tx) => {
       await tx.apprenticeship.update({

@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function CityRolloutBanner({ liveCities, waitlistCities }: Props) {
-  // Nothing to show if every city is hidden - and there's nothing intersting
+  // Nothing to show if every city is hidden — and there's nothing intersting
   // to say when there are no waitlist cities (the landing is already
   // about LIVE cities). Hide.
   if (liveCities.length === 0) return null;
@@ -54,7 +54,7 @@ export default function CityRolloutBanner({ liveCities, waitlistCities }: Props)
             firstWait ? "sm:grid-cols-[1fr_auto_1fr]" : "sm:grid-cols-1"
           }`}
         >
-          {/* LIVE - pick the first LIVE city for the hero copy */}
+          {/* LIVE — pick the first LIVE city for the hero copy */}
           {liveCities.slice(0, 1).map((c) => (
             <div
               key={c.id}

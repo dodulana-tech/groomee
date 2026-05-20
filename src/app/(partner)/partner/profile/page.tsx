@@ -186,7 +186,7 @@ export default function PartnerProfilePage() {
             >
               {uploading ? "Uploading…" : "Change photo"}
             </button>
-            <p className="text-xs text-gray-400">JPG, PNG or WebP - max 5 MB</p>
+            <p className="text-xs text-gray-400">JPG, PNG or WebP — max 5 MB</p>
             {uploadMsg && (
               <p className={`text-xs font-medium ${uploadMsg.includes("updated") ? "text-green-600" : "text-red-500"}`}>
                 {uploadMsg}
@@ -338,7 +338,7 @@ export default function PartnerProfilePage() {
         </div>
       </div>
 
-      {/* Services & zones - read-only for now, admin manages */}
+      {/* Services & zones — read-only for now, admin manages */}
       <div className="glass rounded-2xl border border-white/20 p-6 shadow-lg">
         <h2 className="font-bold text-gray-900 mb-3">Services &amp; zones</h2>
         <p className="text-sm text-gray-500 mb-3">

@@ -41,7 +41,7 @@ export default function SurveySection() {
             </button>
           </div>
 
-          {/* Cards - full layout on md+ */}
+          {/* Cards — full layout on md+ */}
           <div className="hidden md:grid mx-auto max-w-3xl gap-6 sm:grid-cols-2">
             {/* Customer survey */}
             <div className="glass rounded-2xl border border-white/20 p-6 shadow-lg flex flex-col relative overflow-hidden">
@@ -61,7 +61,7 @@ export default function SurveySection() {
                 <span className="text-lg">⭐</span>
                 <p className="text-xs text-gray-700 leading-relaxed">
                   Complete the survey and earn{" "}
-                  <strong className="text-amber-600">10 Groomee Points</strong> -
+                  <strong className="text-amber-600">10 Groomee Points</strong> —
                   redeemable on your first or next booking.
                 </p>
               </div>
@@ -94,7 +94,7 @@ export default function SurveySection() {
                 <span className="text-lg">⭐</span>
                 <p className="text-xs text-gray-700 leading-relaxed">
                   Complete the survey and earn{" "}
-                  <strong className="text-amber-600">10 Groomee Points</strong> -
+                  <strong className="text-amber-600">10 Groomee Points</strong> —
                   priority access when your city goes live.
                 </p>
               </div>

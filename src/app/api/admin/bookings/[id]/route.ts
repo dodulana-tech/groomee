@@ -71,7 +71,7 @@ export async function PATCH(
 
     if (!reason || reason.length < 5) {
       return NextResponse.json(
-        { success: false, error: "Please provide a reason (min 5 chars) - admin status changes are audited." },
+        { success: false, error: "Please provide a reason (min 5 chars) — admin status changes are audited." },
         { status: 400 },
       );
     }

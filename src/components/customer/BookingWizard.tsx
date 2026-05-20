@@ -146,7 +146,7 @@ export default function BookingWizard({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong - please try again");
+        setError(data.error ?? "Something went wrong — please try again");
         return;
       }
       // Redirect to payment or booking detail

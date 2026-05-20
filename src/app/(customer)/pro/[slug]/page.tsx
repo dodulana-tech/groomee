@@ -22,7 +22,7 @@ export default async function ProPage({
 
   if (!pro) notFound();
 
-  // Independence gate - apprentices who haven't cleared their gating modules &
+  // Independence gate — apprentices who haven't cleared their gating modules &
   // master sign-off can't take direct bookings; we surface a "via master" CTA.
   const canTakeIndependent = await canTakeIndependentBookings(pro.id);
 

@@ -65,7 +65,7 @@ export default async function Image() {
             color: "rgba(255,255,255,0.7)",
           }}
         >
-          groomee.ng - Lagos & Abuja
+          groomee.ng — Lagos & Abuja
         </div>
       </div>
     ),

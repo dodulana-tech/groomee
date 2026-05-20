@@ -16,7 +16,7 @@ export async function sendEmail({
   const from = process.env.SMTP_FROM ?? user ?? "noreply@groomee.ng";
 
   if (!user || !pass) {
-    console.warn("[email] SMTP_USER or SMTP_PASS not set - skipping email");
+    console.warn("[email] SMTP_USER or SMTP_PASS not set — skipping email");
     return null;
   }
 

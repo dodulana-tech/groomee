@@ -86,7 +86,7 @@ export default function PartnerEarningsPage() {
         </div>
       </div>
 
-      {/* Apprentice earnings breakdown - only renders when the pro has masters work via apprentices */}
+      {/* Apprentice earnings breakdown — only renders when the pro has masters work via apprentices */}
       {data.breakdown?.apprenticeCommission > 0 && (
         <div className="glass rounded-2xl border border-white/20 shadow-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">

@@ -2,7 +2,7 @@
  * Fire-and-forget notifications when a city flips to LIVE.
  *
  * Reads the existing Waitlist rows for the city (matched on the legacy
- * Waitlist.city string column - Lagos / Abuja) and pings each one over
+ * Waitlist.city string column — Lagos / Abuja) and pings each one over
  * the cheapest available channel:
  *   - WhatsApp/SMS if the row has a phone
  *   - Email otherwise
@@ -33,7 +33,7 @@ export async function notifyCityLive(
 
     if (rows.length === 0) {
       console.log(
-        `[city-notify] ${city.name} went LIVE - no waitlist rows to notify`,
+        `[city-notify] ${city.name} went LIVE — no waitlist rows to notify`,
       );
       return;
     }
@@ -46,7 +46,7 @@ export async function notifyCityLive(
     let emailSent = 0;
     for (const r of rows) {
       const greeting = r.name ? `Hi ${r.name.split(" ")[0]}` : "Hi";
-      const msg = `${greeting} 🌿 Great news - Groomee is now live in ${city.name}! Book a vetted beauty pro to your door in 60s: ${link}`;
+      const msg = `${greeting} 🌿 Great news — Groomee is now live in ${city.name}! Book a vetted beauty pro to your door in 60s: ${link}`;
       if (r.phone) {
         try {
           await sendMessage(r.phone, msg, "whatsapp");
@@ -67,10 +67,10 @@ export async function notifyCityLive(
       }
     }
     console.log(
-      `[city-notify] ${city.name} LIVE: ${rows.length} waitlist row(s) - ${smsSent} sms, ${emailSent} email (triggered by ${triggeredByUserId})`,
+      `[city-notify] ${city.name} LIVE: ${rows.length} waitlist row(s) — ${smsSent} sms, ${emailSent} email (triggered by ${triggeredByUserId})`,
     );
   } catch (err) {
-    // Top-level safety net - never let a notify error surface to the caller.
+    // Top-level safety net — never let a notify error surface to the caller.
     console.error("[city-notify] fatal", err);
   }
 }
