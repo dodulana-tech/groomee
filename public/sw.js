@@ -1,4 +1,6 @@
-const CACHE_NAME = "groomee-v1";
+// Bump on UI/structural changes the client must pick up immediately.
+// On activate, every cache that doesn't match this name is purged.
+const CACHE_NAME = "groomee-v2";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
