@@ -66,6 +66,11 @@ export const PERMISSIONS = {
   // contraindication catalog. Access is always audit-logged.
   HEALTH_VIEW: "health.view",
   HEALTH_MANAGE: "health.manage",
+
+  // Cities — view the list; manage = flip status (WAITLIST → LIVE etc.)
+  // and edit tagline / launchedAt. Manage gates the landing-page rollout.
+  CITIES_VIEW: "cities.view",
+  CITIES_MANAGE: "cities.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -181,6 +186,13 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: PERMISSIONS.HEALTH_MANAGE, label: "Manage contraindication catalog" },
     ],
   },
+  cities: {
+    label: "Cities & rollout",
+    permissions: [
+      { key: PERMISSIONS.CITIES_VIEW, label: "View cities + rollout status" },
+      { key: PERMISSIONS.CITIES_MANAGE, label: "Activate cities (flip status, set launch date)" },
+    ],
+  },
 };
 
 /** Default role definitions used for seeding */
@@ -215,6 +227,8 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.NOTES_MANAGE,
       PERMISSIONS.HEALTH_VIEW,
       PERMISSIONS.HEALTH_MANAGE,
+      PERMISSIONS.CITIES_VIEW,
+      PERMISSIONS.CITIES_MANAGE,
     ],
     isSystem: false,
   },

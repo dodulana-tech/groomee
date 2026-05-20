@@ -97,6 +97,37 @@ async function main() {
   }
   console.log(`✅ Super admin: ${adminPhone} / ${adminEmail}`);
 
+  // ── CITIES ───────────────────────────────────────────────
+  // Each Zone is linked to a City. Cities carry the operational status
+  // (LIVE / WAITLIST / HIDDEN) that gates the landing-page surfaces and
+  // booking endpoint.
+  const lagosCity = await prisma.city.upsert({
+    where: { slug: "lagos" },
+    update: {},
+    create: {
+      name: "Lagos",
+      slug: "lagos",
+      status: "LIVE",
+      launchedAt: new Date("2025-01-01"),
+      sortOrder: 0,
+      tagline: "Vetted pros across the island and mainland.",
+    },
+  });
+  const abujaCity = await prisma.city.upsert({
+    where: { slug: "abuja" },
+    update: {},
+    create: {
+      name: "Abuja",
+      slug: "abuja",
+      status: "WAITLIST",
+      sortOrder: 1,
+      tagline: "Launching soon — be first in line.",
+    },
+  });
+  console.log(`✅ Cities: ${lagosCity.name} (LIVE), ${abujaCity.name} (WAITLIST)`);
+  const cityIdForName = (city: string) =>
+    city.toLowerCase() === "abuja" ? abujaCity.id : lagosCity.id;
+
   // ── ZONES ────────────────────────────────────────────────
   const zones = await Promise.all([
     prisma.zone.upsert({
@@ -106,83 +137,84 @@ async function main() {
         name: "Victoria Island",
         slug: "victoria-island",
         city: "Lagos",
+        cityId: lagosCity.id,
       },
     }),
     prisma.zone.upsert({
       where: { slug: "lekki-phase-1" },
       update: {},
-      create: { name: "Lekki Phase 1", slug: "lekki-phase-1", city: "Lagos" },
+      create: { name: "Lekki Phase 1", slug: "lekki-phase-1", city: "Lagos", cityId: lagosCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "ikoyi" },
       update: {},
-      create: { name: "Ikoyi", slug: "ikoyi", city: "Lagos" },
+      create: { name: "Ikoyi", slug: "ikoyi", city: "Lagos", cityId: lagosCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "ikeja" },
       update: {},
-      create: { name: "Ikeja", slug: "ikeja", city: "Lagos" },
+      create: { name: "Ikeja", slug: "ikeja", city: "Lagos", cityId: lagosCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "surulere" },
       update: {},
-      create: { name: "Surulere", slug: "surulere", city: "Lagos" },
+      create: { name: "Surulere", slug: "surulere", city: "Lagos", cityId: lagosCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "yaba" },
       update: {},
-      create: { name: "Yaba", slug: "yaba", city: "Lagos" },
+      create: { name: "Yaba", slug: "yaba", city: "Lagos", cityId: lagosCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "ajah" },
       update: {},
-      create: { name: "Ajah", slug: "ajah", city: "Lagos" },
+      create: { name: "Ajah", slug: "ajah", city: "Lagos", cityId: lagosCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "gbagada" },
       update: {},
-      create: { name: "Gbagada", slug: "gbagada", city: "Lagos" },
+      create: { name: "Gbagada", slug: "gbagada", city: "Lagos", cityId: lagosCity.id },
     }),
     // ── Abuja zones ──
     prisma.zone.upsert({
       where: { slug: "wuse" },
       update: {},
-      create: { name: "Wuse", slug: "wuse", city: "Abuja" },
+      create: { name: "Wuse", slug: "wuse", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "maitama" },
       update: {},
-      create: { name: "Maitama", slug: "maitama", city: "Abuja" },
+      create: { name: "Maitama", slug: "maitama", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "asokoro" },
       update: {},
-      create: { name: "Asokoro", slug: "asokoro", city: "Abuja" },
+      create: { name: "Asokoro", slug: "asokoro", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "garki" },
       update: {},
-      create: { name: "Garki", slug: "garki", city: "Abuja" },
+      create: { name: "Garki", slug: "garki", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "jabi" },
       update: {},
-      create: { name: "Jabi", slug: "jabi", city: "Abuja" },
+      create: { name: "Jabi", slug: "jabi", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "gudu" },
       update: {},
-      create: { name: "Gudu", slug: "gudu", city: "Abuja" },
+      create: { name: "Gudu", slug: "gudu", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "gwarinpa" },
       update: {},
-      create: { name: "Gwarinpa", slug: "gwarinpa", city: "Abuja" },
+      create: { name: "Gwarinpa", slug: "gwarinpa", city: "Abuja", cityId: abujaCity.id },
     }),
     prisma.zone.upsert({
       where: { slug: "utako" },
       update: {},
-      create: { name: "Utako", slug: "utako", city: "Abuja" },
+      create: { name: "Utako", slug: "utako", city: "Abuja", cityId: abujaCity.id },
     }),
   ]);
   console.log(`✅ ${zones.length} zones`);

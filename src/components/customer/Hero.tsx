@@ -14,11 +14,22 @@ const CATEGORIES = [
   { key: "SKINCARE", label: "Skincare", emoji: "✨" },
 ];
 
-interface Props {
-  services: Service[];
+interface HeroCity {
+  name: string;
+  slug: string;
 }
 
-export default function Hero({ services }: Props) {
+interface Props {
+  services: Service[];
+  // First LIVE city — drives "Book a pro in {name}" CTA. Defaults if not
+  // provided so the component still renders sensibly without props.
+  liveCity?: HeroCity;
+  // First WAITLIST city — drives the secondary "Join … waitlist" CTA.
+  // Omitted when there are no waitlist cities (every city LIVE).
+  waitlistCity?: HeroCity;
+}
+
+export default function Hero({ services, liveCity, waitlistCity }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [isAsap, setIsAsap] = useState(false);
@@ -118,14 +129,20 @@ export default function Hero({ services }: Props) {
                 className="group inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-5 py-3 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.35)] active:scale-[0.97] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
               >
                 <span className="inline-block transition-transform group-hover:scale-110">✦</span>
-                Book a pro in Lagos
+                Book a pro{liveCity ? ` in ${liveCity.name}` : ""}
               </Link>
-              <button
-                onClick={() => document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" })}
-                className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#ddd0fa] bg-[#f5f0ff] px-5 py-3 text-sm font-semibold text-[#7c3aed] transition-all hover:-translate-y-0.5 hover:border-[#c4b0f5] hover:shadow-md active:scale-[0.97] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
-              >
-                Join Abuja waitlist
-              </button>
+              {waitlistCity && (
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById(`waitlist-${waitlistCity.slug}`)
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#ddd0fa] bg-[#f5f0ff] px-5 py-3 text-sm font-semibold text-[#7c3aed] transition-all hover:-translate-y-0.5 hover:border-[#c4b0f5] hover:shadow-md active:scale-[0.97] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
+                >
+                  Join {waitlistCity.name} waitlist
+                </button>
+              )}
             </div>
 
             {/* Stats */}

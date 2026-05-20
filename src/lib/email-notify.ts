@@ -32,7 +32,7 @@ async function getCustomerEmail(userId: string): Promise<string | null> {
 }
 
 /** Fire-and-forget email send. Never throws. */
-function fireEmail(to: string, template: { subject: string; html: string }) {
+export function fireEmail(to: string, template: { subject: string; html: string }) {
   sendEmail({ to, subject: template.subject, html: template.html }).catch(
     (err) => console.error("[email-notify] send failed:", err),
   );

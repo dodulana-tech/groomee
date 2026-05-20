@@ -13,7 +13,7 @@ const SERVICES = [
 const COMPANY = [
   { href: "/#about", label: "Our story" },
   { href: "/partner/onboarding", label: "Become a pro" },
-  { href: "/#waitlist", label: "Abuja waitlist" },
+  // Waitlist entries are appended at render time from props.waitlistCities.
   { href: "/#survey", label: "Take our survey" },
 ];
 
@@ -88,7 +88,33 @@ const SOCIAL = [
   },
 ];
 
-export default function Footer() {
+interface FooterCity {
+  name: string;
+  slug: string;
+}
+
+interface FooterProps {
+  liveCities?: FooterCity[];
+  waitlistCities?: FooterCity[];
+}
+
+export default function Footer({
+  liveCities = [],
+  waitlistCities = [],
+}: FooterProps) {
+  // Compose the "Lagos · Abuja coming soon" line dynamically.
+  const liveLine = liveCities.map((c) => c.name).join(" · ");
+  const cityFootnote = liveCities.length
+    ? `${liveLine}, Nigeria`
+    : "Nigeria";
+  // Waitlist links replace the hardcoded "Abuja waitlist" company entry.
+  const waitlistLinks = waitlistCities.map((c) => ({
+    href: `/#waitlist-${c.slug}`,
+    label: `${c.name} waitlist`,
+  }));
+  // First waitlist city drives the "Abuja launching soon" copy in the
+  // intro paragraph; we omit it entirely once every city is LIVE.
+  const firstWait = waitlistCities[0] ?? null;
   return (
     <footer className="bg-[#0a0f0b]">
       {/* ── Trust Strip ── */}
@@ -163,8 +189,9 @@ export default function Footer() {
               </span>
             </div>
             <p className="mb-6 max-w-sm text-sm leading-[1.8] text-white/30">
-              On-demand beauty for Lagos. Vetted professionals delivered to your
-              door &mdash; anytime, anywhere. Abuja launching soon.
+              On-demand beauty for {liveLine || "Nigeria"}. Vetted professionals
+              delivered to your door &mdash; anytime, anywhere.
+              {firstWait && ` ${firstWait.name} launching soon.`}
             </p>
 
             {/* Contact */}
@@ -219,7 +246,7 @@ export default function Footer() {
               Company
             </h4>
             <ul className="space-y-3">
-              {COMPANY.map((l) => (
+              {[...COMPANY, ...waitlistLinks].map((l) => (
                 <li key={l.label}>
                   <Link
                     href={l.href}
@@ -261,9 +288,15 @@ export default function Footer() {
             reserved.
           </span>
           <div className="flex items-center gap-4 text-xs text-white/15">
-            <span>Lagos, Nigeria</span>
-            <span className="h-3 w-px bg-white/[0.06]" />
-            <span className="text-[#7c3aed]/40">Abuja coming soon</span>
+            <span>{cityFootnote}</span>
+            {firstWait && (
+              <>
+                <span className="h-3 w-px bg-white/[0.06]" />
+                <span className="text-[#7c3aed]/40">
+                  {firstWait.name} coming soon
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>

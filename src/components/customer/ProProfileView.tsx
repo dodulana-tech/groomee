@@ -25,6 +25,7 @@ interface Zone {
   id: string;
   name: string;
   city: string;
+  cityId: string | null;
   slug: string;
 }
 

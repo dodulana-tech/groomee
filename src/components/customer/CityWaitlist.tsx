@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 
-export default function AbujaWaitlist() {
+interface Props {
+  city: {
+    name: string;
+    slug: string;
+    tagline?: string | null;
+  };
+  areas?: string[];
+}
+
+export default function CityWaitlist({ city, areas = [] }: Props) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -18,7 +27,14 @@ export default function AbujaWaitlist() {
       await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, email, role, city: "Abuja", area }),
+        body: JSON.stringify({
+          name,
+          phone,
+          email,
+          role,
+          city: city.name,
+          area,
+        }),
       });
       setSubmitted(true);
     } finally {
@@ -26,51 +42,37 @@ export default function AbujaWaitlist() {
     }
   }
 
-  const AREAS = [
-    "Maitama",
-    "Wuse / Wuse 2",
-    "Garki",
-    "Gwarinpa",
-    "Asokoro",
-    "Jabi",
-    "Utako",
-    "Other",
-  ];
-
   return (
     <section
-      id="waitlist"
+      id={`waitlist-${city.slug}`}
       className="relative overflow-hidden py-12 sm:py-20 px-4"
       style={{
         background:
           "linear-gradient(135deg, #1a0a3d 0%, #2d1060 50%, #1a0a3d 100%)",
       }}
     >
-      {/* Decorative rings */}
       <div className="absolute -top-24 -right-20 h-96 w-96 rounded-full border border-purple-500/20 pointer-events-none" />
       <div className="absolute -bottom-12 left-[5%] h-64 w-64 rounded-full border border-purple-500/20 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_15%_50%,rgba(124,58,237,0.3),transparent_60%),radial-gradient(ellipse_40%_60%_at_85%_30%,rgba(200,135,26,0.12),transparent_55%)] pointer-events-none" />
 
       <div className="container relative z-10">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-          {/* Left — hidden on mobile, shown on lg+ */}
           <div className="hidden lg:block">
             <p className="text-xs font-bold uppercase tracking-widest text-purple-300 mb-3 flex items-center gap-2">
               <span style={{ display: "inline-block", width: 20, height: 2, background: "#ddd0fa" }} />
               Coming soon
             </p>
             <h2 className="font-display text-3xl font-black text-white sm:text-4xl mb-4">
-              Abuja, we&apos;re on our way.
+              {city.name}, we&apos;re on our way.
             </h2>
             <p className="text-base text-white/60 leading-relaxed mb-6">
-              Groomee is launching in Lagos first - and Abuja is next. Be among
-              the first to experience trusted, on-demand beauty professionals in
-              the FCT.
+              {city.tagline ??
+                `Groomee is launching in ${city.name} next. Be among the first to experience trusted, on-demand beauty pros.`}
             </p>
             <div className="space-y-3">
               {[
                 "Early access before public launch",
-                "Shape how Groomee works in Abuja",
+                `Shape how Groomee works in ${city.name}`,
                 "Earn 10 Groomee Points for joining",
                 "First priority when we go live",
               ].map((item) => (
@@ -87,16 +89,15 @@ export default function AbujaWaitlist() {
             </div>
           </div>
 
-          {/* Right: Waitlist form */}
           <div className="rounded-2xl p-4 sm:p-8 bg-white/5 backdrop-blur-xl border border-white/10">
             {submitted ? (
               <div className="text-center py-8">
                 <div className="text-5xl mb-4">🟡</div>
                 <h3 className="font-display text-xl font-bold text-white mb-2">
-                  You&apos;re on the Abuja waitlist!
+                  You&apos;re on the {city.name} waitlist!
                 </h3>
                 <p className="text-sm text-white/60 mb-4">
-                  We&apos;ll notify you as soon as Groomee launches in Abuja.
+                  We&apos;ll notify you as soon as Groomee launches in {city.name}.
                 </p>
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-mono text-sm font-medium px-4 py-2 rounded-full shadow-lg">
                   ⭐ +10 Groomee Points earned
@@ -105,16 +106,16 @@ export default function AbujaWaitlist() {
             ) : (
               <>
                 <h3 className="font-display text-lg sm:text-xl font-bold text-white mb-1">
-                  Join the Abuja waitlist
+                  Join the {city.name} waitlist
                 </h3>
                 <p className="text-sm text-white/50 mb-4 sm:mb-6">
-                  Takes 30 seconds · Be first in Abuja
+                  Takes 30 seconds · Be first in {city.name}
                 </p>
 
                 <div className="mb-4 sm:mb-5 flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 sm:px-4 sm:py-3 text-xs text-amber-100 leading-relaxed">
                   <span className="text-base">⭐</span>
                   Join now and earn <strong className="text-amber-400 ml-1">10 Groomee Points</strong>
-                  <span className="ml-1 hidden sm:inline">- redeemable when Abuja goes live.</span>
+                  <span className="ml-1 hidden sm:inline">- redeemable when {city.name} goes live.</span>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
@@ -144,7 +145,6 @@ export default function AbujaWaitlist() {
                       required
                     />
                   </div>
-                  {/* Email — hidden on mobile */}
                   <div className="hidden sm:block">
                     <label className="block text-xs font-bold uppercase tracking-wider text-white/50 mb-1.5">
                       Email
@@ -157,7 +157,6 @@ export default function AbujaWaitlist() {
                       className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white placeholder:text-white/30 outline-none focus:border-purple-400 focus-visible:ring-2 focus-visible:ring-purple-400/40 transition"
                     />
                   </div>
-                  {/* Role — hidden on mobile */}
                   <div className="hidden sm:block">
                     <label className="block text-xs font-bold uppercase tracking-wider text-white/50 mb-1.5">
                       I am joining as
@@ -173,28 +172,30 @@ export default function AbujaWaitlist() {
                       <option value="both">Both</option>
                     </select>
                   </div>
-                  {/* Area — hidden on mobile */}
-                  <div className="hidden sm:block">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-white/50 mb-1.5">
-                      Area in Abuja
-                    </label>
-                    <select
-                      value={area}
-                      onChange={(e) => setArea(e.target.value)}
-                      className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white outline-none focus:border-purple-400 transition appearance-none"
-                    >
-                      <option value="" disabled>Select your area</option>
-                      {AREAS.map((a) => (
-                        <option key={a} value={a}>{a}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {areas.length > 0 && (
+                    <div className="hidden sm:block">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-white/50 mb-1.5">
+                        Area in {city.name}
+                      </label>
+                      <select
+                        value={area}
+                        onChange={(e) => setArea(e.target.value)}
+                        className="w-full rounded-xl bg-white/7 border border-white/12 px-4 py-3 text-base text-white outline-none focus:border-purple-400 transition appearance-none"
+                      >
+                        <option value="" disabled>Select your area</option>
+                        {areas.map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  )}
                   <button
                     type="submit"
                     disabled={loading}
                     className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-purple-800 py-3.5 text-sm font-bold text-white transition-all hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    🟡 {loading ? "Joining…" : "Join the Abuja waitlist"}
+                    🟡 {loading ? "Joining…" : `Join the ${city.name} waitlist`}
                   </button>
                 </form>
               </>

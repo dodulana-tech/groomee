@@ -13,6 +13,7 @@ const PUBLIC_PREFIX = [
   "/api/services",
   "/api/pros",
   "/api/zones",
+  "/api/cities",
   "/api/surveys",
   "/api/waitlist",
   "/cert/",   // public Freedom certificate verification pages
@@ -113,6 +114,9 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|favicon\\.png|assets/|apple-touch-icon|manifest\\.json|icons/).*)",
+    // Static public assets must bypass middleware entirely. The PWA service
+    // worker (sw.js, workbox-*.js) was being redirected to /auth, so it
+    // never installed and stale chunks kept getting served.
+    "/((?!_next/static|_next/image|favicon\\.ico|favicon\\.png|assets/|apple-touch-icon|manifest\\.json|icons/|sw\\.js|workbox-).*)",
   ],
 };

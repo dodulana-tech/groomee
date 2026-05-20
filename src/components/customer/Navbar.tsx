@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
 import { LOGO_BASE64 } from "@/lib/logo";
+import { db } from "@/lib/db";
 import PointsBadge from "./PointsBadge";
 import MobileMenu from "./MobileMenu";
 
 export default async function Navbar() {
   const session = await getSession();
+  // Surface a single "City waitlist" link only while a WAITLIST city exists.
+  // Once every city is LIVE the nav drops the link automatically.
+  const waitlistCity = await db.city.findFirst({
+    where: { status: "WAITLIST" },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { name: true, slug: true },
+  });
 
   return (
     <nav className="fixed inset-x-0 top-0 z-[100] h-14 border-b border-white/10 bg-[rgba(1,67,66,0.97)] backdrop-blur-xl lg:h-[68px]">
@@ -32,9 +40,14 @@ export default async function Navbar() {
           <Link href="/#about" className="text-sm font-medium text-white/70 hover:text-white transition-colors">
             Our story
           </Link>
-          <Link href="/#waitlist" className="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">
-            Abuja waitlist
-          </Link>
+          {waitlistCity && (
+            <Link
+              href={`/#waitlist-${waitlistCity.slug}`}
+              className="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+            >
+              {waitlistCity.name} waitlist
+            </Link>
+          )}
           <Link href="/partner/login" className="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">
             List your business
           </Link>

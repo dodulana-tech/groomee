@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import { LOGO_TEAL_BASE64 } from "@/lib/logo";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type Method = "phone" | "email";
 type Step = "choose" | "input" | "otp";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [method, setMethod] = useState<Method>("phone");
   const [step, setStep] = useState<Step>("choose");
   const [phone, setPhone] = useState("");
@@ -67,10 +65,12 @@ export default function AdminLoginPage() {
       if (data.data?.role !== "ADMIN") {
         throw new Error("You do not have admin access.");
       }
-      router.push("/admin");
+      // Hard nav so the browser re-issues the request with the new session
+      // cookie and the login form unmounts immediately instead of flashing
+      // during the SPA transition.
+      window.location.href = "/admin";
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   }

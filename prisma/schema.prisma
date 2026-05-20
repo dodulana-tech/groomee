@@ -333,11 +333,42 @@ model Service {
   @@map("services")
 }
 
+// Operational state of a city. Drives the landing-page surfaces and gates
+// new bookings — non-LIVE cities cannot accept bookings or display pros to
+// customers, even if zones exist for them.
+enum CityStatus {
+  HIDDEN
+  WAITLIST
+  LIVE
+}
+
+model City {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  status      CityStatus @default(WAITLIST)
+  launchedAt  DateTime?
+  // Display copy on the landing waitlist banner. Optional — falls back to
+  // the city name.
+  tagline     String?
+  // Stable ordering for nav / banner. Lower = earlier.
+  sortOrder   Int        @default(0)
+  zones       Zone[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("cities")
+}
+
 model Zone {
   id         String       @id @default(cuid())
   name       String
   slug       String       @unique
+  // Legacy display-only "Lagos" / "Abuja" string. Kept until every reader
+  // is migrated to read via cityId. New code MUST use city/cityId.
   city       String       @default("Lagos")
+  cityId     String?
+  cityRel    City?        @relation(fields: [cityId], references: [id])
   pros       ProZone[]
   bookings   Booking[]
   travelFrom ZoneTravel[] @relation("ZoneTravelFrom")

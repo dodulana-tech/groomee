@@ -11,6 +11,7 @@ import {
 import { tryNextPro } from "@/lib/dispatch";
 import { findConflict, inWorkingHours } from "@/lib/scheduling";
 import { resolveBookingServices } from "@/lib/booking-items";
+import { CityNotLiveError, requireLiveCityForZone } from "@/lib/cities";
 import { checkContraindications, highestLevel } from "@/lib/health";
 import { z } from "zod";
 
@@ -92,6 +93,27 @@ export async function POST(req: NextRequest) {
     const { primary, additional, totalDurationMins, totalBasePrice } = resolved;
     // Back-compat: existing helpers still expect a single `service` reference.
     const service = primary;
+
+    // City gate — bookings only land for zones whose city is LIVE. Refusal
+    // here keeps WAITLIST cities clean (no orphan paid bookings to refund).
+    if (input.zoneId) {
+      try {
+        await requireLiveCityForZone(input.zoneId);
+      } catch (err) {
+        if (err instanceof CityNotLiveError) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: err.message,
+              code: "CITY_NOT_LIVE",
+              city: err.city ? { slug: err.city.slug, status: err.city.status } : null,
+            },
+            { status: 409 },
+          );
+        }
+        throw err;
+      }
+    }
 
     // Check minimum lead time
     const settings = await db.setting.findFirst({
