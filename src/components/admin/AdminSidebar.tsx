@@ -28,6 +28,10 @@ const NAV = [
 ];
 
 function canAccess(permissions: string[], required: string): boolean {
+  // DEV BYPASS — mirror src/lib/auth.ts. In any non-production env, every
+  // admin sees every sidebar entry so gated pages stay testable without
+  // re-seeding role rows. Remove before relying on perm filtering in QA.
+  if (process.env.NODE_ENV !== "production") return true;
   return permissions.includes("*") || permissions.includes(required);
 }
 

@@ -300,7 +300,7 @@ export default function BookingPanel({
             still in training under{" "}
             <span className="font-semibold">{pro.parent.name}</span> and isn't
             taking independent bookings yet. Book{" "}
-            <span className="font-semibold">{pro.parent.name}</span> instead —
+            <span className="font-semibold">{pro.parent.name}</span> instead -
             they may deploy {pro.name.split(" ")[0]} for your job.
           </p>
           <Link
@@ -341,7 +341,7 @@ export default function BookingPanel({
       </div>
 
       <div className="space-y-5 p-5">
-        {/* Service selector — multi-select. Tap to add or remove. */}
+        {/* Service selector - multi-select. Tap to add or remove. */}
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <label className="input-label">Select services</label>
@@ -591,7 +591,7 @@ export default function BookingPanel({
           </div>
         )}
 
-        {/* Health contraindication preview — surface BLOCK / WARN / INFO
+        {/* Health contraindication preview - surface BLOCK / WARN / INFO
             against the customer's health profile before they pay. */}
         {healthHits.length > 0 && (
           <HealthWarningNotice
@@ -618,7 +618,7 @@ export default function BookingPanel({
               Processing…
             </span>
           ) : healthLevel === "BLOCK" ? (
-            "Can't book safely — pick another service"
+            "Can't book safely - pick another service"
           ) : selectedServiceId ? (
             `Confirm & Pay ${formatNaira(total)} →`
           ) : (

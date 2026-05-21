@@ -156,7 +156,7 @@ export default function EditProfilePage() {
             </button>
           </form>
 
-          {/* Phone linking — only shown if user registered via email */}
+          {/* Phone linking - only shown if user registered via email */}
           {needsPhone && (
             <form onSubmit={handleLinkPhone} className="space-y-4">
               <div className="bg-white rounded-3xl shadow-card p-5 space-y-4 border-2 border-amber-200">

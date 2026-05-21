@@ -48,7 +48,7 @@ export async function generateMetadata({
     return { title: "Certificate not found" };
   }
   const year = new Date(cert.freedomDate).getFullYear();
-  const title = `${cert.apprentice.name} — Freed under ${cert.master.name} · ${year}`;
+  const title = `${cert.apprentice.name} - Freed under ${cert.master.name} · ${year}`;
   const description = `Verified Groomee Certificate of Freedom. ${cert.apprentice.name} was freed under master ${cert.master.name} on ${format(new Date(cert.freedomDate), "d MMMM yyyy")}. Cert code: ${code}.`;
   const url = `${APP_URL}/cert/${code}`;
   return {

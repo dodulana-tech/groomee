@@ -390,7 +390,7 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
                     {pro.bio}
                   </p>
 
-                  {/* Lineage section — apprentice or freed lineage detail */}
+                  {/* Lineage section - apprentice or freed lineage detail */}
                   {(showApprenticeBadge || showFreedBadge) && (
                     <div
                       className="rounded-2xl p-4 mb-6 border"
@@ -428,7 +428,7 @@ export default function ProProfileView({ pro }: { pro: ProData }) {
                           {freedYear ? ` in ${freedYear}` : ""}
                           {pro.freedUnder!.freedomCertCode || pro.freedomCertCode ? (
                             <>
-                              {" "}— Freedom certificate{" "}
+                              {" "}- Freedom certificate{" "}
                               <Link
                                 href={`/cert/${pro.freedomCertCode ?? pro.freedUnder!.freedomCertCode}`}
                                 className="font-semibold underline"

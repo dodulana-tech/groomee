@@ -94,7 +94,7 @@ export default function LiveBookingTracker({ bookingId, initialData }: Props) {
         timestamps={timestamps}
       />
 
-      {/* Pro card — when assigned */}
+      {/* Pro card - when assigned */}
       {booking.pro && (
         <div className="glass rounded-2xl border border-white/20 p-5 shadow-lg">
           <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">
@@ -107,7 +107,7 @@ export default function LiveBookingTracker({ bookingId, initialData }: Props) {
             <div>
               <p className="font-semibold text-gray-900">{booking.pro.name}</p>
               <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span>★ {booking.pro.avgRating?.toFixed(1) ?? "—"}</span>
+                <span>★ {booking.pro.avgRating?.toFixed(1) ?? "-"}</span>
                 <span>·</span>
                 <span>{booking.pro.totalJobs ?? 0} jobs done</span>
               </div>

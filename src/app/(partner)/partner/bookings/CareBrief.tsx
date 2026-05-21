@@ -156,7 +156,7 @@ export default function CareBrief({ bookingId, isAccepted }: Props) {
 
           {brief && (
             <>
-              {/* Actionable rules — only meaningful on live (non-frozen) briefs */}
+              {/* Actionable rules - only meaningful on live (non-frozen) briefs */}
               {rules.length > 0 &&
                 rules.map((r, i) => {
                   const s = LEVEL_STYLE[r.level];
@@ -251,7 +251,7 @@ export default function CareBrief({ bookingId, isAccepted }: Props) {
                 >
                   {ackLoading
                     ? "Acknowledging…"
-                    : "✓ I've read this — acknowledge"}
+                    : "✓ I've read this - acknowledge"}
                 </button>
               )}
               {acknowledged && brief.acknowledgedAt && (

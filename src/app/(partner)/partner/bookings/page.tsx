@@ -308,7 +308,7 @@ export default async function PartnerBookingsPage({
                   </div>
                 )}
 
-                {/* PHI care brief — pros only see their own held bookings. */}
+                {/* PHI care brief - pros only see their own held bookings. */}
                 {isMine && (
                   <CareBrief
                     bookingId={b.id}

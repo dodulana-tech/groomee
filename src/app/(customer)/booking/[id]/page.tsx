@@ -136,7 +136,7 @@ export default function BookingPage() {
       </div>
 
       <div className="px-4 space-y-3">
-        {/* Health contraindication notice — what the pro will be briefed on
+        {/* Health contraindication notice - what the pro will be briefed on
             for this booking. Derived from the customer's current profile
             against the booking's services. */}
         {healthHits.length > 0 && (

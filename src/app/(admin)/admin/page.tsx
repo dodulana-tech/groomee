@@ -385,17 +385,17 @@ export default async function AdminDashboard() {
                   >
                     <td className="px-5 py-3.5">
                       <p className="font-semibold text-gray-800">
-                        {b.customer?.name ?? b.customer?.phone ?? "—"}
+                        {b.customer?.name ?? b.customer?.phone ?? "-"}
                       </p>
                     </td>
                     <td className="px-5 py-3.5 text-gray-600">
-                      {b.service?.name ?? "—"}
+                      {b.service?.name ?? "-"}
                     </td>
                     <td className="px-5 py-3.5 text-gray-600">
-                      {b.pro?.name ?? "—"}
+                      {b.pro?.name ?? "-"}
                     </td>
                     <td className="px-5 py-3.5 text-gray-500 text-xs">
-                      {b.zone?.name ?? "—"}
+                      {b.zone?.name ?? "-"}
                     </td>
                     <td className="px-5 py-3.5">
                       <span

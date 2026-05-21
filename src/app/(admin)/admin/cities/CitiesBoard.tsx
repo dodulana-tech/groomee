@@ -90,13 +90,13 @@ export default function CitiesBoard({ canManage, cities }: Props) {
                 <td className="px-4 py-3 text-xs text-gray-500">
                   {c.launchedAt
                     ? new Date(c.launchedAt).toLocaleDateString("en-NG")
-                    : "—"}
+                    : "-"}
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-700 font-bold">
                   {c.zoneCount}
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-500 max-w-[18rem]">
-                  {c.tagline || <span className="text-gray-300">—</span>}
+                  {c.tagline || <span className="text-gray-300">-</span>}
                 </td>
                 <td className="px-4 py-3 text-right">
                   {canManage ? (

@@ -260,7 +260,7 @@ export function apprenticeInvitationEmail(data: {
         <tr><td class="detail-label" style="padding: 10px 0;">Master&rsquo;s commission</td><td class="detail-value" style="padding: 10px 0; text-align: right;">${data.commissionPct}% of your earnings</td></tr>
       </table>
       <p class="body-text">
-        Tap the button below to review the full terms, then accept or decline. The invitation expires nothing — but the sooner you respond, the sooner you can begin.
+        Tap the button below to review the full terms, then accept or decline. The invitation expires nothing - but the sooner you respond, the sooner you can begin.
       </p>
       <div style="text-align: center; margin: 24px 0;">
         <a href="${data.acceptUrl}" class="cta">Review invitation</a>
@@ -304,7 +304,7 @@ export function apprenticeModuleCompletedEmail(data: {
         <strong>${data.masterName}</strong> has signed off your work on <span class="highlight">${data.moduleTitle}</span>.
       </p>
       <p class="body-text">
-        Every module you finish moves you closer to independent bookings — and ultimately Freedom. Keep your head down and the work tight.
+        Every module you finish moves you closer to independent bookings - and ultimately Freedom. Keep your head down and the work tight.
       </p>
       <div style="text-align: center; margin: 24px 0;">
         <a href="${APP_URL}/partner" class="cta">View progress</a>
@@ -347,7 +347,7 @@ export function apprenticeReadyForFreedomEmail(data: {
     html: layout(`
       <p class="hero-text">A Freedom moment is brewing, ${greeting}.</p>
       <p class="body-text">
-        <strong>${data.apprenticeName}</strong> has met every Freedom requirement — curriculum complete, master sign-off in place, and Groomee thresholds for jobs and ratings cleared.
+        <strong>${data.apprenticeName}</strong> has met every Freedom requirement - curriculum complete, master sign-off in place, and Groomee thresholds for jobs and ratings cleared.
       </p>
       <p class="body-text">
         When you're ready, bestow Freedom from your partner portal. This is the moment that turns an apprentice into a full pro of their own.
@@ -380,7 +380,7 @@ export function apprenticeFreedomGrantedEmail(data: {
       <p class="hero-text" style="font-family: var(--font-display), 'Playfair Display', Georgia, serif; font-size: 28px;">A milestone day, ${greeting}.</p>
       <p class="body-text">
         Today, <strong>${data.masterName}</strong> bestowed your Freedom. You are no longer
-        an apprentice — you are an independent Groomee pro, with your own customers,
+        an apprentice - you are an independent Groomee pro, with your own customers,
         your own earnings, and your own name carved into the lineage.
       </p>
 
@@ -421,13 +421,13 @@ export function apprenticeFreedomGrantedEmail(data: {
       <p class="body-text">
         Share the link with your customers, your friends, your family. Anyone can scan
         and verify your Freedom on <a href="${APP_URL}" style="color: #014342; font-weight: 700;">Groomee.ng</a>.
-        Reputation compounds — let the world know what you've earned.
+        Reputation compounds - let the world know what you've earned.
       </p>
 
       <hr class="divider" />
       <p class="muted" style="text-align: center;">
         From today, every naira from your bookings is yours alone. The lineage with
-        ${data.masterName} stays with you — earned, permanent, never undone.
+        ${data.masterName} stays with you - earned, permanent, never undone.
       </p>
     `),
   };
@@ -443,13 +443,13 @@ export function masterFreedomCompleteEmail(data: {
 }): { subject: string; html: string } {
   const greeting = data.masterName ? data.masterName.split(" ")[0] : "there";
   return {
-    subject: `🎓 Freedom complete — ${data.apprenticeName} is now independent`,
+    subject: `🎓 Freedom complete - ${data.apprenticeName} is now independent`,
     html: layout(`
       <p class="hero-text" style="font-family: var(--font-display), 'Playfair Display', Georgia, serif;">A pro you raised.</p>
       <p class="body-text">
         ${greeting}, you did it. <strong>${data.apprenticeName}</strong> has just been
         granted Freedom under your name. From today, they take their own bookings,
-        keep their own earnings, and build their own reputation — and they do it as
+        keep their own earnings, and build their own reputation - and they do it as
         someone <em>you</em> trained.
       </p>
       <p class="body-text">
@@ -465,7 +465,7 @@ export function masterFreedomCompleteEmail(data: {
         <a href="${data.certUrl}" class="cta">View their certificate</a>
       </div>
       <p class="muted" style="text-align: center;">
-        Master commission ends on their future bookings — but the lineage, and the
+        Master commission ends on their future bookings - but the lineage, and the
         respect, are permanent.
       </p>
     `),
@@ -490,7 +490,7 @@ export function apprenticeBookingDeployedEmail(data: {
     html: layout(`
       <p class="hero-text">You've been deployed, ${greeting}.</p>
       <p class="body-text">
-        <strong>${data.masterName}</strong> has handed you a live customer booking. Same booking, your hands now — make her proud.
+        <strong>${data.masterName}</strong> has handed you a live customer booking. Same booking, your hands now - make her proud.
       </p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
         <tr><td class="detail-label" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">Service</td><td class="detail-value" style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right;">${data.serviceName}</td></tr>
@@ -521,7 +521,7 @@ export function customerBookingDeployedEmail(data: {
     html: layout(`
       <p class="hero-text">A quick update, ${greeting}.</p>
       <p class="body-text">
-        <strong>${data.masterName}</strong> has sent her trained pro <strong>${data.apprenticeName}</strong> for your ${data.serviceName} booking — same booking, different hands.
+        <strong>${data.masterName}</strong> has sent her trained pro <strong>${data.apprenticeName}</strong> for your ${data.serviceName} booking - same booking, different hands.
       </p>
       <p class="body-text">
         ${data.apprenticeName} trained directly under ${data.masterName} and is fully cleared to take this job. Your booking, time, and price are unchanged.
@@ -546,7 +546,7 @@ export function apprenticeDeploymentRescindedEmail(data: {
     html: layout(`
       <p class="hero-text">Deployment cancelled, ${greeting}.</p>
       <p class="body-text">
-        <strong>${data.masterName}</strong> has taken the booking back. No strike, no penalty — these things happen.
+        <strong>${data.masterName}</strong> has taken the booking back. No strike, no penalty - these things happen.
       </p>
       <p class="body-text">
         You're back online and free to receive other jobs. Stay sharp.

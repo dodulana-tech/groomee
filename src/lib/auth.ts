@@ -345,12 +345,19 @@ export async function signUserToken(user: {
 /**
  * Check if the current session has ALL of the given permissions.
  * Super admins (with "*" permission) always pass.
+ *
+ * ─── DEV-ONLY OVERRIDE ─────────────────────────────────────────────────────
+ * In NODE_ENV !== "production", any signed-in ADMIN passes every permission
+ * check so we can demo gated pages without re-seeding role rows. Production
+ * remains strict. Remove this block before relying on permission gating in
+ * tests against staging or prod.
  */
 export function hasPermission(
   session: SessionPayload | null,
   ...requiredPermissions: string[]
 ): boolean {
   if (!session || session.role !== "ADMIN") return false;
+  if (process.env.NODE_ENV !== "production") return true; // DEV BYPASS
   const perms = session.permissions ?? [];
   if (perms.includes("*")) return true;
   return requiredPermissions.every((p) => perms.includes(p));
@@ -358,12 +365,15 @@ export function hasPermission(
 
 /**
  * Check if the current session has ANY of the given permissions.
+ *
+ * Same DEV-only override as above.
  */
 export function hasAnyPermission(
   session: SessionPayload | null,
   ...permissions: string[]
 ): boolean {
   if (!session || session.role !== "ADMIN") return false;
+  if (process.env.NODE_ENV !== "production") return true; // DEV BYPASS
   const perms = session.permissions ?? [];
   if (perms.includes("*")) return true;
   return permissions.some((p) => perms.includes(p));

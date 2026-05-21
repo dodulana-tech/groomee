@@ -15,7 +15,7 @@ export default async function AdminCalendarPage({
     orderBy: { name: "asc" },
   });
 
-  const cityOf = (p: (typeof pros)[number]) => p.zones[0]?.zone.city ?? "—";
+  const cityOf = (p: (typeof pros)[number]) => p.zones[0]?.zone.city ?? "-";
   const proList = pros.map((p) => ({ id: p.id, name: p.name, city: cityOf(p) }));
   const initialProId = sp.proId ?? proList[0]?.id ?? null;
   const initialDate = sp.date ?? new Date().toISOString().slice(0, 10);
@@ -27,7 +27,7 @@ export default async function AdminCalendarPage({
           Calendar
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          See a pro's day — bookings, travel between zones, and open windows.
+          See a pro's day - bookings, travel between zones, and open windows.
           Overlaps are auto-rejected at assign time.
         </p>
       </header>

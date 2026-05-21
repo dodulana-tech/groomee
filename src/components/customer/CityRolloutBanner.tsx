@@ -54,7 +54,7 @@ export default function CityRolloutBanner({ liveCities, waitlistCities }: Props)
             firstWait ? "sm:grid-cols-[1fr_auto_1fr]" : "sm:grid-cols-1"
           }`}
         >
-          {/* LIVE — pick the first LIVE city for the hero copy */}
+          {/* LIVE - pick the first LIVE city for the hero copy */}
           {liveCities.slice(0, 1).map((c) => (
             <div
               key={c.id}

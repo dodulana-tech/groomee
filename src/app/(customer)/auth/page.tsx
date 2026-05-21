@@ -46,7 +46,7 @@ function AuthPageContent() {
           ? `We just sent a code to ${phone}`
           : `We just sent a code to ${email}`;
       case "link-phone":
-        return "One more thing — we need your number for booking updates and WhatsApp notifications";
+        return "One more thing - we need your number for booking updates and WhatsApp notifications";
       case "name":
         return "Almost done! What should we call you?";
       default:

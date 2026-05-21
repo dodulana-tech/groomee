@@ -193,7 +193,7 @@ export default function TravelTimesEditor() {
                       }`}
                     >
                       {isSelf ? (
-                        <span className="text-xs text-gray-300">—</span>
+                        <span className="text-xs text-gray-300">-</span>
                       ) : (
                         <input
                           type="number"
