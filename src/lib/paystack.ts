@@ -159,11 +159,13 @@ export async function initiateTransfer({
   recipientCode,
   reason,
   reference,
+  metadata,
 }: {
   amount: number;
   recipientCode: string;
   reason: string;
   reference: string;
+  metadata?: Record<string, unknown>;
 }) {
   return paystackFetch("/transfer", {
     method: "POST",
@@ -173,6 +175,7 @@ export async function initiateTransfer({
       recipient: recipientCode,
       reason,
       reference,
+      ...(metadata ? { metadata } : {}),
     }),
   });
 }

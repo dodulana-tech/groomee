@@ -26,6 +26,8 @@ const DEFAULT_ROLES = [
       "settings.view", "settings.manage_ops", "notes.view", "notes.manage",
       "apprenticeships.view", "apprenticeships.manage",
       "health.view", "health.manage",
+      "products.view", "products.manage",
+      "inventory.view", "inventory.manage",
     ],
     isSystem: false,
   },
@@ -59,6 +61,8 @@ const DEFAULT_ROLES = [
       "dashboard.view", "payouts.view", "payouts.manage", "analytics.view",
       "analytics.export", "settings.view", "settings.manage_finance",
       "advances.view", "advances.manage",
+      "wallet.view", "wallet.manage",
+      "benefits.view", "benefits.manage",
     ],
     isSystem: false,
   },
@@ -496,6 +500,27 @@ async function main() {
     { key: "late_night_end", value: "5" },
     { key: "early_morning_start", value: "5" },
     { key: "early_morning_end", value: "7" },
+    // Wallet release split (must sum to 1.0)
+    { key: "WALLET_MOBILIZATION_FRACTION", value: "0.25" },
+    { key: "WALLET_COMPLETION_FRACTION", value: "0.50" },
+    { key: "WALLET_CONFIRM_FRACTION", value: "0.25" },
+    { key: "WALLET_DEFAULT_CREDIT_LIMIT", value: "0" },
+    // Earnings Reserve / forced savings (Concept #5)
+    { key: "SAVINGS_ENABLED", value: "true" },
+    { key: "SAVINGS_DEFAULT_RATE", value: "0.05" },
+    { key: "SAVINGS_SLIDER_MIN", value: "0.02" },
+    { key: "SAVINGS_SLIDER_MAX", value: "0.15" },
+    { key: "SAVINGS_DEFAULT_NOTICE_DAYS", value: "14" },
+    { key: "SAVINGS_DEFAULT_PENALTY_PCT", value: "0.20" },
+    { key: "SAVINGS_CLAWBACK_HOURS", value: "72" },
+    { key: "SAVINGS_MATCH_BONUS_PCT", value: "0.02" },
+    // Inventory (Concept #2)
+    { key: "INVENTORY_ENABLED", value: "true" },
+    // Legacy throttle key — kept in lockstep with the canonical cooldown
+    // key below so any older readers still resolve a value.
+    { key: "INVENTORY_ALERT_THROTTLE_HOURS", value: "24" },
+    { key: "INVENTORY_LOW_STOCK_ALERT_COOLDOWN_HOURS", value: "24" },
+    { key: "INVENTORY_LOW_STOCK_THRESHOLD_DEFAULT", value: "3" },
   ];
 
   for (const s of settings) {
@@ -726,6 +751,288 @@ async function main() {
     }
   }
   console.log(`✅ ${DEFAULT_CONTRAINDICATIONS.length} health contraindications`);
+
+  // ── BENEFITS (Concept #9) ───────────────────────────────────────────
+  const benefitsSettings = [
+    { key: "BENEFITS_ENABLED", value: "true" },
+    { key: "BENEFITS_MIN_BOOKINGS", value: "5" },
+    { key: "BENEFITS_MIN_TENURE_DAYS", value: "30" },
+    { key: "BENEFITS_GRACE_DAYS", value: "14" },
+    { key: "BENEFITS_PAUSE_DAYS", value: "30" },
+  ];
+  for (const s of benefitsSettings) {
+    await prisma.setting.upsert({
+      where: { key: s.key },
+      update: { value: s.value },
+      create: s,
+    });
+  }
+  console.log(`✅ ${benefitsSettings.length} benefits settings keys`);
+
+  const carePlan = await prisma.benefitPlan.upsert({
+    where: { slug: "groomee-care-bundle" },
+    update: {
+      name: "Groomee Care Bundle",
+      kind: "BUNDLE",
+      provider: "Reliance HMO + Leadway",
+      monthlyPremium: 3100,
+      coverAmount: 1000000,
+      description:
+        "HMO outpatient + ₦1M accident cover for Groomee beauty professionals. Underwritten by Reliance HMO (NHIA Licence) and Leadway (NAICOM RIC). Groomee is not an insurer.",
+      highlights: [
+        "200+ hospitals in Lagos/Abuja",
+        "₦1M accident cover",
+        "Monthly billing",
+        "Cancel anytime",
+      ],
+      minBookings: 5,
+      minTenureDays: 30,
+      isActive: true,
+      sortOrder: 0,
+    },
+    create: {
+      name: "Groomee Care Bundle",
+      slug: "groomee-care-bundle",
+      kind: "BUNDLE",
+      provider: "Reliance HMO + Leadway",
+      monthlyPremium: 3100,
+      coverAmount: 1000000,
+      description:
+        "HMO outpatient + ₦1M accident cover for Groomee beauty professionals. Underwritten by Reliance HMO (NHIA Licence) and Leadway (NAICOM RIC). Groomee is not an insurer.",
+      highlights: [
+        "200+ hospitals in Lagos/Abuja",
+        "₦1M accident cover",
+        "Monthly billing",
+        "Cancel anytime",
+      ],
+      minBookings: 5,
+      minTenureDays: 30,
+      isActive: true,
+      sortOrder: 0,
+    },
+  });
+  console.log(`✅ benefit plan: ${carePlan.name}`);
+
+  const subsidies = [
+    { proTier: "STANDARD", subsidyPct: 0 },
+    { proTier: "PRO", subsidyPct: 0.5 },
+    { proTier: "ELITE", subsidyPct: 1 },
+  ];
+  for (const rule of subsidies) {
+    await prisma.benefitSubsidyRule.upsert({
+      where: {
+        planId_proTier: { planId: carePlan.id, proTier: rule.proTier },
+      },
+      update: { subsidyPct: rule.subsidyPct },
+      create: { planId: carePlan.id, ...rule },
+    });
+  }
+  console.log(`✅ ${subsidies.length} benefit subsidy rules`);
+
+  // ── SAVINGS / EARNINGS RESERVE (Concept #5) ─────────────────────────
+  // Opt in a couple of sample pros at the default 5% rate so the admin
+  // tool has something to render out of the box.
+  const sampleProsForSavings = await prisma.pro.findMany({
+    where: { phone: { in: ["+2348011111101", "+2348011111102"] } },
+    select: { id: true },
+  });
+  for (const p of sampleProsForSavings) {
+    await prisma.proSavingsAccount.upsert({
+      where: { proId: p.id },
+      update: {},
+      create: {
+        proId: p.id,
+        optedIn: true,
+        optedInAt: new Date(),
+        skimRate: 0.05,
+        noticeDays: 14,
+        penaltyPct: 0.20,
+        goalLabels: ["Rent"],
+      },
+    });
+  }
+  console.log(`✅ ${sampleProsForSavings.length} sample pros opted in to Earnings Reserve`);
+
+  // ── PRODUCTS + SERVICE RECIPES + INITIAL STOCK (Concept #2) ───────────────
+  // Catalog of common consumables that pros use across services.
+  const productSeed = [
+    { name: "Relaxer 500ml", slug: "relaxer-500ml", category: "HAIR_CARE", unit: "bottle", unitCost: 3500 },
+    { name: "Leave-in Conditioner 250ml", slug: "leave-in-conditioner-250ml", category: "HAIR_CARE", unit: "bottle", unitCost: 1800 },
+    { name: "Hair Pomade", slug: "hair-pomade", category: "HAIR_CARE", unit: "piece", unitCost: 1200 },
+    { name: "Pre-stretched Braiding Hair", slug: "pre-stretched-braiding-hair", category: "HAIR_CARE", unit: "pack", unitCost: 2500 },
+    { name: "Liquid Foundation 30ml", slug: "liquid-foundation-30ml", category: "MAKEUP", unit: "bottle", unitCost: 5000 },
+    { name: "Liquid Lipstick", slug: "liquid-lipstick", category: "MAKEUP", unit: "piece", unitCost: 2200 },
+    { name: "Mascara", slug: "mascara", category: "MAKEUP", unit: "piece", unitCost: 2800 },
+    { name: "Setting Spray", slug: "setting-spray", category: "MAKEUP", unit: "bottle", unitCost: 3200 },
+    { name: "Gel Polish", slug: "gel-polish", category: "NAILS", unit: "bottle", unitCost: 1500 },
+    { name: "Lash Glue", slug: "lash-glue", category: "LASHES", unit: "bottle", unitCost: 2000 },
+    { name: "Lash Tape", slug: "lash-tape", category: "LASHES", unit: "piece", unitCost: 800 },
+    { name: "Cleansing Toner", slug: "cleansing-toner", category: "SKINCARE", unit: "bottle", unitCost: 2500 },
+    { name: "Hair Clippers Blade", slug: "hair-clippers-blade", category: "TOOLS", unit: "piece", unitCost: 4500 },
+  ] as const;
+
+  const productBySlug = new Map<string, { id: string; name: string }>();
+  for (const p of productSeed) {
+    const row = await prisma.product.upsert({
+      where: { slug: p.slug },
+      update: {
+        name: p.name,
+        category: p.category as any,
+        unit: p.unit,
+        unitCost: p.unitCost,
+        isActive: true,
+      },
+      create: {
+        name: p.name,
+        slug: p.slug,
+        category: p.category as any,
+        unit: p.unit,
+        unitCost: p.unitCost,
+      },
+    });
+    productBySlug.set(p.slug, { id: row.id, name: row.name });
+  }
+  console.log(`✅ ${productSeed.length} products`);
+
+  const recipeSeed: {
+    serviceSlug: string;
+    items: { productSlug: string; qty: number; isOptional?: boolean }[];
+  }[] = [
+    {
+      serviceSlug: "knotless-braids",
+      items: [
+        { productSlug: "leave-in-conditioner-250ml", qty: 1 },
+        { productSlug: "pre-stretched-braiding-hair", qty: 2 },
+        { productSlug: "hair-pomade", qty: 1, isOptional: true },
+      ],
+    },
+    {
+      serviceSlug: "box-braids",
+      items: [
+        { productSlug: "leave-in-conditioner-250ml", qty: 1 },
+        { productSlug: "pre-stretched-braiding-hair", qty: 2 },
+      ],
+    },
+    {
+      serviceSlug: "full-glam-makeup",
+      items: [
+        { productSlug: "liquid-foundation-30ml", qty: 1 },
+        { productSlug: "mascara", qty: 1 },
+        { productSlug: "liquid-lipstick", qty: 1 },
+        { productSlug: "setting-spray", qty: 1, isOptional: true },
+      ],
+    },
+    {
+      serviceSlug: "gel-nails",
+      items: [{ productSlug: "gel-polish", qty: 1 }],
+    },
+    {
+      serviceSlug: "classic-lash-set",
+      items: [
+        { productSlug: "lash-glue", qty: 1 },
+        { productSlug: "lash-tape", qty: 1 },
+      ],
+    },
+    {
+      serviceSlug: "facial-treatment",
+      items: [{ productSlug: "cleansing-toner", qty: 1 }],
+    },
+    {
+      serviceSlug: "fade-shape-up",
+      items: [{ productSlug: "hair-clippers-blade", qty: 1, isOptional: true }],
+    },
+  ];
+
+  let recipeCount = 0;
+  for (const rs of recipeSeed) {
+    const svc = await prisma.service.findUnique({
+      where: { slug: rs.serviceSlug },
+      select: { id: true },
+    });
+    if (!svc) continue;
+    for (const it of rs.items) {
+      const product = productBySlug.get(it.productSlug);
+      if (!product) continue;
+      await prisma.serviceRecipe.upsert({
+        where: {
+          serviceId_productId: { serviceId: svc.id, productId: product.id },
+        },
+        update: {
+          qtyPerService: it.qty,
+          isOptional: it.isOptional ?? false,
+        },
+        create: {
+          serviceId: svc.id,
+          productId: product.id,
+          qtyPerService: it.qty,
+          isOptional: it.isOptional ?? false,
+        },
+      });
+      recipeCount++;
+    }
+  }
+  console.log(`✅ ${recipeCount} service recipes`);
+
+  const initialStockSeed: { proPhone: string; items: { productSlug: string; qty: number }[] }[] = [
+    {
+      proPhone: "+2348011111101", // Chidinma — braids
+      items: [
+        { productSlug: "leave-in-conditioner-250ml", qty: 5 },
+        { productSlug: "pre-stretched-braiding-hair", qty: 8 },
+        { productSlug: "hair-pomade", qty: 4 },
+      ],
+    },
+    {
+      proPhone: "+2348011111102", // Shade — makeup + facial
+      items: [
+        { productSlug: "liquid-foundation-30ml", qty: 5 },
+        { productSlug: "mascara", qty: 5 },
+        { productSlug: "liquid-lipstick", qty: 6 },
+        { productSlug: "setting-spray", qty: 3 },
+      ],
+    },
+  ];
+
+  let initialStockCount = 0;
+  for (const ps of initialStockSeed) {
+    const pro = await prisma.pro.findUnique({
+      where: { phone: ps.proPhone },
+      select: { id: true },
+    });
+    if (!pro) continue;
+    for (const it of ps.items) {
+      const product = productBySlug.get(it.productSlug);
+      if (!product) continue;
+      const existing = await prisma.proInventory.findUnique({
+        where: {
+          proId_productId: { proId: pro.id, productId: product.id },
+        },
+      });
+      if (existing) continue;
+      const inv = await prisma.proInventory.create({
+        data: {
+          proId: pro.id,
+          productId: product.id,
+          qtyOnHand: it.qty,
+          lowStockThreshold: 3,
+          lastRestockedAt: new Date(),
+        },
+      });
+      await prisma.inventoryTxn.create({
+        data: {
+          proId: pro.id,
+          productId: product.id,
+          inventoryId: inv.id,
+          delta: it.qty,
+          qtyAfter: it.qty,
+          reason: "INITIAL_STOCK",
+          note: "Seeded initial stock",
+        },
+      });
+      initialStockCount++;
+    }
+  }
+  console.log(`✅ ${initialStockCount} initial-stock rows`);
 
   console.log("🎉 Seeding complete!");
 }

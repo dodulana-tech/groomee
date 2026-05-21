@@ -2,11 +2,12 @@ import { db } from "./db";
 import { awardPoints, POINTS } from "./points";
 import { sendMessage } from "./whatsapp";
 import { computeEarningsSplit } from "./apprenticeships";
+import type { LowStockAlert } from "./inventory";
 
 export default async function autoConfirm(bookingId: string) {
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
-    include: { payment: true, customer: true },
+    include: { payment: true, customer: true, pro: true },
   });
 
   if (!booking || booking.status !== "COMPLETED") return;
@@ -15,13 +16,17 @@ export default async function autoConfirm(bookingId: string) {
   // Compute apprenticeship split BEFORE the transaction (does its own reads).
   const split = await computeEarningsSplit(booking.proId, booking.proEarning);
 
-  // Atomic: conditional update prevents double-confirm race
-  const confirmed = await db.$transaction(async (tx) => {
+  // Atomic: conditional update prevents double-confirm race. Returns
+  // { confirmed, inventoryAlerts } so we can dispatch low-stock WhatsApps
+  // AFTER the tx commits (otherwise a rollback would still fire them).
+  const result = await db.$transaction(async (tx) => {
     const updated = await tx.booking.updateMany({
       where: { id: bookingId, status: "COMPLETED" },
       data: { status: "CONFIRMED", confirmedAt: new Date() },
     });
-    if (updated.count === 0) return false;
+    if (updated.count === 0) {
+      return { confirmed: false, inventoryAlerts: [] as LowStockAlert[] };
+    }
 
     // Only update payment if it exists
     if (booking.payment) {
@@ -87,6 +92,19 @@ export default async function autoConfirm(bookingId: string) {
       });
     }
 
+    // Final wallet release.
+    const { releaseConfirm } = await import("./wallet-releases");
+    await releaseConfirm(bookingId, tx);
+
+    // Concept #5: forced-savings skim (no-op until savings slice wired).
+    const { maybeSkimSavingsForBooking } = await import("./savings");
+    await maybeSkimSavingsForBooking(bookingId, tx);
+
+    // Concept #2: inventory auto-decrement from service recipes. Captured
+    // here, dispatched as WhatsApp AFTER the tx commits below.
+    const { decrementInventoryForBooking } = await import("./inventory");
+    const inventoryAlerts = await decrementInventoryForBooking(bookingId, tx);
+
     await tx.pro.update({
       where: { id: booking.proId! },
       data: {
@@ -96,10 +114,19 @@ export default async function autoConfirm(bookingId: string) {
       },
     });
 
-    return true;
+    return { confirmed: true, inventoryAlerts };
   });
 
-  if (!confirmed) return; // Already confirmed by another path
+  if (!result.confirmed) return; // Already confirmed by another path
+
+  // Concept #2: post-commit low-stock alerts (fire-and-forget).
+  if (result.inventoryAlerts.length > 0 && booking.pro?.phone) {
+    import("./whatsapp")
+      .then(({ notifyProLowStock }) =>
+        notifyProLowStock(booking.pro!.phone, result.inventoryAlerts),
+      )
+      .catch(console.error);
+  }
 
   await awardPoints(
     booking.customerId,

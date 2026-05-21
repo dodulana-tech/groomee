@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
 import autoConfirm from "@/lib/auto-confirm";
+import { runMaturityCron } from "@/lib/savings";
+import { notifyProSavingsWithdrawalEligible } from "@/lib/whatsapp";
 
 // Called every 5 minutes by Vercel Cron
 export async function GET(req: NextRequest) {
@@ -32,9 +34,38 @@ export async function GET(req: NextRequest) {
     data: { status: "NO_GROOMER" },
   });
 
+  // Earnings Reserve maturity tick: flip PENDING → ELIGIBLE on withdrawals
+  // whose notice has elapsed, and mature any in-window SKIM rows past the
+  // clawback cutoff. Best-effort; never blocks other cron work.
+  let savingsTick: Awaited<ReturnType<typeof runMaturityCron>> | null = null;
+  try {
+    // Find which withdrawals are about to be matured so we can notify the
+    // pros afterwards.
+    const toNotify = await db.savingsWithdrawal.findMany({
+      where: {
+        status: "PENDING",
+        isInstant: false,
+        noticeUntil: { lte: now },
+      },
+      include: { pro: { select: { phone: true } } },
+    });
+    savingsTick = await runMaturityCron();
+    for (const w of toNotify) {
+      if (!w.pro?.phone) continue;
+      try {
+        await notifyProSavingsWithdrawalEligible(w.pro.phone, w.netAmount);
+      } catch (err) {
+        console.error("[cron] savings eligible notify failed", err);
+      }
+    }
+  } catch (err) {
+    console.error("[cron] savings maturity tick failed", err);
+  }
+
   return NextResponse.json({
     ok: true,
     autoConfirmed: staleCompleted.length,
+    savings: savingsTick,
     timestamp: now.toISOString(),
   });
 }

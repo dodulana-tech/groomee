@@ -185,22 +185,28 @@ export async function handleProResponse(
   });
 
   if (response === "YES") {
-    // Transactional accept — atomic booking + pro update
-    await db.$transaction([
-      db.booking.update({
+    // Transactional accept — atomic booking + pro update + mobilization release.
+    // The wallet mobilization sits inside the same tx so a partial accept (booking
+    // updated, money post-failed) can never happen.
+    await db.$transaction(async (tx) => {
+      await tx.booking.update({
         where: { id: booking.id },
         data: {
           proId,
           status: "ACCEPTED",
           acceptedAt: new Date(),
         },
-      }),
+      });
       // Only mark pro BUSY if they're still ONLINE (prevents double-booking)
-      db.pro.update({
+      await tx.pro.update({
         where: { id: proId },
         data: { availability: "BUSY", currentBookingId: booking.id },
-      }),
-    ]);
+      });
+      // Front-load mobilization to the pro's wallet so they have cash for
+      // transport/supplies before the job runs.
+      const { releaseMobilization } = await import("./wallet-releases");
+      await releaseMobilization(booking.id, tx);
+    });
 
     // Fire-and-forget health care-notes email — only if the customer has
     // shareable conditions that actually apply to the chosen service set.

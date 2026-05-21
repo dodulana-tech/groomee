@@ -4,6 +4,15 @@ import { db } from "@/lib/db";
 import { initiateTransfer, createTransferRecipient } from "@/lib/paystack";
 import { startOfWeek, endOfWeek, subWeeks } from "date-fns";
 import { logAdminAction } from "@/lib/admin-audit";
+import { postMovement, getWallet, loadAdvanceRepayRate } from "@/lib/wallet";
+import {
+  notifyProPayoutInitiated,
+  notifyProAdvanceRepayment,
+} from "@/lib/whatsapp";
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}
 
 export async function GET() {
   try {
@@ -24,7 +33,7 @@ export async function GET() {
     });
 
     const summary = await Promise.all(
-      prosWithEarnings.map(async (g) => {
+      prosWithEarnings.map(async (g: (typeof prosWithEarnings)[number]) => {
         const agg = await db.earning.aggregate({
           where: { proId: g.id, paid: false },
           _sum: { amount: true },
@@ -67,6 +76,9 @@ export async function POST(req: NextRequest) {
     const periodStart = startOfWeek(subWeeks(now, 1));
     const periodEnd = endOfWeek(subWeeks(now, 1));
 
+    // Pull the configurable advance-repayment rate once per batch.
+    const advanceRepayRate = await loadAdvanceRepayRate();
+
     const results = [];
 
     for (const proId of proIds) {
@@ -104,19 +116,37 @@ export async function POST(req: NextRequest) {
           bankCode: pro.bankName, // assumes bankName stores code
         });
 
+        // ─── Advance repayment split ────────────────────────────────────
+        // If the pro owes a net advance, redirect up to 30% of this payout
+        // to ADVANCE_REPAYMENT before debiting the rest as PAYOUT_DEBIT.
+        const wallet = await getWallet(proId);
+        const owed = wallet?.netAdvanceOwed ?? 0;
+        const repayCap = round2(amount * advanceRepayRate);
+        const repayAmount = owed > 0 ? Math.min(owed, repayCap) : 0;
+        const payoutNet = round2(amount - repayAmount);
+
+        if (payoutNet < 500) {
+          results.push({
+            proId,
+            success: false,
+            reason: `Net after advance repayment (₦${payoutNet}) below minimum.`,
+          });
+          continue;
+        }
+
         const transferRef = `PAY-${proId.slice(-8)}-${Date.now()}`;
         const transfer = (await initiateTransfer({
-          amount,
+          amount: payoutNet,
           recipientCode,
           reason: `Groomee payout - week ending ${periodEnd.toDateString()}`,
           reference: transferRef,
         })) as { data: { transfer_code: string } };
 
-        // Create payout record
+        // Create payout record (amount is the NET amount actually transferred)
         const payout = await db.payout.create({
           data: {
             proId,
-            amount,
+            amount: payoutNet,
             status: "PROCESSING",
             paystackTransferId: transfer.data.transfer_code,
             recipientCode,
@@ -131,7 +161,49 @@ export async function POST(req: NextRequest) {
           data: { paid: true, payoutId: payout.id },
         });
 
-        results.push({ proId, success: true, amount, payoutId: payout.id });
+        // ─── Wallet ledger postings ─────────────────────────────────────
+        // Best-effort — log loud if either fails, since admin needs to repair.
+        try {
+          if (repayAmount > 0) {
+            await postMovement({
+              proId,
+              type: "ADVANCE_REPAYMENT",
+              amount: -repayAmount,
+              payoutId: payout.id,
+              note: `Advance repayment deducted from payout ${payout.id}`,
+              idempotencyKey: `payout:${payout.id}:ADVANCE_REPAYMENT`,
+            });
+            if (pro.phone) {
+              const remainingOwed = Math.max(0, round2(owed - repayAmount));
+              notifyProAdvanceRepayment(pro.phone, repayAmount, remainingOwed).catch((err) => {
+                console.error("[payout] repayment notify failed", err);
+              });
+            }
+          }
+          await postMovement({
+            proId,
+            type: "PAYOUT_DEBIT",
+            amount: -payoutNet,
+            payoutId: payout.id,
+            note: `Payout transfer ${transferRef}`,
+            idempotencyKey: `payout:${payout.id}:DEBIT`,
+          });
+          if (pro.phone) {
+            notifyProPayoutInitiated(pro.phone, payoutNet).catch((err) => {
+              console.error("[payout] notify failed", err);
+            });
+          }
+        } catch (walletErr) {
+          console.error(`[payout] wallet posting failed for ${payout.id}`, walletErr);
+        }
+
+        results.push({
+          proId,
+          success: true,
+          amount: payoutNet,
+          payoutId: payout.id,
+          ...(repayAmount > 0 ? { repaidFromAdvance: repayAmount } : {}),
+        });
       } catch (err) {
         console.error(`Payout failed for pro ${proId}:`, err);
         results.push({ proId, success: false, reason: "Payout processing failed" });
@@ -148,7 +220,10 @@ export async function POST(req: NextRequest) {
         metadata: {
           attemptedCount: results.length,
           successCount: successful.length,
-          totalAmount: successful.reduce((sum, r) => sum + (r.amount ?? 0), 0),
+          totalAmount: successful.reduce(
+            (sum, r) => sum + (("amount" in r && typeof r.amount === "number") ? r.amount : 0),
+            0,
+          ),
           proIds: successful.map((r) => r.proId),
         },
       });

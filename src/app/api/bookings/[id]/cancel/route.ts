@@ -87,6 +87,14 @@ export async function POST(
       // intact. Reverse them all here. For statuses below CONFIRMED there
       // typically won't be any earnings rows yet, so deleteMany no-ops.
       await reverseEarningsForBooking(booking.id, 1, tx);
+      // Mirror the clawback on the wallet ledger so the running balance and
+      // ledger forensics stay in sync with the immutable Earning rows.
+      const { clawbackBooking } = await import("@/lib/wallet-releases");
+      await clawbackBooking(booking.id, 1, tx);
+
+      // Concept #5: reverse any in-window savings skim (no-op outside window).
+      const { clawbackSavingsForBooking } = await import("@/lib/savings");
+      await clawbackSavingsForBooking(booking.id, 1, tx);
 
       if (booking.proId) {
         await tx.pro.update({

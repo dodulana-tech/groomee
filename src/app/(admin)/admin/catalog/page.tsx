@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { formatNaira } from "@/lib/utils";
 
 interface Service {
@@ -226,12 +227,20 @@ export default function AdminCatalogPage() {
                             </button>
                           </td>
                           <td className="px-4 py-3">
-                            <button
-                              onClick={() => openEdit(svc)}
-                              className="text-xs font-semibold text-gray-400 hover:text-gray-700"
-                            >
-                              Edit
-                            </button>
+                            <div className="flex items-center justify-end gap-3">
+                              <Link
+                                href={`/admin/services/${svc.id}/recipe`}
+                                className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+                              >
+                                Recipe
+                              </Link>
+                              <button
+                                onClick={() => openEdit(svc)}
+                                className="text-xs font-semibold text-gray-400 hover:text-gray-700"
+                              >
+                                Edit
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -78,6 +78,29 @@ services:
           type: web
           property: url
 
+  # Benefits debit cron — runs daily at 02:00 UTC. The runner is idempotent
+  # per (enrolment, period) so daily firing produces at most one debit per
+  # month; daily runs power grace-period nudges and PAUSED → CANCELLED
+  # transitions.
+  - type: cron
+    name: groomee-benefits
+    runtime: node
+    schedule: "0 2 * * *"
+    buildCommand: echo "no build needed"
+    startCommand: |
+      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/benefits"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: groomee
+          type: web
+          envVarKey: CRON_SECRET
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: groomee
+          type: web
+          property: url
+
 databases:
   - name: groomee-db
     plan: starter
