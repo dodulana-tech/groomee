@@ -4,6 +4,27 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatNaira } from "@/lib/utils";
 
+interface ReserveSummary {
+  optedIn: boolean;
+  balanceAvailable: number;
+  totalBalance: number;
+  goals: { name: string; sortOrder: number }[];
+}
+
+interface BenefitsHint {
+  hasEnrollment: boolean;
+  status: string | null;
+  planName: string | null;
+  graceUntil: string | null;
+  anyEligible: boolean;
+  cheapestNetDebit: number | null;
+}
+
+interface InventoryHint {
+  productsTracked: number;
+  lowCount: number;
+}
+
 interface DashboardData {
   todayBookings: number;
   weeklyEarnings: number;
@@ -46,6 +67,10 @@ const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; ne
 
 export default function PartnerDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [walletAvailable, setWalletAvailable] = useState<number | null>(null);
+  const [reserve, setReserve] = useState<ReserveSummary | null>(null);
+  const [benefits, setBenefits] = useState<BenefitsHint | null>(null);
+  const [inventory, setInventory] = useState<InventoryHint | null>(null);
   const [toggling, setToggling] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -66,6 +91,64 @@ export default function PartnerDashboard() {
         }
       })
       .catch(() => setFetchError("Could not load dashboard. Pull down to retry."));
+    // Wallet summary is best-effort — never block dashboard rendering on it.
+    fetch("/api/partner/wallet/summary")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j?.success) setWalletAvailable(j.data.available);
+      })
+      .catch(() => {});
+    // Benefits overview is best-effort — never block dashboard rendering on it.
+    fetch("/api/partner/benefits/overview")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!j?.success) return;
+        const enr = j.data.enrollment;
+        const anyEligible =
+          Array.isArray(j.data.eligibility) &&
+          j.data.eligibility.some((e: { eligible: boolean }) => e.eligible);
+        const cheapest = Array.isArray(j.data.eligiblePlans)
+          ? j.data.eligiblePlans.reduce(
+              (lo: number | null, p: { netDebit: number }) =>
+                lo === null || p.netDebit < lo ? p.netDebit : lo,
+              null,
+            )
+          : null;
+        setBenefits({
+          hasEnrollment: !!enr,
+          status: enr?.status ?? null,
+          planName: enr?.plan?.name ?? null,
+          graceUntil: enr?.graceUntil ?? null,
+          anyEligible,
+          cheapestNetDebit: cheapest,
+        });
+      })
+      .catch(() => {});
+    // Reserve summary is best-effort — used by the nudge/badge below. Never
+    // blocks dashboard render.
+    fetch("/api/partner/reserve/summary")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!j?.success) return;
+        setReserve({
+          optedIn: j.data.optedIn,
+          balanceAvailable: j.data.balanceAvailable,
+          totalBalance: j.data.totalBalance,
+          goals: j.data.goals,
+        });
+      })
+      .catch(() => {});
+    // Inventory hint is decorative — silently ignored on failure.
+    fetch("/api/partner/inventory/summary")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!j?.success) return;
+        setInventory({
+          productsTracked: j.data.productsTracked,
+          lowCount: j.data.lowCount,
+        });
+      })
+      .catch(() => {});
   }
 
   // Initial fetch + poll every 30 seconds
@@ -132,12 +215,42 @@ export default function PartnerDashboard() {
 
   const tier = TIER_CONFIG[data.tier] ?? TIER_CONFIG.STANDARD;
 
+  const benefitsGraceUntilDate = benefits?.graceUntil ? new Date(benefits.graceUntil) : null;
+  const benefitsGraceLabel = benefitsGraceUntilDate
+    ? benefitsGraceUntilDate.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      })
+    : null;
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      {/* Benefits GRACE alert (top priority - cover at risk) */}
+      {benefits?.status === "GRACE" && (
+        <Link
+          href="/partner/benefits"
+          className="block rounded-2xl border border-red-200 bg-red-50 p-4 shadow-lg hover:bg-red-100 transition"
+        >
+          <p className="text-sm font-bold text-red-700">
+            ⚠️ Premium failed — top up your wallet by {benefitsGraceLabel ?? "your grace deadline"} →
+          </p>
+          <p className="mt-1 text-xs text-red-600">
+            Your {benefits.planName ?? "benefits"} cover pauses if your wallet stays short.
+          </p>
+        </Link>
+      )}
+
       {/* Header with availability toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            {benefits?.status === "ACTIVE" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-bold text-green-700">
+                🛡️ Cover active
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
             Welcome back. Here&apos;s your overview.
           </p>
@@ -200,8 +313,49 @@ export default function PartnerDashboard() {
           <p className="mt-1 text-3xl font-black text-amber-600">
             {formatNaira(data.pendingBalance)}
           </p>
+          {walletAvailable !== null && walletAvailable > 0 && (
+            <Link
+              href="/partner/wallet"
+              className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-brand-700 hover:underline"
+            >
+              👛 Wallet → {formatNaira(walletAvailable)}
+            </Link>
+          )}
         </div>
       </div>
+
+      {/* Earnings Reserve nudge / passive badge. The nudge appears once a pro
+          has completed 3+ jobs (small social proof — they've been paid before)
+          and hasn't opted in. After opt-in we replace it with a low-key
+          balance badge so the dashboard stays calm. */}
+      {reserve && !reserve.optedIn && data.totalJobs >= 3 && (
+        <Link
+          href="/partner/reserve"
+          className="block glass rounded-2xl border border-white/20 p-5 shadow-lg hover:bg-white/80 transition"
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-3xl">🏦</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-gray-900">Build a cushion.</p>
+              <p className="text-xs text-gray-500 leading-snug mt-0.5">
+                Your next booking can start saving for rent, school, or new
+                tools. Try Reserve →
+              </p>
+            </div>
+          </div>
+        </Link>
+      )}
+      {reserve && reserve.optedIn && (
+        <Link
+          href="/partner/reserve"
+          className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-100 transition"
+        >
+          🏦 Reserve: {formatNaira(reserve.totalBalance)}
+          <span className="font-medium text-brand-600">
+            · {reserve.goals[0]?.name ?? "cushion"}
+          </span>
+        </Link>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Performance card */}
@@ -304,6 +458,12 @@ export default function PartnerDashboard() {
               className="flex items-center gap-3 glass-card rounded-xl p-3 text-sm font-semibold text-gray-700 hover:bg-white/90 transition"
             >
               💰 View earnings
+            </Link>
+            <Link
+              href="/partner/wallet"
+              className="flex items-center gap-3 glass-card rounded-xl p-3 text-sm font-semibold text-gray-700 hover:bg-white/90 transition"
+            >
+              👛 Open wallet
             </Link>
             <Link
               href="/partner/schedule"
