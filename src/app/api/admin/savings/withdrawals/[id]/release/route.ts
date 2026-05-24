@@ -31,6 +31,25 @@ export async function POST(
   if (existing.status === "PAID") {
     return NextResponse.json({ success: true, data: existing });
   }
+  // SECURITY: only ELIGIBLE — or PENDING whose notice has elapsed — may proceed
+  // to a Paystack transfer. CANCELLED / FAILED have already restored balance to
+  // the pro's available bucket; releasing them would double-pay. Premature
+  // PENDING release would be re-paid by the cron once notice elapses.
+  const noticeElapsed =
+    existing.status === "PENDING" &&
+    existing.noticeUntil instanceof Date &&
+    existing.noticeUntil.getTime() <= Date.now();
+  if (existing.status !== "ELIGIBLE" && !noticeElapsed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Cannot release a withdrawal in status ${existing.status}${
+          existing.status === "PENDING" ? " (notice period not yet elapsed)" : ""
+        }`,
+      },
+      { status: 409 },
+    );
+  }
   if (!existing.pro.bankAccount || !existing.pro.bankName) {
     return NextResponse.json(
       { success: false, error: "Pro missing bank details — set them on the pro profile first." },
