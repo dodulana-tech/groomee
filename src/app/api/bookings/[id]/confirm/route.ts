@@ -6,6 +6,7 @@ import {
   computeEarningsSplit,
   computeEarningsSplitFromApprenticeshipId,
 } from "@/lib/apprenticeships";
+import type { LowStockAlert } from "@/lib/inventory";
 
 export async function POST(
   req: NextRequest,
@@ -52,13 +53,17 @@ export async function POST(
         )
       : await computeEarningsSplit(booking.proId, booking.proEarning);
 
-    // Atomic: conditional update prevents double-confirm race
-    const confirmed = await db.$transaction(async (tx) => {
+    // Atomic: conditional update prevents double-confirm race. Returns
+    // { confirmed, inventoryAlerts } so we can dispatch the low-stock
+    // WhatsApp AFTER the tx commits (a rollback must NOT send alerts).
+    const result = await db.$transaction(async (tx) => {
       const updated = await tx.booking.updateMany({
         where: { id, status: "COMPLETED" },
         data: { status: "CONFIRMED", confirmedAt: new Date() },
       });
-      if (updated.count === 0) return false; // Already confirmed by concurrent request
+      if (updated.count === 0) {
+        return { confirmed: false, inventoryAlerts: [] as LowStockAlert[] };
+      } // Already confirmed by concurrent request
 
       if (booking.payment) {
         await tx.payment.update({
@@ -100,6 +105,20 @@ export async function POST(
         });
       }
 
+      // Final wallet release. Catches up whatever's still owed against
+      // proEarning after mobilization + completion have posted.
+      const { releaseConfirm } = await import("@/lib/wallet-releases");
+      await releaseConfirm(id, tx);
+
+      // Concept #5: forced-savings skim (no-op until savings slice wired).
+      const { maybeSkimSavingsForBooking } = await import("@/lib/savings");
+      await maybeSkimSavingsForBooking(id, tx);
+
+      // Concept #2: inventory auto-decrement from service recipes. Captured
+      // here, dispatched as WhatsApp AFTER the tx commits below.
+      const { decrementInventoryForBooking } = await import("@/lib/inventory");
+      const inventoryAlerts = await decrementInventoryForBooking(id, tx);
+
       await tx.pro.update({
         where: { id: booking.proId! },
         data: {
@@ -109,11 +128,20 @@ export async function POST(
         },
       });
 
-      return true;
+      return { confirmed: true, inventoryAlerts };
     });
 
-    if (!confirmed) {
+    if (!result.confirmed) {
       return NextResponse.json({ success: true }); // Idempotent — already confirmed
+    }
+
+    // Concept #2: post-commit low-stock alerts (fire-and-forget).
+    if (result.inventoryAlerts.length > 0 && booking.pro?.phone) {
+      import("@/lib/whatsapp")
+        .then(({ notifyProLowStock }) =>
+          notifyProLowStock(booking.pro!.phone, result.inventoryAlerts),
+        )
+        .catch(console.error);
     }
 
     // Award points for booking confirmation

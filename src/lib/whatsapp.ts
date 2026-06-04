@@ -134,6 +134,100 @@ export async function sendProBalanceInfo(phone: string, pending: number, nextPay
   return sendMessage(phone, `💰 *Your Groomee Balance*\n\nPending earnings: ₦${pending.toLocaleString()}\nNext payout: ${nextPayout}\n\nPayouts are sent every Friday. Contact admin if you have questions.`);
 }
 
+// ─── WALLET NOTIFICATIONS ────────────────────────────────────────────────────
+// Posted by booking-lifecycle release helpers (after tx commit) and by
+// admin manual adjustments. All amounts are positive NGN figures (caller
+// passes the absolute value), the type of movement is communicated in copy.
+
+export async function notifyProMobilizationCredited(
+  phone: string,
+  amount: number,
+  bookingRef: string,
+) {
+  return sendMessage(
+    phone,
+    `💵 *Transport money credited*\n\n₦${amount.toLocaleString()} has been released to your wallet for booking *${bookingRef}* so you can mobilize. Safe travels - more comes through once you mark the job DONE. 💚`,
+  );
+}
+
+export async function notifyProCompletionRelease(
+  phone: string,
+  amount: number,
+  bookingRef: string,
+) {
+  return sendMessage(
+    phone,
+    `✨ *Earning released*\n\n₦${amount.toLocaleString()} has been credited to your wallet for booking *${bookingRef}* (job marked done). The final slice unlocks once the customer confirms. 💚`,
+  );
+}
+
+export async function notifyProConfirmRelease(
+  phone: string,
+  amount: number,
+  bookingRef: string,
+) {
+  return sendMessage(
+    phone,
+    `🎉 *Final earning released*\n\n₦${amount.toLocaleString()} is now in your wallet - the customer confirmed booking *${bookingRef}*. Great work. 💚`,
+  );
+}
+
+export async function notifyProClawback(
+  phone: string,
+  amount: number,
+  reason: string,
+) {
+  return sendMessage(
+    phone,
+    `↩️ *Wallet adjustment*\n\n₦${amount.toLocaleString()} has been clawed back from your wallet.\n\nReason: ${reason}\n\nContact admin if you have questions.`,
+  );
+}
+
+export async function notifyProManualAdjustment(
+  phone: string,
+  amount: number,
+  note: string,
+) {
+  const sign = amount >= 0 ? "credited to" : "deducted from";
+  const abs = Math.abs(amount);
+  return sendMessage(
+    phone,
+    `💼 *Admin adjustment*\n\n₦${abs.toLocaleString()} has been ${sign} your wallet.\n\nNote: ${note}\n\nContact admin if you have questions.`,
+  );
+}
+
+export async function notifyProPayoutInitiated(phone: string, amount: number) {
+  return sendMessage(
+    phone,
+    `🏦 *Payout on the way*\n\nWe've initiated a payout of ₦${amount.toLocaleString()} to your registered bank. Funds typically arrive within minutes.`,
+  );
+}
+
+export async function notifyProPayoutReversed(phone: string, amount: number) {
+  return sendMessage(
+    phone,
+    `⚠️ *Payout returned*\n\nYour bank rejected a payout of ₦${amount.toLocaleString()}. The amount has been returned to your wallet. Please update your bank details if they have changed.`,
+  );
+}
+
+export async function notifyProAdvanceDisbursed(phone: string, amount: number) {
+  return sendMessage(
+    phone,
+    `🤝 *Advance disbursed*\n\nAn advance of ₦${amount.toLocaleString()} has been credited to your wallet. Repayment is automatic - up to 30% of each future payout will be applied until cleared.`,
+  );
+}
+
+export async function notifyProAdvanceRepayment(
+  phone: string,
+  amount: number,
+  remaining: number,
+) {
+  return sendMessage(
+    phone,
+    `📉 *Advance repayment*\n\n₦${amount.toLocaleString()} from your latest payout has been applied to your advance.\n\nRemaining balance owed: ₦${remaining.toLocaleString()}.`,
+  );
+}
+
 // ─── APPRENTICESHIP NOTIFICATIONS ────────────────────────────────────────────
 
 export async function notifyApprenticeInvited(phone: string, masterName: string, acceptUrl: string) {
@@ -268,6 +362,234 @@ export async function notifyApprenticeDeploymentRescinded({
   return sendMessage(
     apprenticePhone,
     `↩️ Heads up - *${masterName}* has rescinded the booking deployment they sent you. The booking is back with them.\n\nYou are now back online and free to receive other jobs. No strike, no penalty.`,
+  );
+}
+
+// ─── BENEFITS / INSURANCE NOTIFICATIONS ──────────────────────────────────────
+//
+// Pros enrol via admin (and soon self-service). The cron posts a monthly
+// BENEFIT_PREMIUM debit; if the wallet can't cover it we cascade
+// GRACE → PAUSED → CANCELLED. We never deduct from the savings Reserve.
+
+export async function notifyProBenefitEnrolled(
+  phone: string,
+  planName: string,
+  premium: number,
+  nextDebitAt: Date,
+) {
+  return sendMessage(
+    phone,
+    `🛡️ *You're enrolled in ${planName}!*\n\nYour cover starts today. Monthly premium ₦${premium.toLocaleString()} will be debited from your Groomee wallet on the 1st of every month.\n\nNext debit: ${nextDebitAt.toDateString()}\n\nInsurance underwritten by Reliance HMO (NHIA) and Leadway (NAICOM). Groomee is not an insurer.`,
+  );
+}
+
+export async function notifyProBenefitDebitSuccess(
+  phone: string,
+  planName: string,
+  amount: number,
+  period: string,
+) {
+  return sendMessage(
+    phone,
+    `✅ *Premium paid - ${planName}*\n\n₦${amount.toLocaleString()} debited from your wallet for ${period}. Your cover remains active. Stay safe out there. 💚`,
+  );
+}
+
+export async function notifyProBenefitInsufficientFunds(
+  phone: string,
+  planName: string,
+  amount: number,
+  graceUntil: Date,
+) {
+  return sendMessage(
+    phone,
+    `⚠️ *Top up to keep your cover - ${planName}*\n\nWe couldn't debit ₦${amount.toLocaleString()} from your wallet today. Your cover is still active until *${graceUntil.toDateString()}*.\n\nTop up your wallet before then or your cover will pause. We never touch your Reserve savings.`,
+  );
+}
+
+export async function notifyProBenefitGraceReminder(
+  phone: string,
+  planName: string,
+  amount: number,
+  daysLeft: number,
+) {
+  return sendMessage(
+    phone,
+    `🛟 *Grace period reminder - ${planName}*\n\n${daysLeft} day${daysLeft === 1 ? "" : "s"} left to top up. We need ₦${amount.toLocaleString()} in your wallet to keep your HMO + accident cover live.\n\nIf the wallet is still short after grace, cover pauses. Your savings Reserve is never touched.`,
+  );
+}
+
+export async function notifyProBenefitPaused(
+  phone: string,
+  planName: string,
+  daysToReactivate: number,
+) {
+  return sendMessage(
+    phone,
+    `⏸️ *Cover paused - ${planName}*\n\nYour grace window has passed and your cover is now paused. You have ${daysToReactivate} days to reactivate by paying back-premiums; after that, re-enrolment needs a fresh 30-day waiting period.`,
+  );
+}
+
+export async function notifyProBenefitCancelled(phone: string, planName: string) {
+  return sendMessage(
+    phone,
+    `❌ *Cover cancelled - ${planName}*\n\nYour benefit cover has been cancelled. You can re-enrol any time, but a fresh 30-day waiting period applies before cover starts again.`,
+  );
+}
+
+export async function notifyProBenefitClaimOpened(
+  phone: string,
+  planName: string,
+  externalRef: string | null,
+) {
+  const refLine = externalRef ? `\n\nClaim ref: *${externalRef}*` : "";
+  return sendMessage(
+    phone,
+    `📝 *Claim logged - ${planName}*\n\nWe've logged a benefit claim on your file.${refLine}\n\nReminder: actual claim processing happens directly with the HMO / insurer. Groomee does not handle medical detail.`,
+  );
+}
+
+// ─── INVENTORY NOTIFICATIONS ─────────────────────────────────────────────────
+//
+// Posted after a booking confirm tx commits, bundling every product that
+// crossed its low-stock threshold into a single WhatsApp. Throttle is
+// enforced on the inventory side via ProInventory.lastAlertSentAt.
+
+export async function notifyProLowStock(
+  phone: string,
+  alerts: { productName: string; qtyLeft: number; threshold: number }[],
+) {
+  if (alerts.length === 0) return { success: false, error: "empty alerts" };
+  const lines = alerts
+    .map(
+      (a) =>
+        `- ${a.productName}: ${a.qtyLeft} left (threshold ${a.threshold})`,
+    )
+    .join("\n");
+  return sendMessage(
+    phone,
+    `📦 *Low stock alert*\n\nThese products are running low:\n${lines}\n\nReady for restock? Reach out to admin or update your stock in the app. 💚`,
+  );
+}
+
+export async function notifyProRestockLogged(
+  phone: string,
+  productName: string,
+  newQty: number,
+) {
+  return sendMessage(
+    phone,
+    `📦 *Stock updated*\n\n${productName} is now ${newQty} on hand. Keep up the great work! 💚`,
+  );
+}
+
+// ─── EARNINGS RESERVE / SAVINGS ──────────────────────────────────────────────
+//
+// "Earnings Reserve" is the customer-facing brand name. Never say "savings
+// account" or "deposit" or "yield" — that would mislead. Match bonus is
+// "Groomee loyalty top-up", not "interest".
+
+export async function notifyProSavingsSkim(
+  phone: string,
+  amount: number,
+  reserveBalance: number,
+  bookingRef: string,
+) {
+  return sendMessage(
+    phone,
+    `🏦 Earnings Reserve update\n\nWe set aside *₦${amount.toLocaleString()}* from booking ${bookingRef} into your Reserve.\n\nReserve balance: *₦${reserveBalance.toLocaleString()}*\n\nYou chose this savings rate. Adjust it any time in the Groomee app. 💚`,
+  );
+}
+
+export async function notifyProSavingsClawback(
+  phone: string,
+  amount: number,
+  bookingRef: string,
+) {
+  return sendMessage(
+    phone,
+    `↩️ Earnings Reserve adjustment\n\nBooking ${bookingRef} was refunded within the clawback window, so we returned *₦${amount.toLocaleString()}* from your Reserve back to your wallet.\n\nNo penalty - this is part of how the Reserve protects you.`,
+  );
+}
+
+export async function notifyProSavingsWithdrawalRequested(
+  phone: string,
+  amount: number,
+  isInstant: boolean,
+  noticeUntil?: Date | null,
+) {
+  if (isInstant) {
+    return sendMessage(
+      phone,
+      `🏃🏿 Instant Reserve withdrawal received\n\nYou asked to take *₦${amount.toLocaleString()}* now (instant break). We'll process it shortly. The penalty was deducted up front.\n\nNeed a hand? Reply *HELP*.`,
+    );
+  }
+  const noticeStr = noticeUntil
+    ? `Eligible on ${noticeUntil.toDateString()}`
+    : "Eligible after notice period";
+  return sendMessage(
+    phone,
+    `📥 Reserve withdrawal scheduled\n\nWe got your request to withdraw *₦${amount.toLocaleString()}*.\n\n${noticeStr}.\n\nWhen the notice elapses we'll release the funds plus a Groomee loyalty top-up. 💚`,
+  );
+}
+
+export async function notifyProSavingsWithdrawalEligible(
+  phone: string,
+  amount: number,
+) {
+  return sendMessage(
+    phone,
+    `✅ Your Reserve withdrawal of *₦${amount.toLocaleString()}* is now eligible\n\nGroomee will pay it out shortly. Watch this number for confirmation. 💚`,
+  );
+}
+
+export async function notifyProSavingsWithdrawalPaid(
+  phone: string,
+  amount: number,
+  matchBonus: number,
+) {
+  const bonusLine = matchBonus > 0
+    ? `\n🎁 Groomee loyalty top-up: *₦${matchBonus.toLocaleString()}*`
+    : "";
+  return sendMessage(
+    phone,
+    `💸 Reserve payout complete\n\nWe sent *₦${amount.toLocaleString()}* to your bank.${bonusLine}\n\nThank you for saving with Groomee. 💚`,
+  );
+}
+
+export async function notifyProSavingsOptIn(phone: string, rate: number) {
+  return sendMessage(
+    phone,
+    `🏦 You're enrolled in Earnings Reserve\n\nWe'll set aside *${(rate * 100).toFixed(1)}%* of every confirmed booking into your private Reserve.\n\nYou can change the rate, withdraw, or opt out at any time. Reply *RESERVE* to check your balance.`,
+  );
+}
+
+export async function notifyProSavingsOptOut(phone: string) {
+  return sendMessage(
+    phone,
+    `📭 Earnings Reserve paused\n\nWe've stopped skimming from new bookings. Your existing Reserve balance is safe - you can still withdraw it at any time.\n\nWelcome back whenever you want to start again. 💚`,
+  );
+}
+
+export async function notifyProSavingsMatchBonus(
+  phone: string,
+  amount: number,
+  note: string,
+) {
+  return sendMessage(
+    phone,
+    `🎁 Groomee loyalty top-up\n\n*₦${amount.toLocaleString()}* added to your Earnings Reserve. ${note}\n\nThank you for saving with us. 💚`,
+  );
+}
+
+export async function notifyProSavingsRateChange(
+  phone: string,
+  oldRate: number,
+  newRate: number,
+) {
+  return sendMessage(
+    phone,
+    `🔧 Earnings Reserve rate updated\n\n*${(oldRate * 100).toFixed(1)}%* → *${(newRate * 100).toFixed(1)}%*\n\nFrom your next confirmed booking, we'll set aside the new amount.`,
   );
 }
 

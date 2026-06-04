@@ -3,6 +3,8 @@ import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { initiateTransfer, createTransferRecipient } from "@/lib/paystack";
 import { logAdminAction } from "@/lib/admin-audit";
+import { postMovement } from "@/lib/wallet";
+import { notifyProPayoutInitiated } from "@/lib/whatsapp";
 
 // POST /api/admin/payouts/[id]/retry
 //
@@ -73,6 +75,28 @@ export async function POST(
           failureReason: null,
         },
       });
+
+      // Re-debit the wallet for the retry. The prior PAYOUT_DEBIT was
+      // offset by PAYOUT_REVERSAL when transfer.failed fired, so the wallet
+      // currently has the cash. Idempotency key is keyed on transferRef so
+      // each retry attempt gets its own debit row.
+      try {
+        await postMovement({
+          proId: payout.proId,
+          type: "PAYOUT_DEBIT",
+          amount: -payout.amount,
+          payoutId: payout.id,
+          note: `Payout retry transfer ${transferRef}`,
+          idempotencyKey: `payout:${payout.id}:DEBIT:retry:${transferRef}`,
+        });
+        if (payout.pro.phone) {
+          notifyProPayoutInitiated(payout.pro.phone, payout.amount).catch((err) => {
+            console.error("[payout retry] notify failed", err);
+          });
+        }
+      } catch (walletErr) {
+        console.error("[payout retry] wallet post failed", walletErr);
+      }
 
       await logAdminAction({
         adminId: session!.userId,

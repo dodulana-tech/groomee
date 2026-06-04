@@ -13,6 +13,7 @@
  *   G — Edge cases & gating
  *   H — DB integrity audit
  *   I — Health profiles lifecycle (customer + booking + pro + admin)
+ *   J — Wallet ledger releases + clawbacks (W1+W2)
  *
  * Generates fixtures inline, exercises them via HTTP + Prisma, asserts
  * invariants, cleans up. Prints a section-by-section table at the end
@@ -1037,6 +1038,188 @@ async function runEdgeCases(f: Fixtures) {
   });
 }
 
+// ─── SECTION J — WALLET LEDGER ───────────────────────────────────────────────
+//
+// Exercise the lifecycle wallet plumbing end-to-end against the DB. Doesn't
+// hit HTTP - operates on synthetic bookings and asserts on ledger rows + the
+// cached `available` total. Independent of the apprenticeship/customer paths
+// in earlier sections so it can run on a fresh DB or alongside existing data.
+
+async function runWalletE2E(f: Fixtures) {
+  console.log("\nJ — Wallet ledger");
+
+  const { ensureWallet, postMovement, ledgerSum, getWallet } = await import(
+    "../src/lib/wallet"
+  );
+  const { releaseMobilization, releaseCompletion, releaseConfirm, clawbackBooking } =
+    await import("../src/lib/wallet-releases");
+
+  // Use the test fixture's master Pro (set up in setupFixtures) as the
+  // independent pro for this section.
+  const proId = f.masterPro.id;
+
+  // 1. Lazy-init wallet
+  await check("J", "ensureWallet lazy-creates ProWallet", async () => {
+    const w = await ensureWallet(proId);
+    return { ok: w.proId === proId && w.available === 0, detail: `avail=${w.available}` };
+  });
+
+  // 2. Synthetic booking owned by the pro, with proEarning=8000
+  const ref = `WALLET-${Date.now().toString(36).toUpperCase()}`;
+  const booking = await db.booking.create({
+    data: {
+      reference: ref,
+      customerId: f.customerUser.id,
+      proId,
+      serviceId: f.service.id,
+      zoneId: f.zone.id,
+      status: "ACCEPTED",
+      address: "Wallet test addr",
+      totalAmount: 10000,
+      baseAmount: 10000,
+      proEarning: 8000,
+      acceptedAt: new Date(),
+    },
+  });
+
+  await check("J", "Mobilization releases 25% (2000) to wallet", async () => {
+    await releaseMobilization(booking.id);
+    const w = await getWallet(proId);
+    return { ok: w?.available === 2000, detail: `avail=${w?.available}` };
+  });
+
+  await check("J", "Mobilization is idempotent (no double-post)", async () => {
+    await releaseMobilization(booking.id);
+    const w = await getWallet(proId);
+    return { ok: w?.available === 2000, detail: `avail=${w?.available}` };
+  });
+
+  await check("J", "Completion release adds 50% (now 6000 total)", async () => {
+    await releaseCompletion(booking.id);
+    const w = await getWallet(proId);
+    return { ok: w?.available === 6000, detail: `avail=${w?.available}` };
+  });
+
+  await check("J", "Confirm release tops up to full proEarning (8000)", async () => {
+    await releaseConfirm(booking.id);
+    const w = await getWallet(proId);
+    return { ok: w?.available === 8000, detail: `avail=${w?.available}` };
+  });
+
+  await check("J", "Ledger sum matches cached available", async () => {
+    const sum = await ledgerSum(proId);
+    const w = await getWallet(proId);
+    return { ok: Math.abs(sum - (w?.available ?? 0)) < 0.01, detail: `sum=${sum} cached=${w?.available}` };
+  });
+
+  await check("J", "Clawback (full) reverses every release on this booking", async () => {
+    await clawbackBooking(booking.id, 1);
+    const w = await getWallet(proId);
+    return { ok: w?.available === 0, detail: `avail=${w?.available}` };
+  });
+
+  await check("J", "Re-running clawback is a no-op (idempotent)", async () => {
+    await clawbackBooking(booking.id, 1);
+    const w = await getWallet(proId);
+    return { ok: w?.available === 0, detail: `avail=${w?.available}` };
+  });
+
+  // Apprenticeship split: another fresh booking owned by an apprentice.
+  // Use the section-D split-apprentice pattern.
+  const stamp = Date.now().toString().slice(-6);
+  const apprenticeUser = await db.user.create({
+    data: { phone: `+23499${stamp}W`, role: "PRO", name: "Wallet Apprentice" },
+  });
+  const apprenticePro = await db.pro.create({
+    data: {
+      userId: apprenticeUser.id,
+      phone: apprenticeUser.phone!,
+      name: "Wallet Apprentice",
+      status: "ACTIVE",
+      availability: "ONLINE",
+      relationship: "APPRENTICE",
+      parentProId: proId,
+      services: { create: { serviceId: f.service.id } },
+      zones: { create: { zoneId: f.zone.id } },
+    },
+  });
+  const apprenticeship = await db.apprenticeship.create({
+    data: {
+      apprenticeId: apprenticePro.id,
+      masterId: proId,
+      status: "IN_TRAINING",
+      masterCommission: 0.3,
+      acceptedAt: new Date(),
+    },
+  });
+  const splitBooking = await db.booking.create({
+    data: {
+      reference: `WALLET-SPLIT-${Date.now().toString(36).toUpperCase()}`,
+      customerId: f.customerUser.id,
+      proId: apprenticePro.id,
+      serviceId: f.service.id,
+      zoneId: f.zone.id,
+      status: "ACCEPTED",
+      address: "Split wallet test",
+      totalAmount: 10000,
+      baseAmount: 10000,
+      proEarning: 8000,
+      acceptedAt: new Date(),
+    },
+  });
+
+  await check("J", "Apprentice mobilization splits 70/30 (1400/600)", async () => {
+    await releaseMobilization(splitBooking.id);
+    const apprenticeRows = await db.walletLedger.findMany({
+      where: { proId: apprenticePro.id, bookingId: splitBooking.id, type: "MOBILIZATION" },
+    });
+    const masterRows = await db.walletLedger.findMany({
+      where: { proId, bookingId: splitBooking.id, type: "APPRENTICE_COMMISSION_RELEASE" },
+    });
+    const apprenticeAmount = apprenticeRows.reduce((s, r) => s + r.amount, 0);
+    const masterAmount = masterRows.reduce((s, r) => s + r.amount, 0);
+    return {
+      ok: apprenticeAmount === 1400 && masterAmount === 600,
+      detail: `apprentice=${apprenticeAmount} master=${masterAmount}`,
+    };
+  });
+
+  await check("J", "Full lifecycle of apprentice booking sums to 8000 across both pros", async () => {
+    await releaseCompletion(splitBooking.id);
+    await releaseConfirm(splitBooking.id);
+    const apprenticeSum = (
+      await db.walletLedger.aggregate({
+        where: { bookingId: splitBooking.id, proId: apprenticePro.id, type: { not: "CLAWBACK" } },
+        _sum: { amount: true },
+      })
+    )._sum.amount ?? 0;
+    const masterSum = (
+      await db.walletLedger.aggregate({
+        where: { bookingId: splitBooking.id, proId, type: { not: "CLAWBACK" } },
+        _sum: { amount: true },
+      })
+    )._sum.amount ?? 0;
+    return {
+      ok: Math.abs(apprenticeSum - 5600) < 0.01 && Math.abs(masterSum - 2400) < 0.01,
+      detail: `apprentice=${apprenticeSum} master=${masterSum}`,
+    };
+  });
+
+  // Cleanup wallet fixtures
+  await db.walletLedger.deleteMany({ where: { bookingId: { in: [booking.id, splitBooking.id] } } });
+  await db.payment.deleteMany({ where: { bookingId: { in: [booking.id, splitBooking.id] } } });
+  await db.booking.deleteMany({ where: { id: { in: [booking.id, splitBooking.id] } } });
+  await db.apprenticeship.deleteMany({ where: { id: apprenticeship.id } });
+  await db.proService.deleteMany({ where: { proId: apprenticePro.id } });
+  await db.proZone.deleteMany({ where: { proId: apprenticePro.id } });
+  await db.pro.deleteMany({ where: { id: apprenticePro.id } });
+  await db.user.deleteMany({ where: { id: apprenticeUser.id } });
+  // Wipe any wallet rows we created for the master so the fixture cleanup
+  // can delete the master pro at the end.
+  await db.walletLedger.deleteMany({ where: { proId } });
+  await db.proWallet.deleteMany({ where: { proId } });
+}
+
 // ─── SECTION H — DB INTEGRITY ────────────────────────────────────────────────
 
 async function runIntegrity() {
@@ -1338,6 +1521,7 @@ async function main() {
     await runAdminOverrides(f);
     await runEdgeCases(f);
     await runHealthProfilesE2E(f);
+    await runWalletE2E(f);
     await runIntegrity();
   } finally {
     // Health-test booking + ack + access logs + profile + condition.

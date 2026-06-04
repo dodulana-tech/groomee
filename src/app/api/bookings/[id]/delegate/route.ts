@@ -222,6 +222,18 @@ export async function POST(
         where: { id: apprentice.id },
         data: { availability: "BUSY", currentBookingId: booking.id },
       });
+      // The mobilization paid to the master at accept must follow the
+      // dependent: claw back the master's MOBILIZATION row, re-issue a
+      // fresh MOBILIZATION to the apprentice (and their master-leg if any).
+      const { transferMobilizationOnDelegate } = await import(
+        "@/lib/wallet-releases"
+      );
+      await transferMobilizationOnDelegate(
+        booking.id,
+        master.id,
+        apprentice.id,
+        tx,
+      );
     });
 
     // ─── Audit trail ─────────────────────────────────────────────────────────

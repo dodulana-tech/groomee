@@ -126,6 +126,18 @@ export async function POST(
         where: { id: master.id },
         data: { availability: "BUSY", currentBookingId: booking.id },
       });
+      // Mirror the booking re-assign on the wallet ledger: claw back the
+      // dependent's MOBILIZATION (and any master-leg paid during the
+      // delegated window) and re-issue MOBILIZATION to the master.
+      const { transferMobilizationOnRescind } = await import(
+        "@/lib/wallet-releases"
+      );
+      await transferMobilizationOnRescind(
+        booking.id,
+        dependent.id,
+        master.id,
+        tx,
+      );
     });
 
     // ─── Audit trail ─────────────────────────────────────────────────────────

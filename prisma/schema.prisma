@@ -124,6 +124,53 @@ enum HealthVisibility {
   PRIVATE
 }
 
+// ─── WALLET ──────────────────────────────────────────────────────────────────
+// Every ± movement against a pro's running balance carries a type so we can
+// trace it back to the lifecycle event that produced it.
+
+enum WalletMovementType {
+  MOBILIZATION // +X% of proEarning posted at ACCEPTED so pro can fund transport/supplies
+  COMPLETION_RELEASE // +Y% posted at COMPLETED
+  CONFIRM_RELEASE // +Z% posted at CONFIRMED (the last slice of the proEarning)
+  APPRENTICE_COMMISSION_RELEASE // +master's cut on a dependent's confirmed booking
+  CLAWBACK // -reversal of any of the above on refund/cancel
+  ADVANCE_DISBURSED // +cash to pro when admin approves an advance
+  ADVANCE_REPAYMENT // -as the pro repays out of future earnings
+  PAYOUT_DEBIT // -when a payout transfer is initiated
+  PAYOUT_REVERSAL // +when a Paystack transfer fails and is returned
+  MANUAL_ADJUSTMENT // +/- admin one-off correction (audit-logged)
+  SAVINGS_SKIM // -funds moved from payout into the pro's savings vault
+  BENEFIT_PREMIUM // -placeholder for Concept #9 (future slice)
+}
+
+// ─── SAVINGS ─────────────────────────────────────────────────────────────────
+// Bank Build: pros opt in (default on) to skimming a configurable percent of
+// every payout into a vault. They can withdraw with a notice period, or take
+// an instant withdrawal subject to a configurable penalty. Built today on top
+// of the live Earning/Payout flow; the WalletLedger gets a parallel
+// SAVINGS_SKIM row so it stays the canonical audit trail once the wallet
+// becomes source-of-truth.
+
+enum SavingsMovementType {
+  SKIM                 // +cash deducted from a payout and credited here
+  WITHDRAWAL_REQUEST   // -amount reserved against balance, awaits notice/release
+  WITHDRAWAL_RELEASED  // 0 sentinel: PENDING → PAID transition (balance already reserved)
+  WITHDRAWAL_CANCELLED // +reverse a pending request (refund the reservation)
+  MATCH_BONUS          // +platform retention match
+  INTEREST_CREDIT      // +partner fintech yield (placeholder)
+  ADJUSTMENT           // +/- admin one-off correction (audit-logged)
+  CLAWBACK             // -reversal of an in-window SKIM when a booking is refunded/cancelled
+  EARLY_BREAK_PENALTY  // -platform-retained haircut on instant-break withdrawals
+}
+
+enum SavingsWithdrawalStatus {
+  PENDING   // notice period ticking
+  ELIGIBLE  // notice elapsed; awaiting worker release
+  PAID
+  CANCELLED
+  FAILED    // Paystack transfer failed; admin must retry/refund
+}
+
 model User {
   id                String         @id @default(cuid())
   phone             String?        @unique
@@ -244,6 +291,16 @@ model Pro {
   apprenticeshipsAsMaster     Apprenticeship[]       @relation("ApprenticeshipMaster")
   earningsFromDependents      Earning[]              @relation("SourcePro")
   healthAcks                  HealthAcknowledgment[]
+  wallet                      ProWallet?
+  walletMovements             WalletLedger[]
+  savingsAccount              ProSavingsAccount?
+  savingsMovements            SavingsMovement[]
+  savingsWithdrawals          SavingsWithdrawal[]
+  inventories                 ProInventory[]
+  inventoryTxns               InventoryTxn[]
+  benefitEnrollments          ProBenefitEnrollment[]
+  benefitDebits               BenefitDebit[]
+  benefitClaims               BenefitClaim[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -328,6 +385,7 @@ model Service {
   bookings          Booking[]
   bookingItems      BookingItem[]
   contraindications ServiceContraindication[]
+  recipes           ServiceRecipe[]
   createdAt         DateTime                  @default(now())
 
   @@map("services")
@@ -343,19 +401,19 @@ enum CityStatus {
 }
 
 model City {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  status      CityStatus @default(WAITLIST)
-  launchedAt  DateTime?
+  id         String     @id @default(cuid())
+  name       String
+  slug       String     @unique
+  status     CityStatus @default(WAITLIST)
+  launchedAt DateTime?
   // Display copy on the landing waitlist banner. Optional — falls back to
   // the city name.
-  tagline     String?
+  tagline    String?
   // Stable ordering for nav / banner. Lower = earlier.
-  sortOrder   Int        @default(0)
-  zones       Zone[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  sortOrder  Int        @default(0)
+  zones      Zone[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   @@map("cities")
 }
@@ -911,4 +969,391 @@ model HealthAccessLog {
 
   @@index([profileId, createdAt])
   @@map("health_access_logs")
+}
+
+// ─── WALLET ──────────────────────────────────────────────────────────────────
+//
+// One ProWallet row per pro (lazy-init on first movement). Stores derived
+// running totals so we don't aggregate the whole ledger on every read.
+// Source of truth is WalletLedger - if you ever doubt the cached values,
+// SUM(amount) over the ledger gives you the canonical balance.
+
+model ProWallet {
+  id             String   @id @default(cuid())
+  proId          String   @unique @map("groomerId")
+  pro            Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
+  // Cash-available the pro can be paid out.
+  available      Float    @default(0)
+  // Held for in-flight bookings (mobilization that has been released but the
+  // booking has not yet CONFIRMED - if cancelled, will be clawed back).
+  pending        Float    @default(0)
+  // Maximum negative balance the pro can carry (mobilization clawbacks may
+  // briefly push them into the red; this caps the risk).
+  creditLimit    Float    @default(0)
+  // Cumulative running figure of cash advanced to the pro that has not yet
+  // been recovered out of future earnings. Decreases with each repayment
+  // movement. Read-only mirror of ledger math.
+  netAdvanceOwed Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("pro_wallets")
+}
+
+model WalletLedger {
+  id               String             @id @default(cuid())
+  proId            String             @map("groomerId")
+  pro              Pro                @relation(fields: [proId], references: [id], onDelete: Cascade)
+  type             WalletMovementType
+  amount           Float // signed; +credit, -debit
+  // Running balance AFTER this movement is applied. Lets us audit/forensic
+  // without re-summing the whole ledger.
+  balanceAfter     Float
+  // Optional linkages back to the lifecycle event that produced this row.
+  bookingId        String?
+  advanceId        String?
+  payoutId         String?
+  sourceProId      String?
+  apprenticeshipId String?
+  // Free-form note shown to the pro in their wallet history.
+  note             String?
+  // Idempotency key. Compound unique with proId lets us de-dupe re-tries of
+  // the same lifecycle event (e.g. concurrent confirms trying to post
+  // CONFIRM_RELEASE).
+  idempotencyKey   String?
+  createdAt        DateTime           @default(now())
+
+  @@unique([proId, idempotencyKey])
+  @@index([proId, createdAt])
+  @@index([bookingId])
+  @@index([advanceId])
+  @@index([payoutId])
+  @@map("wallet_ledger")
+}
+
+// ─── FORCED SAVINGS / EARNINGS RESERVE (Concept #5) ──────────────────────────
+// One vault per pro. Each CONFIRMED booking triggers a SKIM movement
+// (configurable %) into the vault. Withdrawals are gated by a notice period
+// (default 14d) OR an instant break with a configurable penalty (default 20%
+// of withdrawal amount, retained as MATCH_BONUS forfeit). Buckets are tracked
+// per-skim so partial clawback on disputed bookings is forensic.
+//
+// SavingsLedger is the source of truth; ProSavingsAccount.balance* are cached.
+
+model ProSavingsAccount {
+  id                  String              @id @default(cuid())
+  proId               String              @unique @map("groomerId")
+  pro                 Pro                 @relation(fields: [proId], references: [id], onDelete: Cascade)
+  optedIn             Boolean             @default(false)
+  optedInAt           DateTime?
+  optedOutAt          DateTime?
+  skimRate            Float               @default(0.05) // 0.02 - 0.15
+  goalLabels          String[]            @default([]) // user-defined labels (Rent / School / Tools)
+  // Cached running totals. Source of truth is SavingsMovement aggregation.
+  balanceAvailable    Float               @default(0) // matured + non-reserved
+  balanceLocked       Float               @default(0) // within notice period
+  balancePendingWd    Float               @default(0) // reserved by open withdrawals
+  totalSkimmed        Float               @default(0) // lifetime gross in
+  totalMatchEarned    Float               @default(0) // lifetime bonus credited
+  totalWithdrawn      Float               @default(0) // lifetime out
+  totalClawedBack     Float               @default(0) // lifetime reversed
+  noticeDays          Int                 @default(14)
+  penaltyPct          Float               @default(0.20)
+  movements           SavingsMovement[]
+  withdrawals         SavingsWithdrawal[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@map("pro_savings_accounts")
+}
+
+model SavingsMovement {
+  id              String               @id @default(cuid())
+  accountId       String
+  account         ProSavingsAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  proId           String               @map("groomerId")
+  pro             Pro                  @relation(fields: [proId], references: [id], onDelete: Cascade)
+  type            SavingsMovementType
+  amount          Float                // signed; +credit, -debit
+  balanceAfter    Float                // available balance after this row
+  bookingId       String?              // for SKIM / CLAWBACK
+  withdrawalId    String?              // for WITHDRAWAL_REQUEST / RELEASED / CANCELLED
+  walletLedgerId  String?              // pairs the SKIM with the wallet's SAVINGS_SKIM debit
+  goalLabel       String?              // if pro tagged the skim/withdrawal
+  note            String?
+  idempotencyKey  String?              // dedup retries (booking:{id}:SAVINGS_SKIM:{proId})
+  createdAt       DateTime             @default(now())
+
+  @@unique([proId, idempotencyKey])
+  @@index([accountId, createdAt])
+  @@index([proId, createdAt])
+  @@index([bookingId])
+  @@index([withdrawalId])
+  @@map("savings_movements")
+}
+
+model SavingsWithdrawal {
+  id              String                  @id @default(cuid())
+  accountId       String
+  account         ProSavingsAccount       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  proId           String                  @map("groomerId")
+  pro             Pro                     @relation(fields: [proId], references: [id], onDelete: Cascade)
+  amount          Float                   // gross requested
+  penaltyAmount   Float                   @default(0) // forfeited if instant-break
+  netAmount       Float                   // amount actually paid out
+  status          SavingsWithdrawalStatus @default(PENDING)
+  isInstant       Boolean                 @default(false) // true if pro chose break-with-penalty
+  noticeUntil     DateTime?               // PENDING → ELIGIBLE at this time
+  releasedAt      DateTime?               // moved to PAID
+  cancelledAt     DateTime?
+  failureReason   String?
+  payoutId        String?                 // links into Payout flow when released
+  notes           String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([proId, status])
+  @@index([status, noticeUntil])
+  @@map("savings_withdrawals")
+}
+
+// ─── INVENTORY (Concept #2) ──────────────────────────────────────────────────
+// Product catalog (admin-managed) + per-pro stock + service recipes that
+// auto-decrement on CONFIRMED. Recipes are admin-defined per service (e.g.
+// "Knotless Braids consumes 1 bottle of leave-in conditioner"). Decrement
+// runs in the same tx as the confirm wallet movement so the audit trail
+// is consistent.
+
+enum ProductCategory {
+  HAIR_CARE
+  MAKEUP
+  NAILS
+  LASHES
+  SKINCARE
+  TOOLS
+  CONSUMABLE
+  OTHER
+}
+
+enum InventoryTxnReason {
+  INITIAL_STOCK
+  RESTOCK
+  BOOKING_DECREMENT
+  ADMIN_ADJUSTMENT
+  WASTE
+  CORRECTION
+}
+
+model Product {
+  id          String          @id @default(cuid())
+  name        String
+  slug        String          @unique
+  sku         String?         @unique
+  category    ProductCategory
+  unit        String          @default("piece") // ml / g / piece / bottle
+  unitCost    Float           @default(0)       // ₦ per unit (admin's reference cost)
+  description String?
+  photo       String?
+  isActive    Boolean         @default(true)
+  recipes     ServiceRecipe[]
+  inventories ProInventory[]
+  txns        InventoryTxn[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("products")
+}
+
+model ServiceRecipe {
+  id            String   @id @default(cuid())
+  serviceId     String
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  qtyPerService Float    @default(1)
+  isOptional    Boolean  @default(false) // optional recipes don't trigger low-stock alerts on zero
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([serviceId, productId])
+  @@index([productId])
+  @@map("service_recipes")
+}
+
+model ProInventory {
+  id                String         @id @default(cuid())
+  proId             String         @map("groomerId")
+  pro               Pro            @relation(fields: [proId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  qtyOnHand         Float          @default(0)
+  lowStockThreshold Float          @default(3)
+  lastRestockedAt   DateTime?
+  lastAlertSentAt   DateTime?
+  txns              InventoryTxn[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([proId, productId])
+  @@index([proId])
+  @@map("pro_inventories")
+}
+
+model InventoryTxn {
+  id          String             @id @default(cuid())
+  proId       String             @map("groomerId")
+  pro         Pro                @relation(fields: [proId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  inventoryId String?
+  inventory   ProInventory?      @relation(fields: [inventoryId], references: [id])
+  delta       Float              // signed; +restock, -consumption
+  qtyAfter    Float              // qtyOnHand after this row
+  reason      InventoryTxnReason
+  bookingId   String?            // for BOOKING_DECREMENT
+  note        String?
+  createdAt   DateTime           @default(now())
+
+  @@index([proId, createdAt])
+  @@index([productId, createdAt])
+  @@index([bookingId])
+  @@map("inventory_txns")
+}
+
+// ─── BENEFITS / INSURANCE (Concept #9) ───────────────────────────────────────
+// Pros enrol in benefit plans (HMO + accident bundle). A monthly cron debits
+// the premium from the wallet (BENEFIT_PREMIUM movement). Subsidy by tier:
+// Standard 0%, Pro 50%, Elite 100%. Insufficient balance → GRACE for 14d,
+// then PAUSED for 30d, then CANCELLED. Reactivation requires fresh waiting.
+// Groomee never holds PHI: claims are handoff records only.
+
+enum BenefitKind {
+  HMO
+  ACCIDENT
+  BUNDLE
+}
+
+enum BenefitEnrollmentStatus {
+  PENDING       // awaiting first debit
+  ACTIVE
+  GRACE         // recent debit failed; cover still active until graceUntil
+  PAUSED        // grace elapsed; cover paused; can reactivate
+  CANCELLED     // fully off; re-enrol needs fresh waiting period
+}
+
+enum BenefitDebitStatus {
+  SUCCESS
+  INSUFFICIENT_FUNDS
+  SKIPPED       // enrolment paused/cancelled during the run
+  FAILED        // unexpected error
+}
+
+enum BenefitClaimStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+model BenefitPlan {
+  id              String                 @id @default(cuid())
+  name            String
+  slug            String                 @unique
+  kind            BenefitKind
+  provider        String                 // "Reliance HMO + Leadway"
+  monthlyPremium  Float                  // gross, before subsidy
+  coverAmount     Float?                 // sum assured / cover limit
+  description     String?
+  highlights      String[]               @default([]) // bulleted benefit list
+  // Eligibility gates (override Setting defaults).
+  minBookings     Int                    @default(5)
+  minTenureDays   Int                    @default(30)
+  isActive        Boolean                @default(true)
+  sortOrder       Int                    @default(0)
+  subsidyRules    BenefitSubsidyRule[]
+  enrollments     ProBenefitEnrollment[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@map("benefit_plans")
+}
+
+model BenefitSubsidyRule {
+  id         String      @id @default(cuid())
+  planId     String
+  plan       BenefitPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  proTier    String      // "STANDARD" | "PRO" | "ELITE"
+  subsidyPct Float       @default(0) // 0.0 - 1.0
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@unique([planId, proTier])
+  @@map("benefit_subsidy_rules")
+}
+
+model ProBenefitEnrollment {
+  id               String                  @id @default(cuid())
+  proId            String                  @map("groomerId")
+  pro              Pro                     @relation(fields: [proId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             BenefitPlan             @relation(fields: [planId], references: [id])
+  status           BenefitEnrollmentStatus @default(PENDING)
+  enrolledAt       DateTime                @default(now())
+  activatedAt      DateTime?               // first successful debit
+  nextDebitAt      DateTime
+  lastDebitAt      DateTime?
+  graceUntil       DateTime?
+  pausedAt         DateTime?
+  cancelledAt      DateTime?
+  externalPolicyNo String?                 // HMO / insurer's policy number
+  enrolledByAdmin  String?                 // admin user id who manually enrolled (if any)
+  notes            String?
+  debits           BenefitDebit[]
+  claims           BenefitClaim[]
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  @@unique([proId, planId])
+  @@index([status, nextDebitAt])
+  @@map("pro_benefit_enrollments")
+}
+
+model BenefitDebit {
+  id             String               @id @default(cuid())
+  enrollmentId   String
+  enrollment     ProBenefitEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  proId          String               @map("groomerId")
+  pro            Pro                  @relation(fields: [proId], references: [id], onDelete: Cascade)
+  period         String               // YYYY-MM
+  premiumGross   Float                // full premium before subsidy
+  subsidyAmount  Float                @default(0)
+  amountDebited  Float                // premiumGross - subsidyAmount
+  status         BenefitDebitStatus
+  walletLedgerId String?              // points at the BENEFIT_PREMIUM ledger row
+  failureReason  String?
+  createdAt      DateTime             @default(now())
+
+  @@unique([enrollmentId, period])
+  @@index([proId, createdAt])
+  @@map("benefit_debits")
+}
+
+model BenefitClaim {
+  id           String               @id @default(cuid())
+  enrollmentId String
+  enrollment   ProBenefitEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  proId        String               @map("groomerId")
+  pro          Pro                  @relation(fields: [proId], references: [id], onDelete: Cascade)
+  kind         BenefitKind
+  status       BenefitClaimStatus   @default(OPEN)
+  summary      String               // no PHI - just a handoff label ("hospital visit", "accident")
+  externalRef  String?              // claim # at the HMO/insurer
+  resolvedAt   DateTime?
+  notes        String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([proId, createdAt])
+  @@map("benefit_claims")
 }

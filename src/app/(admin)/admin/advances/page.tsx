@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { cn, formatNaira } from "@/lib/utils";
 import AdvanceActions from "./AdvanceActions";
 import RepayClient from "./RepayClient";
+import DisburseClient from "./DisburseClient";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Pro Advances" };
@@ -14,6 +15,7 @@ const PAGE_SIZE = 50;
 const STATUS_TABS = [
   { label: "Pending", value: "PENDING" },
   { label: "Approved", value: "APPROVED" },
+  { label: "Disbursed", value: "DISBURSED" },
   { label: "Repaid", value: "REPAID" },
   { label: "Rejected", value: "REJECTED" },
   { label: "All", value: "" },
@@ -22,6 +24,7 @@ const STATUS_TABS = [
 const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
   PENDING: { bg: "#FEF9C3", color: "#854D0E" },
   APPROVED: { bg: "#DBEAFE", color: "#1E40AF" },
+  DISBURSED: { bg: "#FFEDD5", color: "#9A3412" },
   REPAID: { bg: "#DCFCE7", color: "#166534" },
   REJECTED: { bg: "#FEF2F2", color: "#991B1B" },
 };
@@ -56,7 +59,10 @@ export default async function AdvancesPage({ searchParams }: Props) {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const summaryMap = Object.fromEntries(
-    summary.map((s) => [s.status, { count: s._count._all, total: s._sum.amount ?? 0 }]),
+    summary.map((s: { status: string; _count: { _all: number }; _sum: { amount: number | null } }) => [
+      s.status,
+      { count: s._count._all, total: s._sum.amount ?? 0 },
+    ]),
   );
 
   return (
@@ -69,8 +75,8 @@ export default async function AdvancesPage({ searchParams }: Props) {
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-3 sm:grid-cols-4 mb-6">
-        {(["PENDING", "APPROVED", "REPAID", "REJECTED"] as const).map((s) => (
+      <div className="grid gap-3 sm:grid-cols-5 mb-6">
+        {(["PENDING", "APPROVED", "DISBURSED", "REPAID", "REJECTED"] as const).map((s) => (
           <div key={s} className="glass-card rounded-2xl p-4">
             <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold">{s}</p>
             <p className="text-2xl font-bold text-gray-900 mt-1">
@@ -123,7 +129,7 @@ export default async function AdvancesPage({ searchParams }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {rows.map((r) => {
+              {rows.map((r: (typeof rows)[number]) => {
                 const badge = STATUS_BADGE[r.status] ?? STATUS_BADGE.PENDING;
                 const bankReady = Boolean(r.pro.bankAccount && r.pro.bankName);
                 return (
@@ -168,6 +174,16 @@ export default async function AdvancesPage({ searchParams }: Props) {
                         />
                       )}
                       {r.status === "APPROVED" && (
+                        <div className="flex flex-col gap-1.5">
+                          <DisburseClient
+                            advanceId={r.id}
+                            amount={r.amount}
+                            proHasBank={bankReady}
+                          />
+                          <RepayClient advanceId={r.id} amount={r.amount} />
+                        </div>
+                      )}
+                      {r.status === "DISBURSED" && (
                         <RepayClient advanceId={r.id} amount={r.amount} />
                       )}
                     </td>

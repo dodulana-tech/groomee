@@ -122,6 +122,13 @@ export async function POST(
         },
       });
       await reverseEarningsForBooking(id, refundFraction, tx);
+      // Same scaling on the wallet ledger — partial refund haircuts each
+      // posted release proportionally.
+      const { clawbackBooking } = await import("@/lib/wallet-releases");
+      await clawbackBooking(id, refundFraction, tx);
+      // Concept #5: scale any in-window savings skim by the same fraction.
+      const { clawbackSavingsForBooking } = await import("@/lib/savings");
+      await clawbackSavingsForBooking(id, refundFraction, tx);
     });
 
     await logAdminAction({

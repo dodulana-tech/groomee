@@ -71,6 +71,26 @@ export const PERMISSIONS = {
   // and edit tagline / launchedAt. Manage gates the landing-page rollout.
   CITIES_VIEW: "cities.view",
   CITIES_MANAGE: "cities.manage",
+
+  // Wallet — ledger forensics + manual adjustments + fraction tuning.
+  WALLET_VIEW: "wallet.view",
+  WALLET_MANAGE: "wallet.manage",
+
+  // Savings (Earnings Reserve) — view balances, force mature/break, config.
+  SAVINGS_VIEW: "savings.view",
+  SAVINGS_MANAGE: "savings.manage",
+
+  // Benefits (HMO + accident) — plan catalog, enrolments, debits.
+  BENEFITS_VIEW: "benefits.view",
+  BENEFITS_MANAGE: "benefits.manage",
+
+  // Products (consumables catalog) — global product list, edit unit cost.
+  PRODUCTS_VIEW: "products.view",
+  PRODUCTS_MANAGE: "products.manage",
+
+  // Inventory (per-pro stock) — view stock, restock, recipes, adjustments.
+  INVENTORY_VIEW: "inventory.view",
+  INVENTORY_MANAGE: "inventory.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -193,6 +213,41 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: PERMISSIONS.CITIES_MANAGE, label: "Activate cities (flip status, set launch date)" },
     ],
   },
+  wallet: {
+    label: "Wallet",
+    permissions: [
+      { key: PERMISSIONS.WALLET_VIEW, label: "View pro wallets & ledger" },
+      { key: PERMISSIONS.WALLET_MANAGE, label: "Manual adjustments + tune release fractions" },
+    ],
+  },
+  savings: {
+    label: "Savings (Earnings Reserve)",
+    permissions: [
+      { key: PERMISSIONS.SAVINGS_VIEW, label: "View savings accounts & balances" },
+      { key: PERMISSIONS.SAVINGS_MANAGE, label: "Force mature/break, tune config" },
+    ],
+  },
+  benefits: {
+    label: "Benefits (HMO + accident)",
+    permissions: [
+      { key: PERMISSIONS.BENEFITS_VIEW, label: "View plans, enrolments, debit log" },
+      { key: PERMISSIONS.BENEFITS_MANAGE, label: "Edit plans, enrol/pause/cancel, run debits" },
+    ],
+  },
+  products: {
+    label: "Products",
+    permissions: [
+      { key: PERMISSIONS.PRODUCTS_VIEW, label: "View product catalog" },
+      { key: PERMISSIONS.PRODUCTS_MANAGE, label: "Manage products & service recipes" },
+    ],
+  },
+  inventory: {
+    label: "Inventory",
+    permissions: [
+      { key: PERMISSIONS.INVENTORY_VIEW, label: "View per-pro stock & transactions" },
+      { key: PERMISSIONS.INVENTORY_MANAGE, label: "Restock, adjust, set thresholds" },
+    ],
+  },
 };
 
 /** Default role definitions used for seeding */
@@ -229,6 +284,10 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.HEALTH_MANAGE,
       PERMISSIONS.CITIES_VIEW,
       PERMISSIONS.CITIES_MANAGE,
+      PERMISSIONS.PRODUCTS_VIEW,
+      PERMISSIONS.PRODUCTS_MANAGE,
+      PERMISSIONS.INVENTORY_VIEW,
+      PERMISSIONS.INVENTORY_MANAGE,
     ],
     isSystem: false,
   },
@@ -275,6 +334,12 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.SETTINGS_MANAGE_FINANCE,
       PERMISSIONS.ADVANCES_VIEW,
       PERMISSIONS.ADVANCES_MANAGE,
+      PERMISSIONS.WALLET_VIEW,
+      PERMISSIONS.WALLET_MANAGE,
+      PERMISSIONS.SAVINGS_VIEW,
+      PERMISSIONS.SAVINGS_MANAGE,
+      PERMISSIONS.BENEFITS_VIEW,
+      PERMISSIONS.BENEFITS_MANAGE,
     ],
     isSystem: false,
   },

@@ -228,9 +228,15 @@ export async function POST(req: NextRequest) {
         include: { customer: true },
       });
       if (booking) {
-        await db.booking.update({
-          where: { id: booking.id },
-          data: { status: "COMPLETED", completedAt: new Date() },
+        // Status flip + completion release in the same transaction so the
+        // wallet movement is durable with the status change.
+        await db.$transaction(async (tx) => {
+          await tx.booking.update({
+            where: { id: booking.id },
+            data: { status: "COMPLETED", completedAt: new Date() },
+          });
+          const { releaseCompletion } = await import("@/lib/wallet-releases");
+          await releaseCompletion(booking.id, tx);
         });
         await sendProStatusAck(pro.phone, "DONE");
         if (booking.customer.phone) {
