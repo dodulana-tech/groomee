@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatNaira, cn } from "@/lib/utils";
@@ -32,7 +32,17 @@ interface LedgerResponse {
 
 const GROUPS = Object.keys(TYPE_GROUPS) as WalletTypeGroup[];
 
+// useSearchParams needs a Suspense boundary or the production build fails
+// trying to prerender this page.
 export default function WalletHistoryPage() {
+  return (
+    <Suspense>
+      <WalletHistory />
+    </Suspense>
+  );
+}
+
+function WalletHistory() {
   const router = useRouter();
   const search = useSearchParams();
   const group = ((search.get("group") ?? "all") as WalletTypeGroup);

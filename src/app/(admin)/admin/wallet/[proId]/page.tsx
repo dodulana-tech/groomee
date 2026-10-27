@@ -53,7 +53,7 @@ interface Props {
 export default async function WalletProPage({ params, searchParams }: Props) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
-    redirect("/auth?redirect=/admin/wallet");
+    redirect("/admin/login?redirect=/admin/wallet");
   }
   if (!hasPermission(session, "wallet.view")) {
     return (

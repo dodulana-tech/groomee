@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { db } from "./db";
 import type { SessionPayload } from "@/types";
 import "./env";
+import { ensureEnvAdmin, isEnvAdminEmail, isEnvAdminPhone } from "./admin-bootstrap";
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
@@ -51,39 +52,65 @@ export async function clearSessionCookie() {
 
 // ─── SERVER-SIDE SESSION ──────────────────────────────────────────────────────
 
-// In-memory cache of `sessionsValidFrom` per user so we don't hit the DB on
-// every request. Short TTL — the goal is just to coalesce burst traffic.
-const SESSION_VALIDITY_TTL_MS = 30_000;
-const sessionValidityCache = new Map<string, { validFrom: number; checkedAt: number }>();
+// Admin sessions are re-hydrated from the DB so role / permission changes
+// apply without a re-login (the JWT only proves identity). In-memory cache
+// with a short TTL coalesces burst traffic.
+const ADMIN_STATE_TTL_MS = 30_000;
+type AdminState = {
+  validFrom: number;
+  adminRoleId?: string;
+  adminRoleName?: string;
+  permissions: string[];
+  checkedAt: number;
+};
+const adminStateCache = new Map<string, AdminState>();
 
-async function isSessionRevoked(payload: SessionPayload): Promise<boolean> {
-  // Only admins are subject to forced revocation today (demote/remove flow).
-  // Non-admin sessions don't pay this DB cost.
-  if (payload.role !== "ADMIN") return false;
-  const tokenIat = payload.iat ?? 0; // seconds
-  if (!tokenIat) return false;
-
-  const cached = sessionValidityCache.get(payload.userId);
+async function loadAdminState(userId: string): Promise<AdminState | null> {
+  const cached = adminStateCache.get(userId);
   const now = Date.now();
-  let validFrom: number;
-  if (cached && now - cached.checkedAt < SESSION_VALIDITY_TTL_MS) {
-    validFrom = cached.validFrom;
-  } else {
-    const user = await db.user.findUnique({
-      where: { id: payload.userId },
-      select: { sessionsValidFrom: true, role: true },
-    });
-    if (!user) return true; // user gone — kill the session
-    if (user.role !== "ADMIN") return true; // demoted — kill the session
-    validFrom = user.sessionsValidFrom ? Math.floor(user.sessionsValidFrom.getTime() / 1000) : 0;
-    sessionValidityCache.set(payload.userId, { validFrom, checkedAt: now });
-  }
+  if (cached && now - cached.checkedAt < ADMIN_STATE_TTL_MS) return cached;
 
-  return tokenIat < validFrom;
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { sessionsValidFrom: true, role: true, adminRole: true },
+  });
+  if (!user || user.role !== "ADMIN") {
+    // User gone or demoted — kill the session.
+    adminStateCache.delete(userId);
+    return null;
+  }
+  const state: AdminState = {
+    validFrom: user.sessionsValidFrom ? Math.floor(user.sessionsValidFrom.getTime() / 1000) : 0,
+    adminRoleId: user.adminRole?.id,
+    adminRoleName: user.adminRole?.name,
+    permissions: user.adminRole?.permissions ?? [],
+    checkedAt: now,
+  };
+  adminStateCache.set(userId, state);
+  return state;
 }
 
-export function invalidateSessionCache(userId: string) {
-  sessionValidityCache.delete(userId);
+/**
+ * Returns null if the session is revoked; otherwise the payload with admin
+ * role + permissions refreshed from the DB. Non-admin sessions pass through
+ * without a DB hit.
+ */
+async function resolveSession(payload: SessionPayload): Promise<SessionPayload | null> {
+  if (payload.role !== "ADMIN") return payload;
+  const state = await loadAdminState(payload.userId);
+  if (!state) return null;
+  if ((payload.iat ?? 0) < state.validFrom) return null;
+  return {
+    ...payload,
+    adminRoleId: state.adminRoleId,
+    adminRoleName: state.adminRoleName,
+    permissions: state.permissions,
+  };
+}
+
+export function invalidateSessionCache(userId?: string) {
+  if (userId) adminStateCache.delete(userId);
+  else adminStateCache.clear();
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
@@ -91,8 +118,7 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
   const payload = await verifyToken(token);
   if (!payload) return null;
-  if (await isSessionRevoked(payload)) return null;
-  return payload;
+  return resolveSession(payload);
 }
 
 export async function getSessionFromRequest(
@@ -102,8 +128,7 @@ export async function getSessionFromRequest(
   if (!token) return null;
   const payload = await verifyToken(token);
   if (!payload) return null;
-  if (await isSessionRevoked(payload)) return null;
-  return payload;
+  return resolveSession(payload);
 }
 
 export async function requireSession(): Promise<SessionPayload> {
@@ -172,7 +197,7 @@ export async function verifyOtp(
   const user = await db.user.upsert({
     where: { phone },
     update: {},
-    create: { phone, role: isAdmin(phone) ? "ADMIN" : "CUSTOMER" },
+    create: { phone, role: isEnvAdminPhone(phone) ? "ADMIN" : "CUSTOMER" },
   });
 
   return {
@@ -305,6 +330,17 @@ export async function signUserToken(user: {
 }): Promise<string> {
   let role = user.role as "CUSTOMER" | "ADMIN" | "PRO";
 
+  // Env allow-listed admins always get role=ADMIN plus an admin role, even
+  // if their account pre-dates the list or was created without one.
+  const fullUser = await db.user.findUnique({
+    where: { id: user.id },
+    select: { id: true, phone: true, email: true, role: true, adminRoleId: true },
+  });
+  if (fullUser && (await ensureEnvAdmin(db, fullUser))) {
+    role = "ADMIN";
+    invalidateSessionCache(user.id);
+  }
+
   // If role is CUSTOMER, check if this user has an approved Pro record.
   // Match on userId, plus phone when one is set (covers legacy Pro rows
   // created before user-linking).
@@ -345,19 +381,12 @@ export async function signUserToken(user: {
 /**
  * Check if the current session has ALL of the given permissions.
  * Super admins (with "*" permission) always pass.
- *
- * ─── DEV-ONLY OVERRIDE ─────────────────────────────────────────────────────
- * In NODE_ENV !== "production", any signed-in ADMIN passes every permission
- * check so we can demo gated pages without re-seeding role rows. Production
- * remains strict. Remove this block before relying on permission gating in
- * tests against staging or prod.
  */
 export function hasPermission(
   session: SessionPayload | null,
   ...requiredPermissions: string[]
 ): boolean {
   if (!session || session.role !== "ADMIN") return false;
-  if (process.env.NODE_ENV !== "production") return true; // DEV BYPASS
   const perms = session.permissions ?? [];
   if (perms.includes("*")) return true;
   return requiredPermissions.every((p) => perms.includes(p));
@@ -365,15 +394,12 @@ export function hasPermission(
 
 /**
  * Check if the current session has ANY of the given permissions.
- *
- * Same DEV-only override as above.
  */
 export function hasAnyPermission(
   session: SessionPayload | null,
   ...permissions: string[]
 ): boolean {
   if (!session || session.role !== "ADMIN") return false;
-  if (process.env.NODE_ENV !== "production") return true; // DEV BYPASS
   const perms = session.permissions ?? [];
   if (perms.includes("*")) return true;
   return permissions.some((p) => perms.includes(p));
@@ -381,24 +407,8 @@ export function hasAnyPermission(
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-function isAdmin(phone: string): boolean {
-  const adminPhones = (process.env.ADMIN_PHONES ?? "")
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  return adminPhones.includes(phone);
-}
-
 export function isAdminEmail(email: string): boolean {
-  // Accepts ADMIN_EMAILS (comma-separated list) and the singular ADMIN_EMAIL
-  // (used by prisma/seed.ts) as a fallback so both stay in sync.
-  const list = [
-    ...(process.env.ADMIN_EMAILS ?? "").split(","),
-    process.env.ADMIN_EMAIL ?? "",
-  ]
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return list.includes(email.trim().toLowerCase());
+  return isEnvAdminEmail(email);
 }
 
 export function formatPhone(phone: string): string {

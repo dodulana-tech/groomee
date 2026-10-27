@@ -147,6 +147,23 @@ export async function POST(req: NextRequest) {
       metadata: { roleId, roleName: role.name, upgradedExisting: Boolean(existing) },
     });
 
+    // Best-effort WhatsApp invite to the phone (always present), so invitees
+    // without an email still learn they have access and where to sign in.
+    if (user.phone) {
+      (async () => {
+        try {
+          const { sendMessage } = await import("@/lib/whatsapp");
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+          await sendMessage(
+            user.phone!,
+            `👋 You've been added to the Groomee admin team as *${role.name}*.\n\nSign in with this number at ${appUrl}/admin/login. We'll send you a one-time code.`,
+          );
+        } catch (err) {
+          console.error("admin invite whatsapp failed", err);
+        }
+      })();
+    }
+
     // Best-effort invite email. Don't block the response on it.
     if (user.email) {
       (async () => {
