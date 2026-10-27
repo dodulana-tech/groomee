@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Service } from "@/types";
+import { isWhatsAppChannelCity, trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 
 const CATEGORIES = [
   { key: "HAIR", label: "Hair", emoji: "💇🏿‍♀️" },
@@ -131,7 +132,17 @@ export default function Hero({ services, liveCity, waitlistCity }: Props) {
                 <span className="inline-block transition-transform group-hover:scale-110">✦</span>
                 Book a pro{liveCity ? ` in ${liveCity.name}` : ""}
               </Link>
-              {waitlistCity && (
+              {waitlistCity && isWhatsAppChannelCity(waitlistCity.slug) && (
+                <a
+                  href={trackedWhatsAppHref("hero", waitlistCity.slug)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-[#25D366]/40 bg-[#25D366]/10 px-5 py-3 text-sm font-semibold text-[#128C7E] transition-all hover:-translate-y-0.5 hover:border-[#25D366] hover:shadow-md active:scale-[0.97] sm:px-6 sm:py-3.5 sm:text-[0.95rem]"
+                >
+                  💬 Book in {waitlistCity.name} on WhatsApp
+                </a>
+              )}
+              {waitlistCity && !isWhatsAppChannelCity(waitlistCity.slug) && (
                 <button
                   onClick={() =>
                     document

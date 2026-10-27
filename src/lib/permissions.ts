@@ -91,6 +91,10 @@ export const PERMISSIONS = {
   // Inventory (per-pro stock) — view stock, restock, recipes, adjustments.
   INVENTORY_VIEW: "inventory.view",
   INVENTORY_MANAGE: "inventory.manage",
+
+  // Social listening — view the mention inbox; manage = triage, edit terms.
+  LISTENING_VIEW: "listening.view",
+  LISTENING_MANAGE: "listening.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -248,6 +252,13 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: PERMISSIONS.INVENTORY_MANAGE, label: "Restock, adjust, set thresholds" },
     ],
   },
+  listening: {
+    label: "Social listening",
+    permissions: [
+      { key: PERMISSIONS.LISTENING_VIEW, label: "View social mentions inbox" },
+      { key: PERMISSIONS.LISTENING_MANAGE, label: "Triage mentions, manage tracked terms" },
+    ],
+  },
 };
 
 /** Default role definitions used for seeding */
@@ -288,6 +299,8 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.PRODUCTS_MANAGE,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.INVENTORY_MANAGE,
+      PERMISSIONS.LISTENING_VIEW,
+      PERMISSIONS.LISTENING_MANAGE,
     ],
     isSystem: false,
   },
@@ -317,6 +330,8 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.NOTES_VIEW,
       PERMISSIONS.NOTES_MANAGE,
       PERMISSIONS.HEALTH_VIEW,
+      PERMISSIONS.LISTENING_VIEW,
+      PERMISSIONS.LISTENING_MANAGE,
     ],
     isSystem: false,
   },
