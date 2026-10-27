@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
   const secret = (authHeader ?? "").replace("Bearer ", "");
   const expected = process.env.CRON_SECRET ?? "";
   const isValid =
+    expected.length > 0 &&
     secret.length === expected.length &&
     timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
   if (!isValid) {

@@ -1,5 +1,7 @@
 import Navbar from "@/components/customer/Navbar";
 import MobileNav from "@/components/customer/MobileNav";
+import ConciergeWidget from "@/components/customer/ConciergeWidget";
+import { assistantEnabled } from "@/lib/assistant/engine";
 
 export default function CustomerLayout({
   children,
@@ -11,6 +13,7 @@ export default function CustomerLayout({
       <Navbar />
       <main className="pt-14 lg:pt-[68px] pb-16 lg:pb-0">{children}</main>
       <MobileNav />
+      <ConciergeWidget enabled={assistantEnabled()} />
     </div>
   );
 }

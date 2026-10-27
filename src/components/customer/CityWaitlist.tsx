@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isWhatsAppChannelCity, trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 
 interface Props {
   city: {
@@ -19,6 +20,9 @@ export default function CityWaitlist({ city, areas = [] }: Props) {
   const [area, setArea] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const waHref = isWhatsAppChannelCity(city.slug)
+    ? trackedWhatsAppHref("waitlist", city.slug)
+    : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -102,6 +106,16 @@ export default function CityWaitlist({ city, areas = [] }: Props) {
                 <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-800 text-white font-mono text-sm font-medium px-4 py-2 rounded-full shadow-lg">
                   ⭐ +10 Groomee Points earned
                 </div>
+                {waHref && (
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 text-sm font-bold text-gray-950 transition-all hover:bg-[#3be07a]"
+                  >
+                    💬 Need a pro now? Book on WhatsApp
+                  </a>
+                )}
               </div>
             ) : (
               <>
@@ -112,6 +126,21 @@ export default function CityWaitlist({ city, areas = [] }: Props) {
                   Takes 30 seconds · Be first in {city.name}
                 </p>
 
+                {waHref && (
+                  <>
+                    <a
+                      href={waHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 text-sm font-bold text-gray-950 transition-all hover:bg-[#3be07a]"
+                    >
+                      💬 Book a pro in {city.name} on WhatsApp
+                    </a>
+                    <p className="mb-4 sm:mb-5 text-center text-xs text-white/40">
+                      We&apos;re booking {city.name} by chat while the app rolls out — or join the waitlist below.
+                    </p>
+                  </>
+                )}
                 <div className="mb-4 sm:mb-5 flex items-center gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5 sm:px-4 sm:py-3 text-xs text-amber-100 leading-relaxed">
                   <span className="text-base">⭐</span>
                   Join now and earn <strong className="text-amber-400 ml-1">10 Groomee Points</strong>

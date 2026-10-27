@@ -22,6 +22,7 @@ const optional = [
   "SMTP_PASS",
   "CRON_SECRET",
   "SESSION_DURATION",
+  "ANTHROPIC_API_KEY",
 ] as const;
 
 const missing = required.filter((key) => !process.env[key]);
