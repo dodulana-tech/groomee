@@ -2,7 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequestEdge } from "@/lib/auth-edge";
 
 // Exact-match public paths
-const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
+const PUBLIC_EXACT = new Set([
+  "/",
+  "/search",
+  "/auth",
+  "/partner/login",
+  "/partner/onboarding",
+  "/abuja",
+  "/api/wa", // tracked WhatsApp CTA redirect
+  // Crawlers must reach these without a session.
+  "/robots.txt",
+  "/sitemap.xml",
+  "/opengraph-image",
+]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [
   "/pro/",      // /pro/[slug] pages — NOT /profile
@@ -16,6 +28,7 @@ const PUBLIC_PREFIX = [
   "/api/cities",
   "/api/surveys",
   "/api/waitlist",
+  "/api/cron/", // routes verify CRON_SECRET themselves
   "/cert/",   // public Freedom certificate verification pages
   "/favicon.ico",
   "/_next",

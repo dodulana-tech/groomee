@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isWhatsAppChannelCity, trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 
 interface CitySummary {
   id: string;
@@ -19,6 +20,10 @@ export default function CityRolloutBanner({ liveCities, waitlistCities }: Props)
   if (liveCities.length === 0) return null;
   const liveLabel = liveCities.map((c) => c.name).join(" · ");
   const firstWait = waitlistCities[0] ?? null;
+  const waHref =
+    firstWait && isWhatsAppChannelCity(firstWait.slug)
+      ? trackedWhatsAppHref("rollout-banner", firstWait.slug)
+      : null;
 
   return (
     <section className="bg-gray-950 py-10 relative overflow-hidden">
@@ -37,7 +42,17 @@ export default function CityRolloutBanner({ liveCities, waitlistCities }: Props)
               </>
             )}
           </p>
-          {firstWait && (
+          {firstWait && waHref && (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-bold text-gray-950 hover:bg-[#3be07a] transition-all"
+            >
+              Book on WhatsApp
+            </a>
+          )}
+          {firstWait && !waHref && (
             <Link
               href={`#waitlist-${firstWait.slug}`}
               className="shrink-0 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-purple-500 transition-all"
@@ -101,15 +116,28 @@ export default function CityRolloutBanner({ liveCities, waitlistCities }: Props)
                   </h3>
                   <p className="text-sm text-white/50 leading-relaxed">
                     {firstWait.tagline ??
-                      `We're building Groomee for ${firstWait.name} next. Join the waitlist to be first in line.`}
+                      (waHref
+                        ? `Pros are already taking ${firstWait.name} bookings — message us on WhatsApp and we'll match you.`
+                        : `We're building Groomee for ${firstWait.name} next. Join the waitlist to be first in line.`)}
                   </p>
                 </div>
-                <Link
-                  href={`#waitlist-${firstWait.slug}`}
-                  className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-purple-500 transition-all w-fit"
-                >
-                  Join the {firstWait.name} waitlist →
-                </Link>
+                {waHref ? (
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-2.5 text-sm font-bold text-gray-950 hover:bg-[#3be07a] transition-all w-fit"
+                  >
+                    💬 Book in {firstWait.name} on WhatsApp →
+                  </a>
+                ) : (
+                  <Link
+                    href={`#waitlist-${firstWait.slug}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-purple-500 transition-all w-fit"
+                  >
+                    Join the {firstWait.name} waitlist →
+                  </Link>
+                )}
               </div>
             </>
           )}
