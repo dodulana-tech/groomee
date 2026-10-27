@@ -33,6 +33,10 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      # Customer concierge + admin ops copilot. Unset = both degrade to
+      # static Book / WhatsApp buttons.
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: NEXT_PUBLIC_GROOMEE_WHATSAPP
         value: "2348084296023"
       - key: NEXT_PUBLIC_APP_URL

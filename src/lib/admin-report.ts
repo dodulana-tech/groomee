@@ -16,7 +16,7 @@ interface Window {
 }
 
 async function windowStats(w: Window) {
-  const [created, confirmed, noPro, cancelled, newCustomers, newPros, reviews, disputes, waitlist, waClicks] =
+  const [created, confirmed, noPro, cancelled, newCustomers, newPros, reviews, disputes, waitlist, waClicks, chats] =
     await Promise.all([
       db.booking.findMany({
         where: { createdAt: w },
@@ -34,6 +34,10 @@ async function windowStats(w: Window) {
       db.dispute.count({ where: { createdAt: w } }),
       db.waitlist.groupBy({ by: ["city"], where: { createdAt: w }, _count: true }),
       db.whatsAppClick.groupBy({ by: ["city", "source"], where: { createdAt: w }, _count: true }),
+      db.assistantConversation.findMany({
+        where: { createdAt: w },
+        select: { clickedBooking: true, clickedWhatsApp: true, inputTokens: true, outputTokens: true },
+      }),
     ]);
 
   const bookingsByCity: Record<string, number> = {};
@@ -73,6 +77,9 @@ async function windowStats(w: Window) {
     waClicks: Object.values(waByCity).reduce((a, b) => a + b, 0),
     waByCity,
     waBySource,
+    assistantChats: chats.length,
+    assistantBookingClicks: chats.filter((c) => c.clickedBooking).length,
+    assistantWhatsApp: chats.filter((c) => c.clickedWhatsApp).length,
   };
 }
 
@@ -113,6 +120,9 @@ export async function buildWeeklyReport(now = new Date()) {
     ["New customers", String(c.newCustomers), delta(c.newCustomers, p.newCustomers)],
     ["New pro sign-ups", String(c.newPros), delta(c.newPros, p.newPros)],
     ["WhatsApp CTA taps", String(c.waClicks), delta(c.waClicks, p.waClicks)],
+    ["Concierge chats", String(c.assistantChats), delta(c.assistantChats, p.assistantChats)],
+    ["Concierge → booking link", String(c.assistantBookingClicks), delta(c.assistantBookingClicks, p.assistantBookingClicks)],
+    ["Concierge → WhatsApp", String(c.assistantWhatsApp), delta(c.assistantWhatsApp, p.assistantWhatsApp)],
     ["Waitlist sign-ups", String(sumValues(c.waitlistByCity)), delta(sumValues(c.waitlistByCity), sumValues(p.waitlistByCity))],
     ["Reviews", `${c.reviews}${c.avgRating ? ` (avg ${c.avgRating.toFixed(1)}★)` : ""}`, delta(c.reviews, p.reviews)],
     ["Reviews ≤3★", String(c.lowReviews), delta(c.lowReviews, p.lowReviews)],
@@ -159,6 +169,7 @@ export async function buildWeeklyReport(now = new Date()) {
     `WhatsApp taps: ${c.waClicks} (${breakdown(c.waByCity)})`,
     `Waitlist: ${breakdown(c.waitlistByCity)}`,
     `New customers ${c.newCustomers} · new pros ${c.newPros}`,
+    `Concierge: ${c.assistantChats} chats → ${c.assistantBookingClicks} booking clicks, ${c.assistantWhatsApp} WhatsApp`,
     `No-pro ${c.noPro} · cancelled ${c.cancelled} · disputes ${c.disputes} · ≤3★ ${c.lowReviews}`,
   ].join("\n");
 

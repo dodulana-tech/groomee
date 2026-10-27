@@ -28,6 +28,8 @@ const NAV = [
   { href: "/admin/surveys", label: "Surveys", icon: "📊", permission: "analytics.view" },
   { href: "/admin/waitlist", label: "Waitlist", icon: "📋", permission: "analytics.view" },
   { href: "/admin/analytics", label: "Analytics", icon: "📈", permission: "analytics.view" },
+  { href: "/admin/copilot", label: "Ops copilot", icon: "✦", permission: "copilot.use" },
+  { href: "/admin/assistant", label: "Concierge chats", icon: "💬", permission: "analytics.view" },
   { href: "/admin/team", label: "Team", icon: "🔑", permission: "team.view" },
   { href: "/admin/settings", label: "Settings", icon: "⚙️", permission: "settings.view" },
 ];

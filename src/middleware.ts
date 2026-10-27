@@ -10,6 +10,8 @@ const PUBLIC_EXACT = new Set([
   "/partner/onboarding",
   "/abuja",
   "/api/wa", // tracked WhatsApp CTA redirect
+  "/api/assistant", // customer concierge (rate-limited in-route)
+  "/api/assistant/click",
   // Crawlers must reach these without a session.
   "/robots.txt",
   "/sitemap.xml",

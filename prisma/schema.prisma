@@ -674,6 +674,42 @@ model WhatsAppClick {
   @@map("whatsapp_clicks")
 }
 
+// Customer concierge chats (/api/assistant). One row per browser session
+// conversation; outcome flags are set by the click beacon so the admin page
+// and weekly report can measure assistant-driven conversion.
+model AssistantConversation {
+  id              String             @id @default(cuid())
+  sessionId       String
+  city            String?
+  messageCount    Int                @default(0)
+  inputTokens     Int                @default(0)
+  outputTokens    Int                @default(0)
+  cacheReadTokens Int                @default(0)
+  clickedBooking  Boolean            @default(false)
+  clickedWhatsApp Boolean            @default(false)
+  refused         Boolean            @default(false)
+  messages        AssistantMessage[]
+  lastMessageAt   DateTime           @default(now())
+  createdAt       DateTime           @default(now())
+
+  @@index([createdAt])
+  @@index([sessionId])
+  @@map("assistant_conversations")
+}
+
+model AssistantMessage {
+  id             String                @id @default(cuid())
+  conversationId String
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  toolCalls      Json?
+  createdAt      DateTime              @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("assistant_messages")
+}
+
 model Waitlist {
   id        String   @id @default(cuid())
   email     String?

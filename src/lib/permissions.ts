@@ -91,6 +91,10 @@ export const PERMISSIONS = {
   // Inventory (per-pro stock) — view stock, restock, recipes, adjustments.
   INVENTORY_VIEW: "inventory.view",
   INVENTORY_MANAGE: "inventory.manage",
+
+  // Ops copilot — AI assistant in the admin. Read-only; every tool re-checks
+  // the caller's own permissions, so this only unlocks the chat itself.
+  COPILOT_USE: "copilot.use",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -248,6 +252,12 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: PERMISSIONS.INVENTORY_MANAGE, label: "Restock, adjust, set thresholds" },
     ],
   },
+  copilot: {
+    label: "Ops copilot",
+    permissions: [
+      { key: PERMISSIONS.COPILOT_USE, label: "Use the AI ops copilot (read-only, within own permissions)" },
+    ],
+  },
 };
 
 /** Default role definitions used for seeding */
@@ -288,6 +298,7 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.PRODUCTS_MANAGE,
       PERMISSIONS.INVENTORY_VIEW,
       PERMISSIONS.INVENTORY_MANAGE,
+      PERMISSIONS.COPILOT_USE,
     ],
     isSystem: false,
   },
