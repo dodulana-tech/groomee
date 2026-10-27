@@ -27,6 +27,7 @@ const NAV = [
   { href: "/admin/inventory", label: "Inventory", icon: "📦", permission: "inventory.view" },
   { href: "/admin/surveys", label: "Surveys", icon: "📊", permission: "analytics.view" },
   { href: "/admin/waitlist", label: "Waitlist", icon: "📋", permission: "analytics.view" },
+  { href: "/admin/listening", label: "Listening", icon: "👂", permission: "listening.view" },
   { href: "/admin/analytics", label: "Analytics", icon: "📈", permission: "analytics.view" },
   { href: "/admin/team", label: "Team", icon: "🔑", permission: "team.view" },
   { href: "/admin/settings", label: "Settings", icon: "⚙️", permission: "settings.view" },

@@ -16,7 +16,7 @@ interface Window {
 }
 
 async function windowStats(w: Window) {
-  const [created, confirmed, noPro, cancelled, newCustomers, newPros, reviews, disputes, waitlist, waClicks] =
+  const [created, confirmed, noPro, cancelled, newCustomers, newPros, reviews, disputes, waitlist, waClicks, mentions] =
     await Promise.all([
       db.booking.findMany({
         where: { createdAt: w },
@@ -34,6 +34,10 @@ async function windowStats(w: Window) {
       db.dispute.count({ where: { createdAt: w } }),
       db.waitlist.groupBy({ by: ["city"], where: { createdAt: w }, _count: true }),
       db.whatsAppClick.groupBy({ by: ["city", "source"], where: { createdAt: w }, _count: true }),
+      db.socialMention.findMany({
+        where: { createdAt: w, relevant: true },
+        select: { intent: true, sentiment: true, competitor: true, status: true },
+      }),
     ]);
 
   const bookingsByCity: Record<string, number> = {};
@@ -55,7 +59,17 @@ async function windowStats(w: Window) {
     waBySource[row.source] = (waBySource[row.source] ?? 0) + row._count;
   }
 
+  const listening = {
+    total: mentions.length,
+    leads: mentions.filter((m) => m.intent === "LEAD").length,
+    complaints: mentions.filter((m) => m.intent === "COMPLAINT").length,
+    negative: mentions.filter((m) => m.sentiment === "NEGATIVE").length,
+    competitor: mentions.filter((m) => m.competitor).length,
+    unhandled: mentions.filter((m) => m.status === "NEW").length,
+  };
+
   return {
+    listening,
     bookings: created.length,
     bookingsByCity,
     confirmed: confirmed.length,
@@ -117,6 +131,9 @@ export async function buildWeeklyReport(now = new Date()) {
     ["Reviews", `${c.reviews}${c.avgRating ? ` (avg ${c.avgRating.toFixed(1)}★)` : ""}`, delta(c.reviews, p.reviews)],
     ["Reviews ≤3★", String(c.lowReviews), delta(c.lowReviews, p.lowReviews)],
     ["Disputes opened", String(c.disputes), delta(c.disputes, p.disputes)],
+    ["Social mentions", String(c.listening.total), delta(c.listening.total, p.listening.total)],
+    ["Social leads", String(c.listening.leads), delta(c.listening.leads, p.listening.leads)],
+    ["Social complaints", String(c.listening.complaints), delta(c.listening.complaints, p.listening.complaints)],
   ];
 
   const details: [string, string][] = [
@@ -124,6 +141,10 @@ export async function buildWeeklyReport(now = new Date()) {
     ["WhatsApp taps by city", breakdown(c.waByCity)],
     ["WhatsApp taps by surface", breakdown(c.waBySource)],
     ["Waitlist by city", breakdown(c.waitlistByCity)],
+    [
+      "Social listening",
+      `${c.listening.negative} negative · ${c.listening.competitor} about competitors · ${c.listening.unhandled} still unhandled`,
+    ],
   ];
 
   const subject = `Groomee weekly report · ${period}`;
@@ -160,6 +181,7 @@ export async function buildWeeklyReport(now = new Date()) {
     `Waitlist: ${breakdown(c.waitlistByCity)}`,
     `New customers ${c.newCustomers} · new pros ${c.newPros}`,
     `No-pro ${c.noPro} · cancelled ${c.cancelled} · disputes ${c.disputes} · ≤3★ ${c.lowReviews}`,
+    `Social: ${c.listening.total} mentions · ${c.listening.leads} leads · ${c.listening.complaints} complaints · ${c.listening.unhandled} unhandled`,
   ].join("\n");
 
   return { subject, html, whatsapp, current: c, previous: p };

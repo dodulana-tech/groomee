@@ -35,6 +35,19 @@ services:
         sync: false
       - key: NEXT_PUBLIC_GROOMEE_WHATSAPP
         value: "2348084296023"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Social listening sources — each connector stays off until set.
+      - key: GOOGLE_ALERTS_FEEDS
+        sync: false
+      - key: BRAVE_API_KEY
+        sync: false
+      - key: IG_USER_ID
+        sync: false
+      - key: IG_ACCESS_TOKEN
+        sync: false
+      - key: X_BEARER_TOKEN
+        sync: false
       - key: NEXT_PUBLIC_APP_URL
         sync: false
       - key: SMTP_HOST
@@ -114,6 +127,28 @@ services:
     buildCommand: echo "no build needed"
     startCommand: |
       curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/weekly-report"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: groomee
+          type: web
+          envVarKey: CRON_SECRET
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: groomee
+          type: web
+          property: url
+
+  # Social listening — hourly. Connectors self-throttle (Brave daily, X every
+  # 6h, Instagram hourly); classifies new posts with Claude and WhatsApps
+  # admins about urgent ones.
+  - type: cron
+    name: groomee-listening
+    runtime: node
+    schedule: "20 * * * *"
+    buildCommand: echo "no build needed"
+    startCommand: |
+      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/listening"
     envVars:
       - key: CRON_SECRET
         fromService:

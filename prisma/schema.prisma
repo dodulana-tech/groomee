@@ -1369,3 +1369,108 @@ model BenefitClaim {
   @@index([proId, createdAt])
   @@map("benefit_claims")
 }
+
+// ─── Social listening ────────────────────────────────────────────────────────
+// Public posts mentioning Groomee, competitors or lead keywords, pulled by
+// /api/cron/listening from connectors in src/lib/listening/. NDPA: store only
+// handle/text/url/time; un-actioned rows are purged after 90 days.
+
+enum ListeningSource {
+  INSTAGRAM
+  FACEBOOK
+  X
+  GOOGLE_ALERTS
+  NAIRALAND
+  WEB
+  MANUAL
+}
+
+enum ListeningTermKind {
+  BRAND       // Groomee's own names / handles
+  COMPETITOR  // competitor brand or handle
+  LEAD        // "need a braider" style demand phrases
+  HASHTAG     // Instagram hashtag (30 unique / 7 days limit)
+}
+
+enum MentionIntent {
+  LEAD
+  COMPLAINT
+  PRAISE
+  QUESTION
+  PRO_RECRUIT
+  COMPETITOR_COMPLAINT
+  UGC
+  OTHER
+}
+
+enum MentionSentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+enum MentionUrgency {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum MentionStatus {
+  NEW
+  IN_PROGRESS
+  REPLIED
+  IGNORED
+}
+
+model ListeningTerm {
+  id         String            @id @default(cuid())
+  term       String
+  kind       ListeningTermKind
+  // Display name of the competitor this term tracks (COMPETITOR only).
+  competitor String?
+  active     Boolean           @default(true)
+  createdAt  DateTime          @default(now())
+
+  @@unique([term, kind])
+  @@map("listening_terms")
+}
+
+model SocialMention {
+  id             String            @id @default(cuid())
+  source         ListeningSource
+  // Platform id (or URL hash) — dedupes repeat fetches.
+  externalId     String
+  url            String?
+  authorHandle   String?
+  text           String
+  postedAt       DateTime?
+  matchedTerm    String?
+  competitor     String?
+
+  // Classification (Claude) — null until classified.
+  intent         MentionIntent?
+  sentiment      MentionSentiment?
+  urgency        MentionUrgency?
+  relevant       Boolean?
+  city           String?
+  service        String?
+  summary        String?
+  suggestedReply String?
+  classifiedAt   DateTime?
+
+  // Workflow
+  status         MentionStatus     @default(NEW)
+  handledById    String?
+  handledAt      DateTime?
+  alertedAt      DateTime?
+  note           String?
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([source, externalId])
+  @@index([status, createdAt])
+  @@index([intent, createdAt])
+  @@index([classifiedAt])
+  @@map("social_mentions")
+}
