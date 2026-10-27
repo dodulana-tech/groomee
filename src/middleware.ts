@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequestEdge } from "@/lib/auth-edge";
 
 // Exact-match public paths
-const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
+const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/admin/login", "/partner/login", "/partner/onboarding"]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [
   "/pro/",      // /pro/[slug] pages — NOT /profile
@@ -57,10 +57,12 @@ export async function middleware(request: NextRequest) {
         { status: 401 },
       );
     }
-    // Redirect partner paths to partner login
+    // Partner and admin paths have their own login pages
     const loginPath = PRO_PATHS.some((p) => pathname.startsWith(p))
       ? "/partner/login"
-      : "/auth";
+      : ADMIN_PATHS.some((p) => pathname.startsWith(p))
+        ? "/admin/login"
+        : "/auth";
     const url = new URL(loginPath, request.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
@@ -77,7 +79,9 @@ export async function middleware(request: NextRequest) {
         { status: 403 },
       );
     }
-    return NextResponse.redirect(new URL("/", request.url));
+    // Signed in, but not as an admin (e.g. a customer session): send them to
+    // the admin login so they can switch accounts instead of bouncing home.
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   // Pro/partner-only paths

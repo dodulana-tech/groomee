@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession, hasPermission } from "@/lib/auth";
+import { getSession, hasPermission, invalidateSessionCache } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 // GET /api/admin/roles/[id]
@@ -79,6 +79,8 @@ export async function PATCH(
     }
 
     const updated = await db.adminRole.update({ where: { id }, data: update });
+    // Everyone holding this role sees the change on their next request.
+    invalidateSessionCache();
     return NextResponse.json({ success: true, data: updated });
   } catch (err) {
     console.error("role PATCH error:", err);

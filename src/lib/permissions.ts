@@ -72,6 +72,11 @@ export const PERMISSIONS = {
   CITIES_VIEW: "cities.view",
   CITIES_MANAGE: "cities.manage",
 
+  // Apprenticeships — view master/apprentice pairings; manage = approve,
+  // pause, graduate ("Freedom") and adjust master commission.
+  APPRENTICESHIPS_VIEW: "apprenticeships.view",
+  APPRENTICESHIPS_MANAGE: "apprenticeships.manage",
+
   // Wallet — ledger forensics + manual adjustments + fraction tuning.
   WALLET_VIEW: "wallet.view",
   WALLET_MANAGE: "wallet.manage",
@@ -213,6 +218,13 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: PERMISSIONS.CITIES_MANAGE, label: "Activate cities (flip status, set launch date)" },
     ],
   },
+  apprenticeships: {
+    label: "Apprenticeships",
+    permissions: [
+      { key: PERMISSIONS.APPRENTICESHIPS_VIEW, label: "View master / apprentice pairings" },
+      { key: PERMISSIONS.APPRENTICESHIPS_MANAGE, label: "Approve, pause, graduate, set commission" },
+    ],
+  },
   wallet: {
     label: "Wallet",
     permissions: [
@@ -284,6 +296,8 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.HEALTH_MANAGE,
       PERMISSIONS.CITIES_VIEW,
       PERMISSIONS.CITIES_MANAGE,
+      PERMISSIONS.APPRENTICESHIPS_VIEW,
+      PERMISSIONS.APPRENTICESHIPS_MANAGE,
       PERMISSIONS.PRODUCTS_VIEW,
       PERMISSIONS.PRODUCTS_MANAGE,
       PERMISSIONS.INVENTORY_VIEW,
@@ -301,6 +315,8 @@ export const DEFAULT_ROLES = [
       PERMISSIONS.PROS_MANAGE,
       PERMISSIONS.NOTES_VIEW,
       PERMISSIONS.NOTES_MANAGE,
+      PERMISSIONS.APPRENTICESHIPS_VIEW,
+      PERMISSIONS.APPRENTICESHIPS_MANAGE,
     ],
     isSystem: false,
   },
