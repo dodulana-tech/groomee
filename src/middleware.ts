@@ -2,12 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequestEdge } from "@/lib/auth-edge";
 
 // Exact-match public paths
-const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/admin/login", "/partner/login", "/partner/onboarding"]);
+const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [
   "/pro/",      // /pro/[slug] pages — NOT /profile
   "/groomer/",  // legacy redirect to /pro/[slug]
   "/api/auth",
+  "/admin/login", // admin OTP sign-in (lives outside the admin layout)
   "/api/health",
   "/api/webhooks",
   "/api/services",
