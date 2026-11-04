@@ -15,10 +15,15 @@ export function isWhatsAppChannelCity(slug?: string | null): boolean {
   return !!slug && WHATSAPP_CHANNEL_CITIES.includes(slug.toLowerCase());
 }
 
-export function whatsappGreeting(cityName?: string | null): string {
-  return cityName
-    ? `Hi Groomee! I'd like to book a beauty pro in ${cityName}.`
-    : "Hi Groomee! I'd like to book a beauty pro.";
+export function whatsappGreeting(
+  cityName?: string | null,
+  opts: { serviceName?: string | null; areaName?: string | null } = {},
+): string {
+  const what = opts.serviceName ? opts.serviceName.toLowerCase() : "a beauty pro";
+  const where = [opts.areaName, cityName].filter(Boolean).join(", ");
+  return where
+    ? `Hi Groomee! I'd like to book ${what} at home in ${where}.`
+    : `Hi Groomee! I'd like to book ${what}.`;
 }
 
 /** Direct wa.me link with a prefilled message. */
@@ -30,8 +35,14 @@ export function whatsappUrl(text: string): string {
  * Tracked link — logs a WhatsAppClick then redirects to wa.me. Use this for
  * every on-site CTA so the weekly report can attribute demand.
  */
-export function trackedWhatsAppHref(source: string, citySlug?: string | null): string {
+export function trackedWhatsAppHref(
+  source: string,
+  citySlug?: string | null,
+  opts: { service?: string | null; area?: string | null } = {},
+): string {
   const params = new URLSearchParams({ src: source });
   if (citySlug) params.set("city", citySlug);
+  if (opts.service) params.set("svc", opts.service);
+  if (opts.area) params.set("area", opts.area);
   return `/api/wa?${params.toString()}`;
 }

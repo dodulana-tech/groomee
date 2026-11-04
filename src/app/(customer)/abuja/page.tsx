@@ -6,10 +6,11 @@ import { formatNaira } from "@/lib/utils";
 import { trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 import CityWaitlist from "@/components/customer/CityWaitlist";
 import Footer from "@/components/customer/Footer";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 300;
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomeeapp.com";
+const APP_URL = SITE_URL;
 
 const CATEGORY_LABEL: Record<string, string> = {
   HAIR: "Hair & braids",

@@ -31,6 +31,15 @@ const PUBLIC_PREFIX = [
   "/api/waitlist",
   "/api/cron/", // routes verify CRON_SECRET themselves
   "/cert/",   // public Freedom certificate verification pages
+  // SEO landing pages (service x city, areas, price list, FAQ)
+  "/lagos",
+  "/abuja/",
+  "/prices",
+  "/faq",
+  "/gift",
+  "/subscriptions",
+  "/become-a-pro",
+  "/llms.txt",
   "/favicon.ico",
   "/_next",
 ];

@@ -668,6 +668,10 @@ model WhatsAppClick {
   id        String   @id @default(cuid())
   city      String?
   source    String
+  /// Service slug the tap was about (landing pages), if any
+  service   String?
+  /// Area/zone slug the tap was about, if any
+  area      String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])

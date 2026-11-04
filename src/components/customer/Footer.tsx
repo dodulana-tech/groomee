@@ -3,16 +3,18 @@ import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 import { trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 
 const SERVICES = [
-  { href: "/search?service=knotless-braids", label: "Hair styling" },
-  { href: "/search?service=full-glam-makeup", label: "Makeup" },
-  { href: "/search?service=gel-nails", label: "Nails" },
-  { href: "/search?service=haircut-fade", label: "Barbing" },
-  { href: "/search?service=classic-lashes", label: "Lashes" },
-  { href: "/search?service=facial-glow", label: "Skincare" },
+  { href: "/lagos/knotless-braids", label: "Braids" },
+  { href: "/lagos/full-glam-makeup", label: "Makeup" },
+  { href: "/lagos/gel-nails", label: "Nails" },
+  { href: "/lagos/fade-shape-up", label: "Barbing" },
+  { href: "/lagos/classic-lash-set", label: "Lashes" },
+  { href: "/lagos/facial-treatment", label: "Skincare" },
 ];
 
 const COMPANY = [
   { href: "/#about", label: "Our story" },
+  { href: "/prices", label: "Prices" },
+  { href: "/faq", label: "FAQ" },
   { href: "/partner/onboarding", label: "Become a pro" },
   // Waitlist entries are appended at render time from props.waitlistCities.
   { href: "/#survey", label: "Take our survey" },

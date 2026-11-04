@@ -102,9 +102,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
   category: "beauty",
   metadataBase: new URL(
     SITE_URL,
