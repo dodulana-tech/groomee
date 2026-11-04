@@ -662,6 +662,18 @@ model SurveyResponse {
   @@map("survey_responses")
 }
 
+// One row per tap on a tracked "chat on WhatsApp" CTA (/api/wa). Lets the
+// weekly admin report attribute WhatsApp-concierge demand by city + surface.
+model WhatsAppClick {
+  id        String   @id @default(cuid())
+  city      String?
+  source    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("whatsapp_clicks")
+}
+
 model Waitlist {
   id        String   @id @default(cuid())
   email     String?

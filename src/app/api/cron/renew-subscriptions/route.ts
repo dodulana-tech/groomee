@@ -10,7 +10,8 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
   const secret = (authHeader ?? "").replace("Bearer ", "");
   const expected = process.env.CRON_SECRET ?? "";
-  const isValid = secret.length === expected.length &&
+  const isValid = expected.length > 0 &&
+    secret.length === expected.length &&
     timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
   if (!isValid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

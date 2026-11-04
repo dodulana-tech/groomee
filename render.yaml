@@ -31,6 +31,10 @@ services:
         sync: false
       - key: ADMIN_PHONES
         sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: NEXT_PUBLIC_GROOMEE_WHATSAPP
+        value: "2348084296023"
       - key: NEXT_PUBLIC_APP_URL
         sync: false
       - key: SMTP_HOST
@@ -89,6 +93,27 @@ services:
     buildCommand: echo "no build needed"
     startCommand: |
       curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/benefits"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: groomee
+          type: web
+          envVarKey: CRON_SECRET
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: groomee
+          type: web
+          property: url
+
+  # Weekly admin report — Mondays 06:00 UTC (07:00 WAT). Emails ADMIN_EMAILS,
+  # WhatsApps ADMIN_PHONES with last-7-days vs prior-7-days.
+  - type: cron
+    name: groomee-weekly-report
+    runtime: node
+    schedule: "0 6 * * 1"
+    buildCommand: echo "no build needed"
+    startCommand: |
+      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/weekly-report"
     envVars:
       - key: CRON_SECRET
         fromService:
