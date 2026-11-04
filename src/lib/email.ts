@@ -13,7 +13,7 @@ export async function sendEmail({
   const pass = process.env.SMTP_PASS;
   const host = process.env.SMTP_HOST ?? "smtp.zoho.com";
   const port = parseInt(process.env.SMTP_PORT ?? "465");
-  const from = process.env.SMTP_FROM ?? user ?? "noreply@groomee.ng";
+  const from = process.env.SMTP_FROM ?? user ?? "hello@groomeeapp.com";
 
   if (!user || !pass) {
     console.warn("[email] SMTP_USER or SMTP_PASS not set — skipping email");

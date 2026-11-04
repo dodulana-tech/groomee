@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       const cityLabel = entry.city ?? "your city";
       sendMessage(
         phone,
-        `🎉 You're on the Groomee waitlist for ${cityLabel}!\n\nWe'll notify you as soon as we launch in your area. Meanwhile, earn Groomee Points by completing our quick survey at groomee.ng\n\n💚 The Groomee Team`,
+        `🎉 You're on the Groomee waitlist for ${cityLabel}!\n\nWe'll notify you as soon as we launch in your area. Meanwhile, earn Groomee Points by completing our quick survey at groomeeapp.com\n\n💚 The Groomee Team`,
         "whatsapp",
       ).catch(() => {}); // fire-and-forget — don't block the response
     }

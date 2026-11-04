@@ -212,7 +212,7 @@ export default function AdminLoginPage() {
                   type="email"
                   className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium outline-none transition-all"
                   style={inputStyle}
-                  placeholder="admin@groomee.ng"
+                  placeholder="you@groomeeapp.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoFocus

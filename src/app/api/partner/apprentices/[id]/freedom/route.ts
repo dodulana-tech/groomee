@@ -11,8 +11,9 @@ import {
   emailApprenticeFreedomGranted,
   emailMasterFreedomComplete,
 } from "@/lib/email-notify";
+import { SITE_URL } from "@/lib/site";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+const APP_URL = SITE_URL;
 
 const bodySchema = z.object({
   note: z.string().trim().max(500).optional(),

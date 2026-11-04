@@ -1,4 +1,5 @@
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+import { SITE_URL } from "@/lib/site";
+const APP_URL = SITE_URL;
 
 function layout(content: string): string {
   return `<!DOCTYPE html>

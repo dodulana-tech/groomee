@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, hasPermission, formatPhone, isValidEmail } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ADMIN_CAP, countAdmins, logAdminAction } from "@/lib/admin-audit";
+import { SITE_URL } from "@/lib/site";
 
 // GET /api/admin/team — list all admin users
 export async function GET() {
@@ -153,7 +154,7 @@ export async function POST(req: NextRequest) {
       (async () => {
         try {
           const { sendMessage } = await import("@/lib/whatsapp");
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+          const appUrl = SITE_URL;
           await sendMessage(
             user.phone!,
             `👋 You've been added to the Groomee admin team as *${role.name}*.\n\nSign in with this number at ${appUrl}/admin/login. We'll send you a one-time code.`,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { format } from "date-fns";
 import { db } from "@/lib/db";
+import { SITE_URL, SITE_HOST } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -11,7 +12,7 @@ interface PageProps {
   params: Promise<{ code: string }>;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+const APP_URL = SITE_URL;
 
 async function loadCert(code: string) {
   return db.apprenticeship.findUnique({
@@ -119,7 +120,7 @@ export default async function CertPage({ params }: PageProps) {
             groomee<span style={{ color: "#53eb64" }}>.</span>
           </Link>
           <Link
-            href="https://groomee.ng"
+            href={SITE_URL}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -519,7 +520,7 @@ export default async function CertPage({ params }: PageProps) {
             </Link>
             . Anyone can verify it by visiting{" "}
             <span style={{ fontFamily: "monospace" }}>
-              groomee.ng/cert/{cert.freedomCertCode}
+              {SITE_HOST}/cert/{cert.freedomCertCode}
             </span>
             .
           </p>

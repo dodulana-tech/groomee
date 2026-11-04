@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { awardPoints, POINTS } from "@/lib/points";
+import { SITE_URL } from "@/lib/site";
 
 // GET /api/profile/referral - get referral link + stats
 export async function GET() {
@@ -23,7 +24,7 @@ export async function GET() {
     ).length;
 
     const referralCode = session.userId.slice(-8).toUpperCase();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+    const appUrl = SITE_URL;
 
     return NextResponse.json({
       success: true,

@@ -10,6 +10,7 @@ import SurveySection from "@/components/customer/SurveySection";
 import AboutSection from "@/components/customer/AboutSection";
 import CityWaitlist from "@/components/customer/CityWaitlist";
 import Footer from "@/components/customer/Footer";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -80,9 +81,9 @@ function buildJsonLd(liveCityNames: string[]) {
     "@type": "LocalBusiness",
     name: "Groomee",
     description: `On-demand beauty professionals delivered to your door in ${headline}.`,
-    url: "https://groomee.ng",
-    logo: "https://groomee.ng/assets/logo/groomee-wordmark-green.png",
-    image: "https://groomee.ng/opengraph-image",
+    url: SITE_URL,
+    logo: `${SITE_URL}/assets/logo/groomee-wordmark-green.png`,
+    image: `${SITE_URL}/opengraph-image`,
     address: {
       "@type": "PostalAddress",
       addressLocality: liveCityNames[0] ?? "Lagos",

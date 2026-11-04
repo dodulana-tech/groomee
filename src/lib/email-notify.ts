@@ -20,8 +20,9 @@ import {
   proCareNotesEmail,
 } from "@/lib/email-templates";
 import { formatNaira } from "@/lib/utils";
+import { SITE_URL } from "@/lib/site";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+const APP_URL = SITE_URL;
 
 async function getCustomerEmail(userId: string): Promise<string | null> {
   const user = await db.user.findUnique({
