@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, hasPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { notifyApplicationApproved } from "@/lib/pro-onboarding";
 
 const updateSchema = z.object({
   status: z.enum(["PENDING", "ACTIVE", "SUSPENDED", "REMOVED"]).optional(),
@@ -70,10 +71,14 @@ export async function PATCH(
 
     const { serviceIds, zoneIds, ...rest } = input;
 
+    const before = await db.pro.findUnique({ where: { id }, select: { status: true } });
+    const approvingApplicant = before?.status === "PENDING" && input.status === "ACTIVE";
+
     const pro = await db.pro.update({
       where: { id: id },
       data: {
         ...rest,
+        ...(approvingApplicant ? { approvedAt: new Date(), reviewedById: session!.userId } : {}),
         ...(serviceIds !== undefined && {
           services: {
             deleteMany: {},
@@ -110,6 +115,15 @@ export async function PATCH(
           data: { role: "CUSTOMER" },
         }).catch(() => {});
       }
+    }
+
+    // Approving an applicant from here must welcome them the same way the
+    // applicant queue does (WhatsApp + email with the portal link).
+    if (approvingApplicant) {
+      const user = pro.userId
+        ? await db.user.findUnique({ where: { id: pro.userId }, select: { email: true } })
+        : null;
+      await notifyApplicationApproved({ pro, email: user?.email ?? null });
     }
 
     return NextResponse.json({ success: true, data: pro });
