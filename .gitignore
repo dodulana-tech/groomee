@@ -43,3 +43,6 @@ next-env.d.ts
 # Local Claude tooling + ad-hoc doc build dirs
 /.claude/
 /.docs-build/
+
+# purge-demo-data.ts JSON backups (contain customer PII; never commit)
+/backups/

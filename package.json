@@ -13,6 +13,7 @@
     "db:seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts",
     "db:studio": "prisma studio",
     "gc:temp-users": "tsx scripts/gc-temp-users.ts",
+    "purge:demo": "tsx scripts/purge-demo-data.ts",
     "smoke:admin": "tsx scripts/admin-smoke.ts",
     "sync:roles": "tsx scripts/sync-roles.ts",
     "test:deep": "tsx scripts/deep-test.ts",

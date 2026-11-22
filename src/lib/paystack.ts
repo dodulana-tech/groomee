@@ -204,8 +204,13 @@ export function validateWebhookSignature(
   body: string,
   signature: string,
 ): boolean {
+  // Paystack signs webhooks with the account's secret key. Fall back to it so
+  // a missing PAYSTACK_WEBHOOK_SECRET rejects bad signatures instead of
+  // throwing (500) on every webhook.
+  const secret = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY;
+  if (!secret) return false;
   const hash = crypto
-    .createHmac("sha512", process.env.PAYSTACK_WEBHOOK_SECRET!)
+    .createHmac("sha512", secret)
     .update(body)
     .digest("hex");
   const hashBuf = Buffer.from(hash, "hex");

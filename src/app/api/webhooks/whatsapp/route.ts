@@ -411,7 +411,7 @@ export async function POST(req: NextRequest) {
           `ADVANCE [amt] [reason] - Request salary advance\n\n` +
           `*Support:*\n` +
           `HELP - Show this menu\n\n` +
-          `For urgent issues call: ${process.env.ADMIN_SUPPORT_PHONE ?? "07000000000"}`,
+          `For urgent issues call: ${process.env.ADMIN_SUPPORT_PHONE ?? "+2348084296023"}`,
       );
     }
 
