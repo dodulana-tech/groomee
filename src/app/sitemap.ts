@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/lagos", 0.95),
     page("/abuja", 0.9),
     page("/prices", 0.9),
+    page("/detty-december", 0.9),
     page("/faq", 0.8),
     page("/search", 0.8, "daily"),
     page("/become-a-pro", 0.7),

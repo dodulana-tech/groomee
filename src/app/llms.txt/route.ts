@@ -32,6 +32,7 @@ ${SERVICES.map((s) => `- [${s.name}](${SITE_URL}/lagos/${s.slug}): ${priceRange(
 ## Pages
 
 - [Price list](${SITE_URL}/prices): every service with typical prices
+- [Detty December](${SITE_URL}/detty-december): December party, owambe and wedding glam at home, hotels and Airbnbs; book early
 - [FAQ](${SITE_URL}/faq): booking, payment, vetting, areas
 - [${CITY_NAME.lagos}](${SITE_URL}/lagos): home service beauty in Lagos
 - [${CITY_NAME.abuja}](${SITE_URL}/abuja): home service beauty in Abuja

@@ -181,6 +181,7 @@ export default async function HomePage() {
             ))}
           </div>
           <p className="mt-6 text-sm text-gray-600">
+            <Link href="/detty-december" className="font-semibold underline">Detty December</Link> ·{" "}
             <Link href="/prices" className="font-semibold underline">Price list</Link> ·{" "}
             <Link href="/faq" className="font-semibold underline">FAQ</Link> ·{" "}
             <Link href="/lagos" className="font-semibold underline">Lagos</Link> ·{" "}
