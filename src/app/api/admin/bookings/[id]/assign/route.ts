@@ -32,7 +32,10 @@ export async function PATCH(
     const [booking, pro] = await Promise.all([
       db.booking.findUnique({
         where: { id },
-        include: { service: { select: { durationMins: true } } },
+        include: {
+          service: { select: { durationMins: true } },
+          payment: { select: { status: true } },
+        },
       }),
       db.pro.findUnique({ where: { id: proId } }),
     ]);
@@ -41,6 +44,18 @@ export async function PATCH(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     if (!pro)
       return NextResponse.json({ error: "Pro not found" }, { status: 404 });
+
+    // Only before the job starts. Once a pro is on the way or working, a
+    // switch needs a cancel-and-rebook so money and messages stay correct.
+    const ASSIGNABLE = ["PENDING_PAYMENT", "DISPATCHING", "NO_GROOMER", "ACCEPTED"];
+    if (!ASSIGNABLE.includes(booking.status)) {
+      return NextResponse.json(
+        { error: `Can't change the pro once a booking is ${booking.status.toLowerCase().replace("_", " ")}.`, code: "NOT_ASSIGNABLE" },
+        { status: 409 },
+      );
+    }
+    const paid = booking.payment?.status === "AUTHORISED" || booking.payment?.status === "CAPTURED";
+    const previousProId = booking.proId && booking.proId !== proId ? booking.proId : null;
 
     // ─── Scheduler enforcement ───
     // Skip checks when the booking is ASAP (live dispatch state, not on the
@@ -83,6 +98,37 @@ export async function PATCH(
       }
     }
 
+    // Unpaid: record the pro only. confirmBookingPayment offers the job to
+    // them first once the customer pays. Nothing is released to a wallet
+    // for a booking nobody has paid for.
+    if (!paid) {
+      await db.booking.update({ where: { id }, data: { proId } });
+      await logAdminAction({
+        adminId: session!.userId,
+        action: "booking.preassign",
+        entityType: "booking",
+        entityId: id,
+        metadata: { proId, proName: pro.name, previousStatus: booking.status },
+      });
+      return NextResponse.json({ success: true, preassigned: true });
+    }
+
+    if (previousProId) {
+      // The delegate transfer's idempotency keys are per booking and pro,
+      // so a second switch could pay a pro twice. One switch is enough in
+      // practice; beyond that, cancel and rebook.
+      const priorSwitch = await db.walletLedger.findFirst({
+        where: { bookingId: id, type: "CLAWBACK", idempotencyKey: { startsWith: `delegate:${id}:` } },
+        select: { id: true },
+      });
+      if (priorSwitch) {
+        return NextResponse.json(
+          { error: "This booking has already been moved to another pro once. Cancel it and create a new booking to switch again.", code: "ALREADY_REASSIGNED" },
+          { status: 409 },
+        );
+      }
+    }
+
     await db.$transaction(async (tx) => {
       await tx.booking.update({
         where: { id },
@@ -92,6 +138,18 @@ export async function PATCH(
         where: { id: proId },
         data: { availability: "BUSY", currentBookingId: id },
       });
+      const wallet = await import("@/lib/wallet-releases");
+      if (previousProId) {
+        // Free the previous pro and move the mobilization they were paid.
+        await tx.pro.updateMany({
+          where: { id: previousProId, currentBookingId: id },
+          data: { availability: "ONLINE", currentBookingId: null },
+        });
+        await wallet.transferMobilizationOnDelegate(id, previousProId, proId, tx);
+      } else {
+        // Same release as a dispatch acceptance (idempotent per pro).
+        await wallet.releaseMobilization(id, tx);
+      }
     });
 
     await logAdminAction({
