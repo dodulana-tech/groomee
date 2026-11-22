@@ -266,6 +266,21 @@ model Pro {
   gender           Gender?
   photo            String?
   bio              String?
+
+  // ─── Application / vetting pipeline ───
+  appliedAt         DateTime?
+  approvedAt        DateTime?
+  rejectedAt        DateTime?
+  rejectionReason   String?
+  reviewedById      String?
+  yearsExperience   Int?
+  portfolioUrl      String?
+  applicationSource String?
+  // Paystack-resolved account holder name; bankVerifiedAt set only when the
+  // resolve call succeeded for the stored bankCode + bankAccount.
+  bankAccountName   String?
+  bankVerifiedAt    DateTime?
+
   services         ProService[]
   zones            ProZone[]
   bookings         Booking[]
@@ -307,6 +322,7 @@ model Pro {
 
   @@index([parentProId])
   @@index([freedUnderProId])
+  @@index([status, appliedAt])
   @@map("groomers")
 }
 

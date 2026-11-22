@@ -7,7 +7,7 @@ import Link from "next/link";
 import { formatPhone, isValidNigerianPhone } from "@/lib/utils";
 
 type Method = "phone" | "email";
-type Step = "choose" | "input" | "otp";
+type Step = "choose" | "input" | "otp" | "status";
 
 export default function PartnerLoginPage() {
   return (
@@ -29,6 +29,8 @@ function PartnerLoginContent() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [appState, setAppState] = useState<string>("NONE");
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
   async function sendOtp(e: React.FormEvent) {
     e.preventDefault();
@@ -89,9 +91,16 @@ function PartnerLoginContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Invalid code");
       if (data.data?.role !== "PRO" && data.data?.role !== "ADMIN") {
-        throw new Error(
-          "Looks like you don't have a partner account yet. Apply to join and start earning!"
-        );
+        // Signed in, but not (yet) a pro: tell them where their application
+        // stands instead of a dead-end error.
+        const st = await fetch("/api/applications/pro", { cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+        const state = st?.data?.state ?? "NONE";
+        setAppState(state);
+        setRejectionReason(st?.data?.application?.rejectionReason ?? null);
+        setStep("status");
+        return;
       }
       router.push(redirect);
       router.refresh();
@@ -153,7 +162,17 @@ function PartnerLoginContent() {
             className="text-2xl font-black text-white mb-1"
             style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
           >
-            {step === "otp" ? "Enter your code" : "Partner sign in"}
+            {step === "otp"
+              ? "Enter your code"
+              : step === "status"
+                ? appState === "PENDING"
+                  ? "Application under review"
+                  : appState === "REJECTED"
+                    ? "Application update"
+                    : appState === "NONE"
+                      ? "No partner account yet"
+                      : "Account on hold"
+                : "Partner sign in"}
           </h1>
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
             {step === "choose"
@@ -162,7 +181,9 @@ function PartnerLoginContent() {
                 ? method === "phone"
                   ? "Enter your registered phone number"
                   : "Enter your registered email"
-                : `Enter the code sent to ${method === "phone" ? phone : email}`}
+                : step === "status"
+                  ? "You're signed in. Here's where things stand."
+                  : `Enter the code sent to ${method === "phone" ? phone : email}`}
           </p>
         </div>
 
@@ -181,7 +202,7 @@ function PartnerLoginContent() {
               <div>
                 <p className="text-sm font-bold text-white">Phone number</p>
                 <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-                  Get a code via SMS
+                  Get a code via WhatsApp or SMS
                 </p>
               </div>
             </button>
@@ -293,6 +314,45 @@ function PartnerLoginContent() {
               ← Other sign-in options
             </button>
           </form>
+        )}
+
+        {step === "status" && (
+          <div className="space-y-4">
+            <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.75)" }}>
+              {appState === "PENDING" &&
+                "Thanks for applying! Our team is reviewing your application, usually within 24 hours on weekdays. We'll WhatsApp you the moment you're approved."}
+              {appState === "REJECTED" &&
+                "We couldn't approve your application yet. You can update it and apply again."}
+              {appState === "NONE" &&
+                "This number isn't linked to a Groomee partner account. Apply in about 3 minutes and start earning."}
+              {(appState === "SUSPENDED" || appState === "CLOSED") &&
+                "Your partner account is on hold. Please message the Groomee team on WhatsApp and we'll help."}
+              {appState === "APPROVED" && "You're approved! Open your portal below."}
+            </p>
+            {appState === "REJECTED" && rejectionReason && (
+              <p
+                className="rounded-xl p-3 text-sm"
+                style={{ background: "rgba(255,254,161,0.1)", color: "#fffea1", border: "1px solid rgba(255,254,161,0.25)" }}
+              >
+                {rejectionReason}
+              </p>
+            )}
+            {appState !== "SUSPENDED" && appState !== "CLOSED" && (
+              <Link
+                href="/partner/onboarding"
+                className="block w-full py-3.5 rounded-xl text-center text-sm font-bold"
+                style={{ background: "#53eb64", color: "#014342" }}
+              >
+                {appState === "PENDING"
+                  ? "View my application →"
+                  : appState === "REJECTED"
+                    ? "Update & re-apply →"
+                    : appState === "APPROVED"
+                      ? "Open my portal →"
+                      : "Apply to join Groomee →"}
+              </Link>
+            )}
+          </div>
         )}
 
         {/* OTP step */}

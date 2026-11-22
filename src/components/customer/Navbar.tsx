@@ -48,8 +48,8 @@ export default async function Navbar() {
               {waitlistCity.name} waitlist
             </Link>
           )}
-          <Link href="/partner/login" className="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">
-            List your business
+          <Link href="/become-a-pro" className="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors">
+            Become a pro
           </Link>
         </div>
 
