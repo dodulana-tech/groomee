@@ -3,6 +3,7 @@ import { validateWebhookSignature } from "@/lib/paystack";
 import { db } from "@/lib/db";
 import { postMovement } from "@/lib/wallet";
 import { notifyProPayoutReversed } from "@/lib/whatsapp";
+import { confirmBookingPayment } from "@/lib/booking-payment";
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("x-paystack-signature") ?? "";
@@ -26,21 +27,23 @@ export async function POST(req: NextRequest) {
         const authCode = event.data.authorization?.authorization_code as string | undefined;
         const metadata = event.data.metadata as Record<string, any> | undefined;
 
-        const payment = await db.payment.findFirst({
-          where: { paystackRef: ref },
-        });
-        if (payment && payment.status === "PENDING") {
-          // Verify amount matches (Paystack sends kobo)
-          const expectedKobo = Math.round(payment.amount * 100);
-          const actualKobo = event.data.amount as number;
-          if (actualKobo !== expectedKobo) {
-            console.error(`Webhook amount mismatch: expected ${expectedKobo}, got ${actualKobo}, ref ${ref}`);
-            break;
-          }
-          await db.payment.updateMany({
-            where: { id: payment.id, status: "PENDING" },
-            data: { status: "AUTHORISED", authorisedAt: new Date() },
+        // Booking charges: same path as the checkout callback (payment
+        // AUTHORISED → booking DISPATCHING → offer / dispatch → notify). This
+        // used to only mark the payment, so a customer who paid without a
+        // Groomee session (e.g. from a WhatsApp pay link) left the booking
+        // stuck in PENDING_PAYMENT. Idempotent with the callback.
+        const isBookingCharge =
+          !metadata?.type || metadata.type === "booking";
+        if (isBookingCharge && ref) {
+          const result = await confirmBookingPayment({
+            reference: ref,
+            amountKobo: event.data.amount as number,
+            bookingIdHint:
+              typeof metadata?.bookingId === "string" ? metadata.bookingId : null,
           });
+          if (!result.ok && result.reason === "AMOUNT_MISMATCH") {
+            console.error(`Webhook amount mismatch for ref ${ref}`);
+          }
         }
 
         // Store auth code on subscription for future auto-renewals

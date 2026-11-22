@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { calculateSurcharge, calculateEarnings } from "@/lib/surcharge";
 import {
   generateBookingReference,
   generatePaymentReference,
-  initializeTransaction,
-  paystackEmailFor,
 } from "@/lib/paystack";
-import { tryNextPro } from "@/lib/dispatch";
 import { findConflict, inWorkingHours } from "@/lib/scheduling";
-import { resolveBookingServices } from "@/lib/booking-items";
+import { quoteBooking } from "@/lib/booking-pricing";
+import { getBookingPaymentLink } from "@/lib/booking-payment";
 import { CityNotLiveError, requireLiveCityForZone } from "@/lib/cities";
 import { checkContraindications, highestLevel } from "@/lib/health";
 import { z } from "zod";
@@ -78,19 +75,26 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const input = createBookingSchema.parse(body);
 
-    // Resolve primary + any additional services chained to this booking.
-    let resolved;
+    // Resolve primary + any additional services and price them. Shared with
+    // the ops concierge flow so both charge the same (lib/booking-pricing).
+    const scheduledFor = input.scheduledFor
+      ? new Date(input.scheduledFor)
+      : null;
+    let quote;
     try {
-      resolved = await resolveBookingServices({
+      quote = await quoteBooking({
         primaryServiceId: input.serviceId,
         additionalServiceIds: input.additionalServiceIds,
         proId: input.proId ?? null,
+        isAsap: input.isAsap,
+        scheduledFor,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Service unavailable.";
       return NextResponse.json({ success: false, error: msg }, { status: 404 });
     }
-    const { primary, additional, totalDurationMins, totalBasePrice } = resolved;
+    const { primary, additional, totalDurationMins, totalBasePrice } =
+      quote.resolved;
     // Back-compat: existing helpers still expect a single `service` reference.
     const service = primary;
 
@@ -212,23 +216,7 @@ export async function POST(req: NextRequest) {
         { status: 404 },
       );
 
-    // Calculate pricing
-    const scheduledFor = input.scheduledFor
-      ? new Date(input.scheduledFor)
-      : null;
-    const surcharge = await calculateSurcharge(
-      input.isAsap ? null : scheduledFor,
-      totalBasePrice,
-    );
-
-    // Get pro commission (default 20%)
-    const commissionRate = 0.2;
-    const { totalAmount: rawTotal, proEarning } = calculateEarnings({
-      baseAmount: totalBasePrice,
-      surchargeAmount: surcharge.amount,
-      surchargeType: surcharge.type,
-      commissionRate,
-    });
+    const { surcharge, totalAmount: rawTotal, proEarning } = quote;
 
     // Points redemption: 100 pts → ₦500 discount
     const POINTS_REQUIRED = 100;
@@ -341,15 +329,11 @@ export async function POST(req: NextRequest) {
     });
 
     // Initialize Paystack payment (network call — outside transaction)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const paystack = await initializeTransaction({
-      email: paystackEmailFor(user),
-      phone: user.phone,
-      amount: totalAmount,
-      reference: paymentRef,
-      callbackUrl: `${appUrl}/api/payments/verify?bookingId=${booking.id}`,
-      metadata: { bookingId: booking.id, reference, userId: session.userId },
-    });
+    const link = await getBookingPaymentLink(booking.id, { paymentRef });
+    const paystack = {
+      authorization_url: link.url,
+      access_code: link.accessCode,
+    };
 
     // Send booking email (fire-and-forget)
     import("@/lib/email-notify").then(({ emailBookingCreated }) =>

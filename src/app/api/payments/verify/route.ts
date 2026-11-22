@@ -2,87 +2,86 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
 import { verifyTransaction } from "@/lib/paystack";
-import { tryNextPro } from "@/lib/dispatch";
+import { confirmBookingPayment } from "@/lib/booking-payment";
+import { SITE_URL } from "@/lib/site";
 
+/**
+ * Paystack checkout callback. Paystack's verify API (server-to-server, with
+ * our secret key) is the authority on whether the charge succeeded, so the
+ * booking moves forward whether or not the browser has a Groomee session.
+ * That matters for pay links sent over WhatsApp: the customer typically pays
+ * from a browser that has never signed in. The session only decides where we
+ * send them afterwards.
+ */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const reference = searchParams.get("reference") ?? searchParams.get("trxref");
   const bookingId = searchParams.get("bookingId");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = SITE_URL;
 
   if (!reference || !bookingId) {
     return NextResponse.redirect(`${appUrl}/?error=payment_failed`);
   }
 
   try {
-    // Auth: verify caller is the booking owner
     const session = await getSessionFromRequest(req);
-    if (!session) {
-      return NextResponse.redirect(`${appUrl}/auth?redirect=/booking/${bookingId}`);
-    }
 
     const payment = await db.payment.findFirst({
       where: { paystackRef: reference },
-      include: { booking: { select: { customerId: true, reference: true, service: { select: { name: true } } } } },
+      include: { booking: { select: { customerId: true } } },
     });
-    if (!payment) {
-      return NextResponse.redirect(`${appUrl}/?error=payment_not_found`);
-    }
-
-    // Verify bookingId matches + caller owns the booking
-    if (payment.bookingId !== bookingId || payment.booking.customerId !== session.userId) {
+    // A reference we don't hold (e.g. an older link for this booking) is
+    // still checked with Paystack and matched via metadata.bookingId.
+    if (payment && payment.bookingId !== bookingId) {
       return NextResponse.redirect(`${appUrl}/?error=payment_mismatch`);
     }
 
-    // Idempotency
-    if (payment.status !== "PENDING") {
-      return NextResponse.redirect(`${appUrl}/booking/${bookingId}`);
+    // Signed-in owner lands on the booking; anyone else signs in first.
+    const ownerId =
+      payment?.booking.customerId ??
+      (await db.booking.findUnique({ where: { id: bookingId }, select: { customerId: true } }))
+        ?.customerId;
+    if (!ownerId) {
+      return NextResponse.redirect(`${appUrl}/?error=payment_not_found`);
+    }
+    const landing = (suffix = "") =>
+      session?.userId === ownerId
+        ? `${appUrl}/booking/${bookingId}${suffix}`
+        : `${appUrl}/auth?redirect=${encodeURIComponent(`/booking/${bookingId}${suffix}`)}`;
+
+    // Idempotency: already processed by the webhook or an earlier callback.
+    if (payment && payment.status !== "PENDING" && payment.status !== "FAILED") {
+      return NextResponse.redirect(landing());
     }
 
     const txData = await verifyTransaction(reference);
 
     if (txData.status === "success") {
-      // Verify payment amount matches (Paystack returns kobo)
-      const expectedKobo = Math.round(payment.amount * 100);
-      if (txData.amount !== expectedKobo) {
-        console.error(`Payment amount mismatch: expected ${expectedKobo} kobo, got ${txData.amount}`);
-        return NextResponse.redirect(`${appUrl}/booking/${bookingId}?error=amount_mismatch`);
-      }
-
-      // Atomic: only update if still PENDING (prevents double-processing with webhook)
-      const updated = await db.payment.updateMany({
-        where: { id: payment.id, status: "PENDING" },
-        data: { status: "AUTHORISED", authorisedAt: new Date() },
+      const metaBookingId =
+        (txData as { metadata?: { bookingId?: string } }).metadata?.bookingId ?? null;
+      const result = await confirmBookingPayment({
+        reference,
+        amountKobo: txData.amount,
+        bookingIdHint: metaBookingId === bookingId ? bookingId : null,
       });
-
-      if (updated.count > 0) {
-        await db.booking.update({
-          where: { id: bookingId },
-          data: { status: "DISPATCHING" },
-        });
-        tryNextPro(bookingId).catch(console.error);
-
-        // Send payment confirmed email (fire-and-forget)
-        import("@/lib/email-notify").then(({ emailPaymentConfirmed }) =>
-          emailPaymentConfirmed({
-            id: bookingId,
-            reference: payment.booking.reference,
-            totalAmount: payment.amount,
-            customerId: payment.booking.customerId,
-            service: { name: payment.booking.service?.name ?? "Beauty service" },
-          }),
-        ).catch(() => {});
+      if (!result.ok) {
+        return NextResponse.redirect(
+          result.reason === "AMOUNT_MISMATCH"
+            ? landing("?error=amount_mismatch")
+            : `${appUrl}/?error=payment_not_found`,
+        );
       }
+      return NextResponse.redirect(landing());
+    }
 
-      return NextResponse.redirect(`${appUrl}/booking/${bookingId}`);
-    } else {
+    if (payment) {
       await db.payment.updateMany({
         where: { id: payment.id, status: "PENDING" },
         data: { status: "FAILED" },
       });
-      return NextResponse.redirect(`${appUrl}/booking/${bookingId}?error=payment_failed`);
     }
+    return NextResponse.redirect(landing("?error=payment_failed"));
   } catch (err) {
     console.error("payment verify error:", err);
     return NextResponse.redirect(`${appUrl}/?error=payment_error`);

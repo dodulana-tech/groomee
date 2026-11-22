@@ -410,6 +410,11 @@ model Service {
 // Operational state of a city. Drives the landing-page surfaces and gates
 // new bookings — non-LIVE cities cannot accept bookings or display pros to
 // customers, even if zones exist for them.
+enum BookingSource {
+  APP
+  WHATSAPP_CONCIERGE
+}
+
 enum CityStatus {
   HIDDEN
   WAITLIST
@@ -507,6 +512,16 @@ model Booking {
   // is durable even if the apprenticeship later transitions to FREED or
   // TERMINATED. Null for non-delegated bookings.
   delegatedApprenticeshipId String?
+  // Channel the booking came in through. APP = the customer booked it
+  // themselves; WHATSAPP_CONCIERGE = the ops team created it from a WhatsApp
+  // chat via /admin/bookings/new and sent the customer a pay link.
+  source                    BookingSource         @default(APP)
+  createdByAdminId          String?
+  // Concierge price override: listBaseAmount is what the catalogue / pro
+  // price would have been; baseAmount holds the agreed price. Null = unchanged.
+  listBaseAmount            Float?
+  priceOverrideReason       String?
+  paymentLinkSentAt         DateTime?
   customer                  User                  @relation(fields: [customerId], references: [id])
   pro                       Pro?                  @relation(fields: [proId], references: [id])
   service                   Service               @relation(fields: [serviceId], references: [id])
@@ -524,6 +539,7 @@ model Booking {
   @@index([customerId, createdAt])
   @@index([proId])
   @@index([status, createdAt])
+  @@index([source, createdAt])
   @@map("bookings")
 }
 
@@ -570,6 +586,9 @@ model Payment {
   amount       Float
   status       PaymentStatus @default(PENDING)
   paystackRef  String?
+  // Latest Paystack checkout URL for paystackRef. Re-sent as-is while the
+  // payment is PENDING so an older link never points at an orphaned ref.
+  authorizationUrl String?
   authorisedAt DateTime?
   capturedAt   DateTime?
   refundedAt   DateTime?
