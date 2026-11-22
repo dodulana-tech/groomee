@@ -11,6 +11,7 @@
  */
 import { db } from "@/lib/db";
 import type { City, CityStatus } from "@prisma/client";
+import { isWhatsAppChannelCity } from "@/lib/whatsapp-channel";
 
 export type { City, CityStatus };
 
@@ -88,4 +89,23 @@ export async function requireLiveCityForZone(
   if (!city) throw new CityNotLiveError(null);
   if (city.status !== "LIVE") throw new CityNotLiveError(city);
   return city;
+}
+
+/**
+ * Gate for ops-created (WhatsApp concierge) bookings only. Accepts LIVE
+ * cities plus cities the team books by hand over WhatsApp while they are
+ * still WAITLIST (WHATSAPP_CHANNEL_CITIES, e.g. Abuja). Customer self-serve
+ * bookings keep using requireLiveCityForZone.
+ */
+export async function requireConciergeCityForZone(zoneId: string): Promise<City> {
+  const city = await getCityForZone(zoneId);
+  if (!city) throw new CityNotLiveError(null);
+  if (city.status === "LIVE" || isWhatsAppChannelCity(city.slug)) return city;
+  throw new CityNotLiveError(city);
+}
+
+/** Cities ops can create concierge bookings in. */
+export async function getConciergeCities(): Promise<City[]> {
+  const cities = await getAllCities();
+  return cities.filter((c) => c.status === "LIVE" || isWhatsAppChannelCity(c.slug));
 }
