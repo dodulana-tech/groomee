@@ -29,7 +29,8 @@ export async function calculateSurcharge(
     ? (scheduledFor.getTime() - now.getTime()) / 60_000
     : 0;
 
-  const hour = targetTime.getHours();
+  // Lagos hour (UTC+1, no DST): the server runs in UTC on Render.
+  const hour = (targetTime.getUTCHours() + 1) % 24;
 
   const emergencyThreshold = parseInt(s.EMERGENCY_THRESHOLD_MINUTES ?? "120");
   const lateNightStart = parseInt(s.LATENIGHT_START_HOUR ?? "22");

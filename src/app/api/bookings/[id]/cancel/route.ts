@@ -74,10 +74,12 @@ export async function POST(
       });
 
       if (booking.payment && refundAmount > 0) {
-        // Mark as REFUND_PENDING — actual REFUNDED status set by Paystack webhook
+        // Record the refund owed; the status stays as paid until Paystack
+        // confirms. (There is no REFUND_PENDING status: writing one made
+        // Postgres reject the whole cancellation.)
         await tx.payment.update({
           where: { bookingId: booking.id },
-          data: { status: "REFUND_PENDING" as any, refundAmount },
+          data: { refundAmount },
         });
       }
 

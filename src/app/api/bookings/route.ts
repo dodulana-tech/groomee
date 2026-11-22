@@ -25,7 +25,7 @@ const createBookingSchema = z.object({
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   isAsap: z.boolean(),
-  scheduledFor: z.string().datetime().optional(),
+  scheduledFor: z.string().datetime({ offset: true }).optional(),
   customerNotes: z.string().max(500).optional(),
   zoneId: z.string().optional(),
   redeemPoints: z.boolean().optional(),
