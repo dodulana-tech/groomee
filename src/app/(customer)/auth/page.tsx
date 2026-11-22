@@ -28,6 +28,9 @@ function AuthPageContent() {
   const [otp, setOtp] = useState("");
   const [name, setName] = useState("");
   const [needsPhone, setNeedsPhone] = useState(false);
+  // Linking a phone needs a code sent to it (proves the number is theirs).
+  const [linkCodeSent, setLinkCodeSent] = useState(false);
+  const [linkOtp, setLinkOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phoneCollision, setPhoneCollision] = useState(false);
@@ -196,10 +199,28 @@ function AuthPageContent() {
     }
     setLoading(true);
     try {
+      if (!linkCodeSent) {
+        const sent = await fetch("/api/auth/send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: formatPhone(phone) }),
+        });
+        const sj = await sent.json().catch(() => ({}));
+        if (!sent.ok) {
+          setError(sj.error ?? "Couldn't send a code. Please try again.");
+          return;
+        }
+        setLinkCodeSent(true);
+        return;
+      }
+      if (linkOtp.length !== 6) {
+        setError("Enter the 6-digit code we sent you.");
+        return;
+      }
       const res = await fetch("/api/auth/link-phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formatPhone(phone) }),
+        body: JSON.stringify({ phone: formatPhone(phone), otp: linkOtp }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -506,6 +527,7 @@ function AuthPageContent() {
                     onChange={(e) => {
                       setPhone(e.target.value);
                       if (phoneCollision) setPhoneCollision(false);
+                      if (linkCodeSent) { setLinkCodeSent(false); setLinkOtp(""); }
                     }}
                     placeholder="0801 234 5678"
                     className="input flex-1"
@@ -515,6 +537,25 @@ function AuthPageContent() {
                   />
                 </div>
               </div>
+              {linkCodeSent && (
+                <div>
+                  <label htmlFor="link-otp" className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Code sent to {phone}
+                  </label>
+                  <input
+                    id="link-otp"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={linkOtp}
+                    onChange={(e) => setLinkOtp(e.target.value.replace(/\D/g, ""))}
+                    placeholder="6-digit code"
+                    className="input w-full tracking-widest"
+                    autoFocus
+                  />
+                </div>
+              )}
               {error && <p className="text-sm text-red-500">{error}</p>}
               {phoneCollision ? (
                 <div className="space-y-2">
@@ -540,7 +581,7 @@ function AuthPageContent() {
                   disabled={loading}
                   className="btn-primary btn-lg w-full"
                 >
-                  {loading ? "Linking…" : "Continue"}
+                  {loading ? (linkCodeSent ? "Checking…" : "Sending code…") : linkCodeSent ? "Verify and continue" : "Send me a code"}
                 </button>
               )}
             </form>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession, clearSessionCookie, requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { emailClaimError } from "@/lib/admin-bootstrap";
 import { touchAdminActivity } from "@/lib/admin-audit";
 
 // GET /api/auth/me
@@ -35,6 +36,13 @@ async function updateProfile(req: NextRequest) {
   try {
     const session = await requireSession();
     const { name, email } = await req.json();
+
+    if (email) {
+      const reason = await emailClaimError(db, session.userId, String(email));
+      if (reason) {
+        return NextResponse.json({ success: false, error: reason }, { status: 409 });
+      }
+    }
 
     const user = await db.user.update({
       where: { id: session.userId },

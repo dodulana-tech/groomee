@@ -94,8 +94,9 @@ export async function POST(
       );
     }
     if (pro.userId) {
+      // CUSTOMER → PRO only: never demote an admin who applied (e.g. testing).
       await db.user
-        .update({ where: { id: pro.userId }, data: { role: "PRO" } })
+        .updateMany({ where: { id: pro.userId, role: "CUSTOMER" }, data: { role: "PRO" } })
         .catch((err) => console.error("[review] role sync failed", err));
     }
     await logAdminAction({

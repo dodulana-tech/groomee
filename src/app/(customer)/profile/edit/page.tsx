@@ -19,6 +19,9 @@ export default function EditProfilePage() {
   const [linkingPhone, setLinkingPhone] = useState(false);
   const [phoneSaved, setPhoneSaved] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  // A code sent to the phone proves it is theirs before it is linked.
+  const [codeSent, setCodeSent] = useState(false);
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -65,10 +68,22 @@ export default function EditProfilePage() {
     }
     setLinkingPhone(true);
     try {
+      if (!codeSent) {
+        const sent = await fetch("/api/auth/send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone }),
+        });
+        const sj = await sent.json().catch(() => ({}));
+        if (!sent.ok) throw new Error(sj.error ?? "Couldn't send a code");
+        setCodeSent(true);
+        return;
+      }
+      if (code.length !== 6) throw new Error("Enter the 6-digit code we sent you");
       const res = await fetch("/api/auth/link-phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone, otp: code }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to link phone");
@@ -174,9 +189,25 @@ export default function EditProfilePage() {
                     className="input"
                     placeholder="+234 801 234 5678"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => { setPhone(e.target.value); setCodeSent(false); setCode(""); }}
                   />
                 </div>
+                {codeSent && (
+                  <div>
+                    <label className="label" htmlFor="link-code">Code sent to {phone}</label>
+                    <input
+                      id="link-code"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      className="input tracking-widest"
+                      placeholder="6-digit code"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                    />
+                  </div>
+                )}
               </div>
 
               {phoneError && (
@@ -196,7 +227,7 @@ export default function EditProfilePage() {
                   background: linkingPhone || phoneSaved ? "#9CA3AF" : "#014342",
                 }}
               >
-                {linkingPhone ? "Linking…" : phoneSaved ? "Linked ✓" : "Link phone number"}
+                {linkingPhone ? (codeSent ? "Checking…" : "Sending code…") : phoneSaved ? "Linked ✓" : codeSent ? "Verify and link" : "Send me a code"}
               </button>
             </form>
           )}

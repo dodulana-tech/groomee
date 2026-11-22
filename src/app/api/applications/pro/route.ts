@@ -10,6 +10,7 @@ import {
   notifyApplicationReceived,
   PRIORITY_ZONES,
 } from "@/lib/pro-onboarding";
+import { emailClaimError } from "@/lib/admin-bootstrap";
 
 /**
  * Beauty-professional applications.
@@ -299,12 +300,9 @@ export async function POST(req: NextRequest) {
     let emailWarning: string | null = null;
     let email = sessionUser.email;
     if (input.email && input.email !== sessionUser.email) {
-      const taken = await db.user.findFirst({
-        where: { email: input.email, id: { not: session.userId } },
-        select: { id: true },
-      });
-      if (taken) {
-        emailWarning = "We kept your existing email. The one you entered is already linked to another account.";
+      const claimError = await emailClaimError(db, session.userId, input.email);
+      if (claimError) {
+        emailWarning = `We kept your existing email. ${claimError}`;
       } else {
         try {
           await db.user.update({ where: { id: session.userId }, data: { email: input.email } });

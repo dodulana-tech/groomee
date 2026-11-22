@@ -46,9 +46,6 @@ export async function PATCH(request: Request) {
     const profileSchema = (await import("zod")).z.object({
       name: (await import("zod")).z.string().min(1).max(100).optional(),
       bio: (await import("zod")).z.string().max(500).optional(),
-      bankCode: (await import("zod")).z.string().max(20).optional(),
-      bankAccount: (await import("zod")).z.string().max(20).optional(),
-      bankName: (await import("zod")).z.string().max(100).optional(),
       availability: (await import("zod")).z.enum(["ONLINE", "BUSY", "OFFLINE"]).optional(),
     });
     const parsed = profileSchema.safeParse(body);
@@ -77,17 +74,12 @@ export async function PATCH(request: Request) {
       }
     }
 
-    // Any change to the payout account voids the previous verification.
-    const bankChanged =
-      (validated.bankCode !== undefined && validated.bankCode !== (pro.bankCode ?? "")) ||
-      (validated.bankAccount !== undefined && validated.bankAccount !== (pro.bankAccount ?? ""));
-
+    // Bank details change only through POST /api/partner/verify-bank, which
+    // resolves the account holder with Paystack. Accepting them here let a
+    // pro swap the account number under a previously verified bank code.
     await db.pro.update({
       where: { id: pro.id },
-      data: {
-        ...validated,
-        ...(bankChanged ? { bankVerifiedAt: null, bankAccountName: null } : {}),
-      },
+      data: validated,
     });
 
     return NextResponse.json({ success: true });

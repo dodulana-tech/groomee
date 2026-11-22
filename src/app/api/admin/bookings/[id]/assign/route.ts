@@ -129,11 +129,14 @@ export async function PATCH(
       }
     }
 
-    await db.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id },
+    const applied = await db.$transaction(async (tx) => {
+      // Conditional on the status we read, so a pro accepting by WhatsApp at
+      // the same moment can't leave two pros paid for one job.
+      const claimed = await tx.booking.updateMany({
+        where: { id, status: booking.status, proId: booking.proId },
         data: { proId, status: "ACCEPTED", acceptedAt: new Date() },
       });
+      if (claimed.count === 0) return false;
       await tx.pro.update({
         where: { id: proId },
         data: { availability: "BUSY", currentBookingId: id },
@@ -150,7 +153,14 @@ export async function PATCH(
         // Same release as a dispatch acceptance (idempotent per pro).
         await wallet.releaseMobilization(id, tx);
       }
+      return true;
     });
+    if (!applied) {
+      return NextResponse.json(
+        { error: "This booking just changed (a pro may have accepted it). Refresh and try again.", code: "CHANGED" },
+        { status: 409 },
+      );
+    }
 
     await logAdminAction({
       adminId: session!.userId,

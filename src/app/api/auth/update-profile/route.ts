@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { emailClaimError } from "@/lib/admin-bootstrap";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
     const { name, email } = await req.json();
+
+    if (email) {
+      const reason = await emailClaimError(db, session.userId, String(email));
+      if (reason) {
+        return NextResponse.json({ success: false, error: reason }, { status: 409 });
+      }
+    }
 
     if (!name?.trim()) {
       return NextResponse.json(

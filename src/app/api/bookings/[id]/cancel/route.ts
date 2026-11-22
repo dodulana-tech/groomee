@@ -67,11 +67,22 @@ export async function POST(
     }
 
     // Update DB
-    await db.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id: booking.id },
+    // Conditional on the booking and payment state we priced the refund
+    // from: if a payment confirmed in between (PENDING_PAYMENT →
+    // DISPATCHING), cancelling on stale data would keep the money and
+    // refund nothing.
+    const cancelled = await db.$transaction(async (tx) => {
+      const claimed = await tx.booking.updateMany({
+        where: { id: booking.id, status: booking.status },
         data: { status: "CANCELLED", cancelledAt: new Date() },
       });
+      if (claimed.count === 0) return false;
+      if (booking.payment) {
+        const stillSame = await tx.payment.count({
+          where: { bookingId: booking.id, status: booking.payment.status },
+        });
+        if (stillSame === 0) throw new Error("PAYMENT_CHANGED");
+      }
 
       if (booking.payment && refundAmount > 0) {
         // Record the refund owed; the status stays as paid until Paystack
@@ -104,7 +115,17 @@ export async function POST(
           data: { availability: "ONLINE", currentBookingId: null },
         });
       }
+      return true;
+    }).catch((err: unknown) => {
+      if (err instanceof Error && err.message === "PAYMENT_CHANGED") return false;
+      throw err;
     });
+    if (!cancelled) {
+      return NextResponse.json(
+        { error: "This booking just changed (a payment may have come through). Refresh and try again." },
+        { status: 409 },
+      );
+    }
 
     // Paystack refund (outside transaction - network call)
     if (booking.payment?.paystackRef && refundAmount > 0) {

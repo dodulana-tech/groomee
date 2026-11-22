@@ -190,16 +190,40 @@ export async function confirmBookingPayment(opts: {
     return { ok: true, bookingId: payment.bookingId, alreadyProcessed: true };
   }
 
-  // Only a booking still waiting on payment moves forward; a booking the team
-  // cancelled in the meantime stays cancelled (and shows as paid for refund).
-  const moved = await db.booking.updateMany({
-    where: { id: payment.bookingId, status: "PENDING_PAYMENT" },
-    data: { status: "DISPATCHING" },
+  // Only a booking still waiting on payment, whose slot hasn't passed, moves
+  // forward. Anything else was paid on an old link: keep the money visible,
+  // dispatch nobody to a dead slot, and tell a person (team + customer)
+  // instead of failing silently.
+  const current = await db.booking.findUnique({
+    where: { id: payment.bookingId },
+    select: { status: true, isAsap: true, scheduledFor: true, createdAt: true, reference: true, totalAmount: true, customer: { select: { name: true, phone: true } } },
   });
+  const late = current && current.status === "PENDING_PAYMENT" && isPaymentWindowClosed(current);
+  const moved = late
+    ? { count: 0 }
+    : await db.booking.updateMany({
+        where: { id: payment.bookingId, status: "PENDING_PAYMENT" },
+        data: { status: "DISPATCHING" },
+      });
   if (moved.count === 0) {
-    console.warn(
-      `[booking-payment] booking ${payment.bookingId} paid but no longer PENDING_PAYMENT; needs manual refund review`,
-    );
+    const why = late ? "its time slot had already passed" : `the booking is ${current?.status.toLowerCase().replace("_", " ") ?? "missing"}`;
+    console.warn(`[booking-payment] booking ${payment.bookingId} paid but ${why}`);
+    if (current) {
+      const { alertOps } = await import("@/lib/ops-alert");
+      await alertOps(
+        `Payment needs a person: ${current.reference}`,
+        `${current.customer.name ?? "A customer"} (${current.customer.phone ?? "no phone"}) paid ₦${current.totalAmount.toLocaleString()}, but ${why}, so no pro was sent. Call them to book a new time, or refund in Paystack.`,
+        `${SITE_URL}/admin/bookings/${payment.bookingId}`,
+      );
+      if (current.customer.phone) {
+        const { sendMessage } = await import("@/lib/whatsapp");
+        const reason = late ? "That time slot has passed" : "That booking had been cancelled";
+        await sendMessage(
+          current.customer.phone,
+          `We've received your payment for booking ${current.reference}. 💚\n\n${reason}, so our team will contact you shortly to book a new time or refund you.`,
+        ).catch((err: unknown) => console.error("[booking-payment] customer notice failed", err));
+      }
+    }
     return { ok: true, bookingId: payment.bookingId, alreadyProcessed: false };
   }
 

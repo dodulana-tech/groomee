@@ -677,26 +677,15 @@ function ApplicationForm({
       let res = await post();
       let j = await res.json().catch(() => ({}));
 
-      // Email-only accounts: link the phone they typed, then retry once.
+      // Email-only accounts have no verified phone. Linking one needs a code
+      // sent to that number, so send them to phone sign-in (their draft is
+      // kept) rather than attaching an unverified number.
       if (!res.ok && j.needsPhone) {
-        const link = await fetch("/api/auth/link-phone", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: formatPhone(phone) }),
+        setErrors({
+          phone: "Please sign in with your phone number (we'll text you a code) so we can reach you about jobs. Your application is saved.",
         });
-        if (!link.ok) {
-          const lj = await link.json().catch(() => ({}));
-          setErrors({
-            phone:
-              link.status === 409
-                ? "That number is already on another Groomee account. Sign in with it instead."
-                : lj.error ?? "We couldn't link that number.",
-          });
-          setStep("about");
-          return;
-        }
-        res = await post();
-        j = await res.json().catch(() => ({}));
+        setStep("about");
+        return;
       }
 
       if (!res.ok) {

@@ -104,14 +104,16 @@ export async function PATCH(
 
     // Sync user role when pro status changes
     if (input.status && pro.userId) {
+      // Only move between CUSTOMER and PRO: an admin's role is never changed
+      // by a pro status toggle.
       if (input.status === "ACTIVE") {
-        await db.user.update({
-          where: { id: pro.userId },
+        await db.user.updateMany({
+          where: { id: pro.userId, role: "CUSTOMER" },
           data: { role: "PRO" },
         }).catch(() => {});
       } else if (input.status === "SUSPENDED" || input.status === "REMOVED") {
-        await db.user.update({
-          where: { id: pro.userId },
+        await db.user.updateMany({
+          where: { id: pro.userId, role: "PRO" },
           data: { role: "CUSTOMER" },
         }).catch(() => {});
       }

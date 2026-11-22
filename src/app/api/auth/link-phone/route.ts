@@ -5,7 +5,9 @@ import {
   formatPhone,
   signUserToken,
   setSessionCookie,
+  consumePhoneOtp,
 } from "@/lib/auth";
+import { checkVerifyLimit } from "@/lib/rate-limit";
 import { isValidNigerianPhone } from "@/lib/utils";
 import { db } from "@/lib/db";
 
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { phone: rawPhone } = await req.json();
+    const { phone: rawPhone, otp } = await req.json();
 
     if (!isValidNigerianPhone(rawPhone)) {
       return NextResponse.json(
@@ -29,11 +31,31 @@ export async function POST(req: NextRequest) {
     }
 
     const phone = formatPhone(rawPhone);
+
+    // SECURITY: the caller must prove they control this phone with a code
+    // sent to it (POST /api/auth/send-otp first). Without this anyone signed
+    // in by email could attach — or merge into — someone else's account,
+    // admins included.
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+    if (!checkVerifyLimit(phone, ip)) {
+      return NextResponse.json(
+        { success: false, error: "Too many attempts. Please try again in a few minutes." },
+        { status: 429 },
+      );
+    }
+    if (!(await consumePhoneOtp(phone, String(otp ?? "").trim()))) {
+      return NextResponse.json(
+        { success: false, error: "Enter the 6-digit code we sent to that number.", needsOtp: true },
+        { status: 400 },
+      );
+    }
+
     const linked = await linkPhoneToUser(session.userId, phone);
 
     if (!linked) {
-      // Phone is taken by another account. If the current session is on a
-      // temp email-only user, treat this as the user re-finding their original
+      // Phone is taken by another account. The caller has just proved they
+      // own that phone (OTP above). If the current session is on a temp
+      // email-only user, treat this as the user re-finding their original
       // phone-based account: merge the temp user's email onto the existing
       // account, drop the temp, and sign in as the existing user.
       const sessionUser = await db.user.findUnique({
@@ -47,15 +69,18 @@ export async function POST(req: NextRequest) {
         sessionUser.id !== owner.id &&
         sessionUser.phone === null
       ) {
-        // Only copy the email over if the existing account doesn't already have one,
-        // so we never silently overwrite a user-set address.
-        if (!owner.email && sessionUser.email) {
-          await db.user.update({
-            where: { id: owner.id },
-            data: { email: sessionUser.email },
-          });
-        }
-        await db.user.delete({ where: { id: sessionUser.id } });
+        // Drop the temp user first: email is unique, so copying it onto the
+        // owner while the temp row still holds it always failed. Only copy it
+        // if the existing account has none, so a user-set address is kept.
+        await db.$transaction(async (tx) => {
+          await tx.user.delete({ where: { id: sessionUser.id } });
+          if (!owner.email && sessionUser.email) {
+            await tx.user.update({
+              where: { id: owner.id },
+              data: { email: sessionUser.email },
+            });
+          }
+        });
 
         const merged = await db.user.findUnique({ where: { id: owner.id } });
         if (merged) {

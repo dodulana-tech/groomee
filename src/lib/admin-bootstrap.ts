@@ -47,8 +47,17 @@ export function isEnvAdminEmail(email: string | null | undefined): boolean {
 export async function ensureEnvAdmin(
   prisma: PrismaClient,
   user: { id: string; phone: string | null; email: string | null; role: string; adminRoleId: string | null },
+  /** The email the caller just proved with an email OTP, if any. Stored
+   *  emails are self-asserted, so only a proven one counts. Phones are
+   *  always OTP-verified before they reach a user row. */
+  opts: { verifiedEmail?: string | null } = {},
 ): Promise<boolean> {
-  if (!isEnvAdminPhone(user.phone) && !isEnvAdminEmail(user.email)) return false;
+  const emailProven =
+    !!opts.verifiedEmail &&
+    !!user.email &&
+    opts.verifiedEmail.trim().toLowerCase() === user.email.trim().toLowerCase() &&
+    isEnvAdminEmail(user.email);
+  if (!isEnvAdminPhone(user.phone) && !emailProven) return false;
   if (user.role === "ADMIN" && user.adminRoleId) return false;
 
   const role = await prisma.adminRole.findUnique({
@@ -69,4 +78,27 @@ export async function ensureEnvAdmin(
     },
   });
   return true;
+}
+
+/**
+ * May this user put `email` on their account without proving they own it?
+ * Returns a reason when not. Emails are self-asserted (profile, pro
+ * application), so an allow-listed admin address or one already on another
+ * account must never be claimable this way — otherwise typing an admin's
+ * email into a profile would hand out admin access on the next login.
+ */
+export async function emailClaimError(
+  prisma: PrismaClient,
+  userId: string,
+  email: string,
+): Promise<string | null> {
+  const normalised = email.trim().toLowerCase();
+  const self = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (self?.email?.toLowerCase() === normalised) return null;
+  if (isEnvAdminEmail(normalised)) return "That email can't be used here.";
+  const taken = await prisma.user.findFirst({
+    where: { email: normalised, id: { not: userId } },
+    select: { id: true },
+  });
+  return taken ? "That email is already linked to another account." : null;
 }

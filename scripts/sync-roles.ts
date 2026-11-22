@@ -17,7 +17,6 @@ import { DEFAULT_ROLES } from "../src/lib/permissions";
 import {
   ENV_ADMIN_ROLE_SLUG,
   ensureEnvAdmin,
-  envAdminEmails,
   envAdminPhones,
 } from "../src/lib/admin-bootstrap";
 
@@ -66,11 +65,12 @@ async function main() {
   // Env allow-listed admins (ADMIN_PHONES / ADMIN_EMAILS) must always have a
   // role, otherwise they land on an empty dashboard and can't reach
   // /admin/team to fix it. Never touches a role that's already assigned.
+  // Phones only: a stored email is self-asserted (anyone can type one into
+  // their profile), so email allow-listing happens only at email-OTP login.
   const phones = envAdminPhones();
-  const emails = envAdminEmails();
-  if (phones.length || emails.length) {
+  if (phones.length) {
     const candidates = await prisma.user.findMany({
-      where: { OR: [{ phone: { in: phones } }, { email: { in: emails } }] },
+      where: { phone: { in: phones } },
       select: { id: true, phone: true, email: true, role: true, adminRoleId: true },
     });
     let promoted = 0;

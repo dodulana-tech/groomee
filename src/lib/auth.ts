@@ -207,6 +207,25 @@ export async function verifyOtp(
   };
 }
 
+/**
+ * Check and consume a phone OTP WITHOUT creating or signing in a user: proof
+ * that the caller controls `phone` (used before linking a phone to an
+ * existing account). Race-safe: only one caller can consume a code.
+ */
+export async function consumePhoneOtp(phone: string, code: string): Promise<boolean> {
+  if (!code || !/^\d{6}$/.test(code)) return false;
+  const rec = await db.otpCode.findFirst({
+    where: { phone, code, usedAt: null, expiresAt: { gt: new Date() } },
+    select: { id: true },
+  });
+  if (!rec) return false;
+  const consumed = await db.otpCode.updateMany({
+    where: { id: rec.id, usedAt: null },
+    data: { usedAt: new Date() },
+  });
+  return consumed.count === 1;
+}
+
 // ─── EMAIL OTP ───────────────────────────────────────────────────────────────
 
 // Prefer a fully linked user (has a real phone) over an email-only user when
@@ -323,11 +342,14 @@ export async function getAdminRoleData(userId: string): Promise<{
   };
 }
 
-export async function signUserToken(user: {
-  id: string;
-  phone: string | null;
-  role: string;
-}): Promise<string> {
+export async function signUserToken(
+  user: {
+    id: string;
+    phone: string | null;
+    role: string;
+  },
+  opts: { verifiedEmail?: string | null } = {},
+): Promise<string> {
   let role = user.role as "CUSTOMER" | "ADMIN" | "PRO";
 
   // Env allow-listed admins always get role=ADMIN plus an admin role, even
@@ -336,7 +358,7 @@ export async function signUserToken(user: {
     where: { id: user.id },
     select: { id: true, phone: true, email: true, role: true, adminRoleId: true },
   });
-  if (fullUser && (await ensureEnvAdmin(db, fullUser))) {
+  if (fullUser && (await ensureEnvAdmin(db, fullUser, opts))) {
     role = "ADMIN";
     invalidateSessionCache(user.id);
   }
