@@ -67,7 +67,7 @@ export async function POST(
     const recipientCode = await createTransferRecipient({
       accountName: existing.pro.name,
       accountNumber: existing.pro.bankAccount,
-      bankCode: existing.pro.bankName,
+      bankCode: existing.pro.bankCode ?? existing.pro.bankName,
     });
     const transferRef = `RES-${id.slice(-8)}-${Date.now()}`;
     const transfer = (await initiateTransfer({

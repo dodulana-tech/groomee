@@ -51,11 +51,43 @@ export async function PATCH(request: Request) {
       bankName: (await import("zod")).z.string().max(100).optional(),
       availability: (await import("zod")).z.enum(["ONLINE", "BUSY", "OFFLINE"]).optional(),
     });
-    const validated = profileSchema.parse(body);
+    const parsed = profileSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" },
+        { status: 400 },
+      );
+    }
+    const validated = parsed.data;
+
+    // Going online with nothing to dispatch on just produces no-pro failures.
+    if (validated.availability === "ONLINE") {
+      const [svc, zones] = await Promise.all([
+        db.proService.count({ where: { proId: pro.id } }),
+        db.proZone.count({ where: { proId: pro.id } }),
+      ]);
+      if (svc === 0 || zones === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Add at least one service and one area on your Profile before going online.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Any change to the payout account voids the previous verification.
+    const bankChanged =
+      (validated.bankCode !== undefined && validated.bankCode !== (pro.bankCode ?? "")) ||
+      (validated.bankAccount !== undefined && validated.bankAccount !== (pro.bankAccount ?? ""));
 
     await db.pro.update({
       where: { id: pro.id },
-      data: validated,
+      data: {
+        ...validated,
+        ...(bankChanged ? { bankVerifiedAt: null, bankAccountName: null } : {}),
+      },
     });
 
     return NextResponse.json({ success: true });

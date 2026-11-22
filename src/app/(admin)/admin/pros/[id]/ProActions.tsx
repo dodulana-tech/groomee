@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ApplicantActions from "../applicants/ApplicantActions";
 
 interface Props {
   proId: string;
   currentStatus: string;
+  name?: string;
 }
 
-export default function ProActions({ proId, currentStatus }: Props) {
+export default function ProActions({ proId, currentStatus, name }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -27,6 +29,12 @@ export default function ProActions({ proId, currentStatus }: Props) {
     }
   }
 
+  // Applicants go through the review flow so they get the welcome / decline
+  // message instead of a silent status flip.
+  if (currentStatus === "PENDING") {
+    return <ApplicantActions proId={proId} name={name ?? "this applicant"} compact />;
+  }
+
   return (
     <div className="flex gap-2">
       {currentStatus === "ACTIVE" && (
@@ -38,7 +46,7 @@ export default function ProActions({ proId, currentStatus }: Props) {
           Suspend
         </button>
       )}
-      {(currentStatus === "SUSPENDED" || currentStatus === "PENDING") && (
+      {currentStatus === "SUSPENDED" && (
         <button
           onClick={() => updateStatus("ACTIVE")}
           disabled={loading}

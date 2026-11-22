@@ -610,3 +610,72 @@ export function noProEmail(data: {
     `),
   };
 }
+
+// ── PRO APPLICATION PIPELINE ─────────────────────────────
+
+function esc(v: string): string {
+  return v
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function proApplicationReceivedEmail(data: {
+  name: string;
+  zones: string[];
+  services: string[];
+}): { subject: string; html: string } {
+  const first = data.name.split(" ")[0] || data.name;
+  return {
+    subject: "We've got your Groomee application",
+    html: layout(`
+      <p class="hero-text">Thanks, ${esc(first)}. Your application is in.</p>
+      <p class="body-text">Our team reviews every beauty professional personally. Most applications get an answer within 24 hours on weekdays.</p>
+      <div class="detail-row"><span class="detail-label">Services</span><span class="detail-value">${esc(data.services.join(", ")) || "-"}</span></div>
+      <div class="detail-row"><span class="detail-label">Areas</span><span class="detail-value">${esc(data.zones.join(", ")) || "-"}</span></div>
+      <hr class="divider" />
+      <p class="body-text"><strong>What happens next</strong><br/>
+      1. We check your details and may WhatsApp you for photos of recent work.<br/>
+      2. Once approved, you get a WhatsApp with your partner portal link.<br/>
+      3. Add your photo, confirm your prices and bank details, then go online.</p>
+      <div style="text-align: center; margin: 24px 0 8px;">
+        <a href="${APP_URL}/partner/onboarding" class="cta">Check my application</a>
+      </div>
+    `),
+  };
+}
+
+export function proApplicationApprovedEmail(data: { name: string }): { subject: string; html: string } {
+  const first = data.name.split(" ")[0] || data.name;
+  return {
+    subject: "You're approved - welcome to Groomee",
+    html: layout(`
+      <p class="hero-text">Welcome to Groomee, ${esc(first)}!</p>
+      <p class="body-text">Your partner account is active. Sign in with the phone number you applied with, finish your profile checklist, and go online to start receiving bookings.</p>
+      <div style="text-align: center; margin: 24px 0 8px;">
+        <a href="${APP_URL}/partner/login" class="cta">Open my partner portal</a>
+      </div>
+      <p class="muted" style="text-align: center;">Pros with a photo, confirmed prices and a verified bank account get booked first.</p>
+    `),
+  };
+}
+
+export function proApplicationRejectedEmail(data: {
+  name: string;
+  reason: string;
+}): { subject: string; html: string } {
+  const first = data.name.split(" ")[0] || data.name;
+  return {
+    subject: "An update on your Groomee application",
+    html: layout(`
+      <p class="hero-text">Thank you for applying, ${esc(first)}.</p>
+      <p class="body-text">We can't approve your application right now. Here is why:</p>
+      <p class="body-text" style="background:#f7f5f0;border-radius:12px;padding:14px 16px;">${esc(data.reason)}</p>
+      <p class="body-text">This is not a final no. Once you've addressed this, you're welcome to apply again with the same phone number.</p>
+      <div style="text-align: center; margin: 24px 0 8px;">
+        <a href="${APP_URL}/partner/onboarding" class="cta">Update my application</a>
+      </div>
+    `),
+  };
+}

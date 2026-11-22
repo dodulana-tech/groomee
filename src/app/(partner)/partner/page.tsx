@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatNaira } from "@/lib/utils";
+import ActivationChecklist, { type ChecklistData } from "@/components/partner/ActivationChecklist";
 
 interface ReserveSummary {
   optedIn: boolean;
@@ -71,6 +72,8 @@ export default function PartnerDashboard() {
   const [reserve, setReserve] = useState<ReserveSummary | null>(null);
   const [benefits, setBenefits] = useState<BenefitsHint | null>(null);
   const [inventory, setInventory] = useState<InventoryHint | null>(null);
+  const [checklist, setChecklist] = useState<ChecklistData | null>(null);
+  const [toggleError, setToggleError] = useState("");
   const [toggling, setToggling] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -138,6 +141,13 @@ export default function PartnerDashboard() {
         });
       })
       .catch(() => {});
+    // Activation checklist — shown until the pro's profile is bookable.
+    fetch("/api/partner/activation")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j?.success) setChecklist(j.data);
+      })
+      .catch(() => {});
     // Inventory hint is decorative — silently ignored on failure.
     fetch("/api/partner/inventory/summary")
       .then((r) => (r.ok ? r.json() : null))
@@ -172,15 +182,27 @@ export default function PartnerDashboard() {
     const action = data.isOnline ? "go offline" : "go online";
     if (!confirm(`Are you sure you want to ${action}?`)) return;
     setToggling(true);
+    setToggleError("");
     try {
-      await fetch("/api/partner/profile", {
+      const res = await fetch("/api/partner/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           availability: data.isOnline ? "OFFLINE" : "ONLINE",
         }),
       });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setToggleError(j.error ?? "Couldn't change your status. Please try again.");
+        return;
+      }
       setData((d) => d ? { ...d, isOnline: !d.isOnline } : d);
+      fetch("/api/partner/activation")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => j?.success && setChecklist(j.data))
+        .catch(() => {});
+    } catch {
+      setToggleError("Network error. Please try again.");
     } finally {
       setToggling(false);
     }
@@ -279,6 +301,14 @@ export default function PartnerDashboard() {
           {data.isOnline ? "Online - accepting bookings" : "Offline"}
         </button>
       </div>
+
+      {toggleError && (
+        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-600" role="alert">
+          {toggleError}
+        </p>
+      )}
+
+      {checklist && <ActivationChecklist data={checklist} />}
 
       {/* Stat cards - glassmorphism */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

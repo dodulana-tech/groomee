@@ -133,10 +133,27 @@ export default async function AdminProDetailPage({
               <ProActions
                 proId={pro.id}
                 currentStatus={pro.status}
+                name={pro.name}
               />
             </div>
           </div>
         </div>
+
+        {(pro.appliedAt || pro.rejectedAt || pro.portfolioUrl || pro.yearsExperience != null) && (
+          <div className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-xs text-gray-600 space-y-1">
+            {pro.appliedAt && <p>Applied {format(pro.appliedAt, "d MMM yyyy, HH:mm")}{pro.applicationSource ? ` via ${pro.applicationSource}` : ""}</p>}
+            {pro.approvedAt && <p>Approved {format(pro.approvedAt, "d MMM yyyy, HH:mm")}</p>}
+            {pro.rejectedAt && (
+              <p className="text-red-700">
+                Declined {format(pro.rejectedAt, "d MMM yyyy, HH:mm")}
+                {pro.rejectionReason ? `: “${pro.rejectionReason}”` : ""}
+              </p>
+            )}
+            {pro.yearsExperience != null && <p>{pro.yearsExperience} years experience</p>}
+            {pro.portfolioUrl && <p>Portfolio: {pro.portfolioUrl}</p>}
+            <p>Bank: {pro.bankVerifiedAt ? `verified (${pro.bankAccountName ?? ""})` : "not verified"}</p>
+          </div>
+        )}
 
         {/* Stats row */}
         <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-gray-100 pt-5">
