@@ -24,6 +24,7 @@ function sourceLabel(src: string): string {
     prices: "Price list",
     faq: "FAQ",
     "become-a-pro": "Become a pro",
+    rebook: "Rebooking reminders",
   };
   return named[src] ?? src;
 }

@@ -13,34 +13,18 @@ import { generateMapsLinkFromAddress, maskPhone } from "@/lib/utils";
 import { format, addWeeks, nextFriday } from "date-fns";
 import crypto from "crypto";
 import { SITE_URL } from "@/lib/site";
+import { isValidTwilioSignature } from "@/lib/twilio-signature";
+import { sendMessage } from "@/lib/whatsapp";
 
 // Validate Twilio webhook signature
 function validateTwilioSignature(req: NextRequest, body: Record<string, any>): boolean {
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  if (!authToken) return false; // Fail closed if no token configured
-
-  const signature = req.headers.get("x-twilio-signature");
-  if (!signature) return false;
-
-  // Build the validation URL and sorted params
-  const url = req.url;
-  const sortedParams = Object.keys(body)
-    .sort()
-    .reduce((acc, key) => acc + key + body[key], "");
-
-  const expected = crypto
-    .createHmac("sha1", authToken)
-    .update(url + sortedParams)
-    .digest("base64");
-
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(expected),
-      Buffer.from(signature),
-    );
-  } catch {
-    return false;
-  }
+  return isValidTwilioSignature({
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    signature: req.headers.get("x-twilio-signature"),
+    requestUrl: req.url,
+    siteUrl: SITE_URL,
+    params: body,
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -64,9 +48,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Normalise across providers
-    const from: string = body.from ?? body.sender ?? "";
-    const rawMessage: string = (body.text ?? body.sms ?? body.message ?? "")
+    // Normalise across providers. Twilio posts From="whatsapp:+234..." and
+    // Body; reading only lower-case fields meant every real reply from a
+    // pro was silently ignored.
+    const from: string = String(body.From ?? body.from ?? body.sender ?? "")
+      .replace(/^whatsapp:/i, "")
+      .trim();
+    const rawMessage: string = String(body.Body ?? body.text ?? body.sms ?? body.message ?? "")
       .trim()
       .toUpperCase();
 
@@ -75,7 +63,14 @@ export async function POST(req: NextRequest) {
     // Find pro by phone
     const pro = await db.pro.findFirst({ where: { phone: from } });
     if (!pro) {
-      // Unknown sender - ignore silently
+      // Customers can opt out of reminder messages; anything else from a
+      // non-pro is a normal chat for the team, so ignore it here.
+      if (["STOP", "UNSUBSCRIBE", "STOP REMINDERS"].includes(rawMessage)) {
+        await db.user.updateMany({ where: { phone: from }, data: { marketingOptOut: true } });
+        await sendMessage(from, "Done, we won't send you reminders. You can still message us here any time to book. 💚");
+      } else if (rawMessage === "START") {
+        await db.user.updateMany({ where: { phone: from }, data: { marketingOptOut: false } });
+      }
       return NextResponse.json({ ok: true });
     }
 
@@ -303,7 +298,6 @@ export async function POST(req: NextRequest) {
 
     // ── SCORE ─────────────────────────────────────────────────────
     if (rawMessage === "SCORE") {
-      const { sendMessage } = await import("@/lib/whatsapp");
       const creditRes = await fetch(
         `${SITE_URL}/api/pro/credit-score?proId=${pro.id}`,
       );
@@ -339,7 +333,6 @@ export async function POST(req: NextRequest) {
     // ── ADVANCE ───────────────────────────────────────────────────
     // Format: ADVANCE 15000 Need equipment for upcoming jobs
     if (rawMessage.startsWith("ADVANCE ")) {
-      const { sendMessage } = await import("@/lib/whatsapp");
       const parts = rawMessage.split(" ");
       const rawAmount = parseFloat(parts[1] ?? "");
       const reason = parts.slice(2).join(" ");
@@ -392,7 +385,6 @@ export async function POST(req: NextRequest) {
 
     // ── HELP ──────────────────────────────────────────────────────
     if (rawMessage === "HELP") {
-      const { sendMessage } = await import("@/lib/whatsapp");
       await sendMessage(
         pro.phone,
         `📱 *Groomee Commands*\n\n` +
