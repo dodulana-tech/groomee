@@ -14,6 +14,7 @@ const PUBLIC_EXACT = new Set([
   "/robots.txt",
   "/sitemap.xml",
   "/opengraph-image",
+  "/464cb6d1b7ad2c38abfd2db9e4014216.txt", // IndexNow key file (Bing, which ChatGPT Search runs on)
 ]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [

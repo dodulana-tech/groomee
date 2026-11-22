@@ -16,7 +16,8 @@
     "smoke:admin": "tsx scripts/admin-smoke.ts",
     "sync:roles": "tsx scripts/sync-roles.ts",
     "test:deep": "tsx scripts/deep-test.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "indexnow": "tsx scripts/indexnow-submit.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
