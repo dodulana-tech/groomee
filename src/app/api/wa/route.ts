@@ -39,7 +39,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const text = whatsappGreeting(city?.name, {
+  // Beauty professionals asking to join get their own opener so the team
+  // can tell recruits from customers at a glance.
+  const text = source === "become-a-pro"
+    ? "Hi Groomee! I'm a beauty professional and I'd like to join."
+    : whatsappGreeting(city?.name, {
     serviceName: service?.name,
     areaName: area?.name,
   });

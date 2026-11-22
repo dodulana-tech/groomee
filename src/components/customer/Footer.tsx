@@ -15,7 +15,7 @@ const COMPANY = [
   { href: "/#about", label: "Our story" },
   { href: "/prices", label: "Prices" },
   { href: "/faq", label: "FAQ" },
-  { href: "/partner/onboarding", label: "Become a pro" },
+  { href: "/become-a-pro", label: "Become a pro" },
   // Waitlist entries are appended at render time from props.waitlistCities.
   { href: "/#survey", label: "Take our survey" },
 ];
@@ -164,7 +164,7 @@ export default function Footer({
                 Book a pro
               </Link>
               <Link
-                href="/partner/onboarding"
+                href="/become-a-pro"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-6 py-3.5 text-sm font-semibold text-white/60 transition-all hover:border-white/20 hover:text-white"
               >
                 Join as a pro
