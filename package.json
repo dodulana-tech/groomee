@@ -18,7 +18,8 @@
     "sync:roles": "tsx scripts/sync-roles.ts",
     "test:deep": "tsx scripts/deep-test.ts",
     "postinstall": "prisma generate",
-    "indexnow": "tsx scripts/indexnow-submit.ts"
+    "indexnow": "tsx scripts/indexnow-submit.ts",
+    "sync:reference": "tsx scripts/sync-reference-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
