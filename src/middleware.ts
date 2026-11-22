@@ -24,6 +24,7 @@ const PUBLIC_PREFIX = [
   "/admin/login", // admin OTP sign-in (lives outside the admin layout)
   "/api/health",
   "/api/webhooks",
+  "/api/payments/verify", // Paystack return; verifies with Paystack itself, works signed out
   "/api/services",
   "/api/pros",
   "/api/zones",

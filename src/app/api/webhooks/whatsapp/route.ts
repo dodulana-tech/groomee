@@ -12,6 +12,7 @@ import {
 import { generateMapsLinkFromAddress, maskPhone } from "@/lib/utils";
 import { format, addWeeks, nextFriday } from "date-fns";
 import crypto from "crypto";
+import { SITE_URL } from "@/lib/site";
 
 // Validate Twilio webhook signature
 function validateTwilioSignature(req: NextRequest, body: Record<string, any>): boolean {
@@ -304,7 +305,7 @@ export async function POST(req: NextRequest) {
     if (rawMessage === "SCORE") {
       const { sendMessage } = await import("@/lib/whatsapp");
       const creditRes = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/pro/credit-score?proId=${pro.id}`,
+        `${SITE_URL}/api/pro/credit-score?proId=${pro.id}`,
       );
       if (creditRes.ok) {
         const { data } = await creditRes.json();
@@ -360,7 +361,7 @@ export async function POST(req: NextRequest) {
 
       // Call advance API
       const advRes = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/pro/advance`,
+        `${SITE_URL}/api/pro/advance`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
