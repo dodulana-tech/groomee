@@ -20,6 +20,9 @@ const optional = [
   "SMTP_HOST",
   "SMTP_USER",
   "SMTP_PASS",
+  "SMTP_FROM",
+  "ADMIN_EMAILS",
+  "ADMIN_SUPPORT_PHONE",
   "CRON_SECRET",
   "SESSION_DURATION",
 ] as const;
@@ -40,6 +43,17 @@ if (process.env.NODE_ENV === "production") {
     console.warn(
       `[env] Missing optional env vars: ${missingOptional.join(", ")}`,
     );
+  }
+  // Live-mode sanity checks: these silently break real customers.
+  if (process.env.PAYSTACK_SECRET_KEY?.startsWith("sk_test_")) {
+    console.warn("[env] PAYSTACK_SECRET_KEY is a TEST key in production - no real money will move.");
+  }
+  if (!process.env.TWILIO_WHATSAPP_NUMBER) {
+    console.warn("[env] TWILIO_WHATSAPP_NUMBER unset - WhatsApp falls back to the Twilio SANDBOX sender.");
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl || !appUrl.startsWith("https://")) {
+    console.warn(`[env] NEXT_PUBLIC_APP_URL is "${appUrl ?? ""}" - payment callbacks fall back to localhost.`);
   }
 }
 
