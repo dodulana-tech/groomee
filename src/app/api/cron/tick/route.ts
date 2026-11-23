@@ -72,8 +72,18 @@ export async function GET(req: NextRequest) {
     console.error("[cron] rebook reminders failed", err);
   }
 
+  // "How was it?" review requests (09:00-20:00 Lagos)
+  let reviews: unknown = null;
+  try {
+    const { runReviewRequests } = await import("@/lib/reviews");
+    reviews = await runReviewRequests(now);
+  } catch (err) {
+    console.error("[cron] review requests failed", err);
+  }
+
   return NextResponse.json({
     ok: true,
+    reviews,
     autoConfirmed: staleCompleted.length,
     savings: savingsTick,
     rebook,

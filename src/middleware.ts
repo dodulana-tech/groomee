@@ -46,6 +46,8 @@ const PUBLIC_PREFIX = [
   "/prices",
   "/faq",
   "/guides",
+  "/review/", // one-tap review links (signed token, no sign-in)
+  "/api/reviews/",
   "/detty-december",
   "/gift",
   "/subscriptions",

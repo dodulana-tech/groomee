@@ -526,6 +526,8 @@ model Booking {
   paymentLinkSentAt         DateTime?
   /// When the "time to rebook?" WhatsApp went out (one per booking)
   rebookReminderSentAt      DateTime?
+  /// When the "how was it? rate your pro" WhatsApp went out (one per booking)
+  reviewRequestSentAt       DateTime?
   customer                  User                  @relation(fields: [customerId], references: [id])
   pro                       Pro?                  @relation(fields: [proId], references: [id])
   service                   Service               @relation(fields: [serviceId], references: [id])

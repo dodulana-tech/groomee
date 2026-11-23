@@ -27,6 +27,8 @@ import {
   priceRange,
 } from "./blocks";
 
+import { serviceRating } from "@/lib/reviews";
+
 const BUSINESS_ID = `${SITE_URL}/#business`;
 
 // Lagos books online too; Abuja is WhatsApp-concierge only for now.
@@ -118,7 +120,7 @@ export function serviceMetadata(city: CitySlug, s: SeoService): Metadata {
 
 export async function ServiceCityPage({ city, service }: { city: CitySlug; service: SeoService }) {
   const cityName = CITY_NAME[city];
-  const prices = await getPrices();
+  const [prices, rating] = await Promise.all([getPrices(), serviceRating(service.slug)]);
   const price = prices[service.slug];
   const areas = areasIn(city);
   const waHref = trackedWhatsAppHref(`svc-${service.slug}`, city, { service: service.slug });
@@ -143,6 +145,10 @@ export async function ServiceCityPage({ city, service }: { city: CitySlug; servi
       lowPrice: price.min,
       highPrice: price.max,
     },
+    // Real Groomee reviews only (3+), never seeded pro ratings.
+    ...(rating
+      ? { aggregateRating: { "@type": "AggregateRating", ratingValue: rating.average, reviewCount: rating.count, bestRating: 5 } }
+      : {}),
   };
 
   return (
@@ -215,6 +221,27 @@ export async function ServiceCityPage({ city, service }: { city: CitySlug; servi
           <AreaChips city={city} areas={areas} service={service} />
         </div>
       </section>
+
+      {rating && (
+        <section className="bg-white px-4 pb-4">
+          <div className="container max-w-4xl">
+            <h2 className="font-display text-xl font-black text-gray-950">
+              Rated {rating.average.toFixed(1)} out of 5 by {rating.count} Groomee customers
+            </h2>
+            {rating.recent.length > 0 && (
+              <ul className="mt-4 grid gap-3 sm:grid-cols-3">
+                {rating.recent.map((r, i) => (
+                  <li key={i} className="rounded-2xl border border-gray-200 bg-white/80 p-4 text-sm">
+                    <p className="text-[#c8871a]">{"★".repeat(r.rating)}</p>
+                    <p className="mt-2 text-gray-700">&ldquo;{r.text}&rdquo;</p>
+                    <p className="mt-2 text-xs text-gray-500">{r.author}{r.area ? `, ${r.area}` : ""}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
 
       <HowItWorks />
       <Faqs faqs={faqs} title={`${service.name} in ${cityName}: questions people ask`} />
