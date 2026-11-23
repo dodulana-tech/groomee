@@ -8,12 +8,12 @@ const TABS = [
   {
     href: "/search",
     label: "Explore",
-    match: (p: string) => p.startsWith("/search"),
+    match: (p: string) => p.startsWith("/search") || p === "/book",
   },
   {
     href: "/bookings",
     label: "Bookings",
-    match: (p: string) => p.startsWith("/book"),
+    match: (p: string) => p.startsWith("/booking"),
   },
   {
     href: "/profile",

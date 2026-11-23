@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession, hasPermission, hasAnyPermission } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { invalidateSettingsCache } from "@/lib/surcharge";
+import { invalidateBookingModeCache } from "@/lib/booking-mode";
+import { revalidatePath } from "next/cache";
 
 export async function GET() {
   try {
@@ -41,6 +43,10 @@ export async function POST(req: NextRequest) {
 
     // Bust the surcharge cache
     await invalidateSettingsCache();
+    if ("WHATSAPP_BOOKING_MODE" in settings) {
+      invalidateBookingModeCache();
+      revalidatePath("/", "layout"); // homepage + sitemap are cached
+    }
 
     return NextResponse.json({ success: true });
   } catch {

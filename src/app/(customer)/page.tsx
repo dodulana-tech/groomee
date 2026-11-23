@@ -16,13 +16,15 @@ import Link from "next/link";
 import { GROOMEE_WHATSAPP, trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 import { AREAS, SERVICES } from "@/lib/seo/content";
 import { WhatsAppFab } from "@/components/seo/blocks";
+import ServiceMenu from "@/components/customer/ServiceMenu";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 
 export const revalidate = 300;
 
 // Only the homepage is canonical to the root; other pages set their own.
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-async function getHomeData() {
+async function getHomeData(whatsappMode: boolean) {
   // Apprenticeship gating (Slice 5): apprentices who haven't earned
   // independence don't appear in the top-pros section. Same filter as
   // /api/pros — see comment there.
@@ -53,7 +55,7 @@ async function getHomeData() {
       where: { isActive: true },
       orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
     }),
-    db.pro.findMany({
+    whatsappMode ? Promise.resolve([]) : db.pro.findMany({
       where: {
         AND: [
           { status: "ACTIVE", avgRating: { gte: 4.0 } },
@@ -127,7 +129,8 @@ function buildJsonLd(liveCityNames: string[]) {
 }
 
 export default async function HomePage() {
-  const { services, pros, cities, areasFor } = await getHomeData();
+  const whatsappMode = await isWhatsAppMode();
+  const { services, pros, cities, areasFor } = await getHomeData(whatsappMode);
   const liveCities = cities.filter((c) => c.status === "LIVE");
   const waitlistCities = cities.filter((c) => c.status === "WAITLIST");
   const jsonLd = buildJsonLd(liveCities.map((c) => c.name));
@@ -149,9 +152,13 @@ export default async function HomePage() {
         }
       />
       <CityRolloutBanner liveCities={liveCities} waitlistCities={waitlistCities} />
-      <Suspense fallback={<div className="h-64" />}>
-        <Browse services={services} pros={pros} />
-      </Suspense>
+      {whatsappMode ? (
+        <ServiceMenu />
+      ) : (
+        <Suspense fallback={<div className="h-64" />}>
+          <Browse services={services} pros={pros} />
+        </Suspense>
+      )}
       <HowItWorks />
       <SurveySection />
       <AboutSection />

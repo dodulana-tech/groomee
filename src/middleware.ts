@@ -12,6 +12,7 @@ import {
 const PUBLIC_EXACT = new Set([
   "/",
   "/search",
+  "/book", // WhatsApp booking request form
   "/auth",
   "/partner/login",
   "/partner/onboarding",

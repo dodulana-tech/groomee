@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 import { db } from "@/lib/db";
 import ProProfileView from "@/components/customer/ProProfileView";
 import { canTakeIndependentBookings } from "@/lib/apprenticeships";
@@ -9,6 +10,9 @@ export default async function ProPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
+  // WhatsApp mode: profiles aren't public until the vendor list is live.
+  if (await isWhatsAppMode()) redirect("/book");
 
   const pro = await db.pro.findFirst({
     where: { id: slug, status: "ACTIVE" },

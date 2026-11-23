@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { AREAS, SERVICES } from "@/lib/seo/content";
 import { GUIDES } from "@/lib/seo/guides";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 
 export const revalidate = 3600;
 
@@ -40,6 +41,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic pro profile pages
   let proPages: MetadataRoute.Sitemap = [];
   try {
+    // WhatsApp mode: profiles redirect to /book, so don't list them.
+    if (await isWhatsAppMode()) throw new Error("whatsapp mode");
     const pros = await db.pro.findMany({
       where: { status: "ACTIVE" },
       select: { id: true, updatedAt: true },

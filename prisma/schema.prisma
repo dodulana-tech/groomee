@@ -721,6 +721,8 @@ model WhatsAppClick {
   landingPath   String?
   /// utm_source/campaign or referring host
   channelDetail String?
+  /// Request details from the /book form (when, people, note), if any
+  details       String?
   createdAt     DateTime @default(now())
 
   @@index([createdAt])
