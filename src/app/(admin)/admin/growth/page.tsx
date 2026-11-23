@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { getSession, hasPermission } from "@/lib/auth";
 import { AREAS, serviceBySlug } from "@/lib/seo/content";
+import { AI_CHANNELS, CHANNEL_LABEL, type Channel } from "@/lib/attribution";
 
 export const metadata: Metadata = { title: "Growth | Admin" };
 export const revalidate = 0;
@@ -72,7 +73,7 @@ export default async function GrowthPage() {
   const clicks = await db.whatsAppClick.findMany({
     where: { createdAt: { gte: since } },
     orderBy: { createdAt: "desc" },
-    select: { source: true, city: true, service: true, area: true, createdAt: true },
+    select: { source: true, city: true, service: true, area: true, channel: true, firstChannel: true, createdAt: true },
   });
 
   // Daily series, oldest first, including empty days.
@@ -104,6 +105,11 @@ export default async function GrowthPage() {
   const byService = tally(week, (c) => (c.service ? serviceBySlug(c.service)?.name ?? c.service : null));
   const byArea = tally(week, (c) => (c.area ? AREAS.find((a) => a.slug === c.area)?.name ?? c.area : null));
   const byCity = tally(week, (c) => (c.city ? c.city.charAt(0).toUpperCase() + c.city.slice(1) : "Not specified"));
+  const channelName = (ch: string | null) => (ch ? CHANNEL_LABEL[ch as Channel] ?? ch : "Not recorded yet");
+  const byChannel = tally(week, (c) => channelName(c.channel));
+  const byFirstChannel = tally(week, (c) => channelName(c.firstChannel));
+  const aiWeek = week.filter((c) => c.channel && AI_CHANNELS.includes(c.channel as Channel)).length;
+  const searchWeek = week.filter((c) => c.channel === "google" || c.channel === "bing" || c.channel === "other-search").length;
 
   const change = prev7 === 0 ? null : Math.round(((last7 - prev7) / prev7) * 100);
 
@@ -174,6 +180,21 @@ export default async function GrowthPage() {
             </span>
           ))}
         </div>
+      </div>
+
+      <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">From AI assistants, 7 days</p>
+          <p className="mt-1 text-3xl font-bold text-gray-900">{aiWeek}</p>
+          <p className="mt-1 text-xs text-gray-500">ChatGPT, Perplexity, Gemini, Claude, Copilot</p>
+        </div>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">From search, 7 days</p>
+          <p className="mt-1 text-3xl font-bold text-gray-900">{searchWeek}</p>
+          <p className="mt-1 text-xs text-gray-500">Google, Bing and others</p>
+        </div>
+        <Ranked title="Channel that brought them (latest)" rows={byChannel} empty="No taps yet" />
+        <Ranked title="Channel that first found us" rows={byFirstChannel} empty="No taps yet" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

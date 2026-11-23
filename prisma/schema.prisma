@@ -704,16 +704,25 @@ model SurveyResponse {
 // One row per tap on a tracked "chat on WhatsApp" CTA (/api/wa). Lets the
 // weekly admin report attribute WhatsApp-concierge demand by city + surface.
 model WhatsAppClick {
-  id        String   @id @default(cuid())
-  city      String?
-  source    String
+  id            String   @id @default(cuid())
+  city          String?
+  source        String
   /// Service slug the tap was about (landing pages), if any
-  service   String?
+  service       String?
   /// Area/zone slug the tap was about, if any
-  area      String?
-  createdAt DateTime @default(now())
+  area          String?
+  /// Channel that most recently brought the visitor (lib/attribution)
+  channel       String?
+  /// Channel that first brought the visitor (kept 90 days)
+  firstChannel  String?
+  /// Page they first landed on
+  landingPath   String?
+  /// utm_source/campaign or referring host
+  channelDetail String?
+  createdAt     DateTime @default(now())
 
   @@index([createdAt])
+  @@index([channel, createdAt])
   @@map("whatsapp_clicks")
 }
 

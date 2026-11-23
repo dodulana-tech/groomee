@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { whatsappGreeting, whatsappUrl } from "@/lib/whatsapp-channel";
 import { AREAS, serviceBySlug } from "@/lib/seo/content";
+import { FIRST_TOUCH_COOKIE, LAST_TOUCH_COOKIE, decodeTouch } from "@/lib/attribution";
 
 const BOT_UA = /bot|crawler|spider|preview|facebookexternalhit|whatsapp|slurp/i;
 
@@ -23,6 +24,9 @@ export async function GET(req: NextRequest) {
   const service = serviceSlug ? serviceBySlug(serviceSlug) : undefined;
   const area = areaSlug ? AREAS.find((a) => a.slug === areaSlug) : undefined;
 
+  const first = decodeTouch(req.cookies.get(FIRST_TOUCH_COOKIE)?.value);
+  const last = decodeTouch(req.cookies.get(LAST_TOUCH_COOKIE)?.value);
+
   // Link-preview fetchers (incl. WhatsApp's own) would inflate counts.
   if (!BOT_UA.test(req.headers.get("user-agent") ?? "")) {
     try {
@@ -32,6 +36,10 @@ export async function GET(req: NextRequest) {
           city: city ? citySlug : null,
           service: service ? serviceSlug : null,
           area: area ? areaSlug : null,
+          channel: last?.channel ?? first?.channel ?? null,
+          firstChannel: first?.channel ?? null,
+          landingPath: first?.landing || null,
+          channelDetail: (last ?? first)?.detail || null,
         },
       });
     } catch (err) {
