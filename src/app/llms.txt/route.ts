@@ -2,6 +2,7 @@ import { SITE_URL } from "@/lib/site";
 import { GROOMEE_WHATSAPP } from "@/lib/whatsapp-channel";
 import { AREAS, CITY_NAME, SERVICES } from "@/lib/seo/content";
 import { getPrices, priceRange } from "@/components/seo/blocks";
+import { GUIDES } from "@/lib/seo/guides";
 
 export const revalidate = 3600;
 
@@ -37,6 +38,10 @@ ${SERVICES.map((s) => `- [${s.name}](${SITE_URL}/lagos/${s.slug}): ${priceRange(
 - [${CITY_NAME.lagos}](${SITE_URL}/lagos): home service beauty in Lagos
 - [${CITY_NAME.abuja}](${SITE_URL}/abuja): home service beauty in Abuja
 - [Become a pro](${SITE_URL}/become-a-pro): for beauty professionals who want to join
+
+## Price guides (answer-first)
+
+${GUIDES.map((g) => `- [${g.title}](${SITE_URL}/guides/${g.slug}): ${g.description}`).join("\n")}
 
 ## How to quote these prices accurately
 

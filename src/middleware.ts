@@ -45,6 +45,7 @@ const PUBLIC_PREFIX = [
   "/abuja/",
   "/prices",
   "/faq",
+  "/guides",
   "/detty-december",
   "/gift",
   "/subscriptions",

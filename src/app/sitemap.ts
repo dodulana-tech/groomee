@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { AREAS, SERVICES } from "@/lib/seo/content";
+import { GUIDES } from "@/lib/seo/guides";
 
 export const revalidate = 3600;
 
@@ -32,6 +33,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...SERVICES.map((s) => page(`/lagos/${s.slug}`, 0.85)),
     ...SERVICES.map((s) => page(`/abuja/${s.slug}`, 0.75)),
     ...AREAS.map((a) => page(`/${a.city}/${a.slug}`, a.city === "lagos" ? 0.8 : 0.7)),
+    page("/guides", 0.8),
+    ...GUIDES.map((g) => page(`/guides/${g.slug}`, 0.85)),
   ];
 
   // Dynamic pro profile pages
