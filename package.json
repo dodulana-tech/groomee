@@ -19,7 +19,8 @@
     "test:deep": "tsx scripts/deep-test.ts",
     "postinstall": "prisma generate",
     "indexnow": "tsx scripts/indexnow-submit.ts",
-    "sync:reference": "tsx scripts/sync-reference-data.ts"
+    "sync:reference": "tsx scripts/sync-reference-data.ts",
+    "prebuild": "tsx scripts/sync-reference-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

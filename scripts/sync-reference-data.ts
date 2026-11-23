@@ -13,7 +13,7 @@
  *   - adds travel times only for zone pairs that have none (values edited
  *     in Admin are kept)
  *
- * Usage: npm run sync:reference
+ * Usage: npm run sync:reference (also runs automatically as npm prebuild)
  */
 import { PrismaClient, type CityStatus } from "@prisma/client";
 
@@ -66,6 +66,12 @@ const TRAVEL: Record<string, Record<string, number>> = {
 };
 
 async function main() {
+  // Runs as npm "prebuild" too, so it happens whatever build command the
+  // host is configured with. No database (e.g. a CI typecheck build): skip.
+  if (!process.env.DATABASE_URL) {
+    console.log("🗺  sync-reference-data: no DATABASE_URL, skipping");
+    return;
+  }
   console.log("🗺  Syncing reference data (cities, zones, travel)…");
 
   const cityIds: Record<string, string> = {};
