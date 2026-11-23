@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import ResendPayLinkButton from "../ResendPayLinkButton";
 import { db } from "@/lib/db";
 import { format } from "date-fns";
 import { formatNaira } from "@/lib/utils";
@@ -140,7 +141,22 @@ export default async function AdminBookingDetailPage({
                 {booking.surchargeType} surcharge
               </span>
             )}
+            {booking.source === "WHATSAPP_CONCIERGE" && (
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#25D366]/10 text-[#128C7E]">
+                WhatsApp concierge
+              </span>
+            )}
           </div>
+          {booking.priceOverrideReason && booking.listBaseAmount !== null && (
+            <p className="mt-2 text-xs text-gray-500">
+              Price set by ops: {formatNaira(booking.baseAmount)} (list {formatNaira(booking.listBaseAmount)}) · {booking.priceOverrideReason}
+            </p>
+          )}
+          {booking.source === "WHATSAPP_CONCIERGE" && booking.status === "PENDING_PAYMENT" && (
+            <div className="mt-3 max-w-sm">
+              <ResendPayLinkButton bookingId={booking.id} />
+            </div>
+          )}
         </div>
         <div className="text-right shrink-0">
           <p className="text-2xl font-extrabold text-gray-900">

@@ -28,13 +28,15 @@ interface Props {
     status?: string;
     q?: string;
     page?: string;
+    source?: string;
   }>;
 }
 
-function buildQuery(params: { status?: string; q?: string }) {
+function buildQuery(params: { status?: string; q?: string; source?: string }) {
   const out = new URLSearchParams();
   if (params.status) out.set("status", params.status);
   if (params.q) out.set("q", params.q);
+  if (params.source) out.set("source", params.source);
   return out.toString();
 }
 
@@ -42,12 +44,14 @@ export default async function AdminProsPage({ searchParams }: Props) {
   const sp = await searchParams;
   const status = sp.status;
   const q = sp.q?.trim();
+  const source = sp.source?.trim().slice(0, 40) || undefined;
   const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
 
   const where: Prisma.ProWhereInput = {};
   if (status && STATUS_TABS.includes(status)) {
     where.status = status as never;
   }
+  if (source) where.applicationSource = source;
   if (q) {
     where.OR = [
       { name: { contains: q, mode: "insensitive" } },
@@ -73,9 +77,10 @@ export default async function AdminProsPage({ searchParams }: Props) {
     }),
     db.pro.count({ where }),
   ]);
+  const pendingCount = await db.pro.count({ where: { status: "PENDING" } });
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const baseQs = buildQuery({ status, q });
+  const baseQs = buildQuery({ status, q, source });
 
   return (
     <div className="p-6 lg:p-8">
@@ -86,13 +91,28 @@ export default async function AdminProsPage({ searchParams }: Props) {
             {total} total · showing {pros.length} (page {page} of {totalPages})
           </p>
         </div>
-        <Link
-          href="/admin/pros/new"
-          className="px-4 py-2 rounded-xl text-sm font-bold text-white"
-          style={{ background: "#1A3A2A" }}
-        >
-          + Add pro
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/pros/applicants"
+            className="px-4 py-2 rounded-xl text-sm font-bold"
+            style={{ background: "#FEF9C3", color: "#854D0E" }}
+          >
+            Applicants{pendingCount > 0 ? ` (${pendingCount})` : ""}
+          </Link>
+          <Link
+            href="/admin/pros/import"
+            className="px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 bg-white text-gray-800"
+          >
+            Import existing pros
+          </Link>
+          <Link
+            href="/admin/pros/new"
+            className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+            style={{ background: "#1A3A2A" }}
+          >
+            + Add pro
+          </Link>
+        </div>
       </div>
 
       {/* Search */}
@@ -101,6 +121,7 @@ export default async function AdminProsPage({ searchParams }: Props) {
         className="mb-4 flex flex-wrap items-end gap-2 rounded-2xl bg-white border border-gray-100 p-3"
       >
         {status && <input type="hidden" name="status" value={status} />}
+        {source && <input type="hidden" name="source" value={source} />}
         <div className="flex-1 min-w-[200px]">
           <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
             Search
@@ -132,7 +153,7 @@ export default async function AdminProsPage({ searchParams }: Props) {
       {/* Status tabs */}
       <div className="mb-5 flex gap-1 overflow-x-auto pb-1">
         {STATUS_TABS.map((s) => {
-          const tabQs = buildQuery({ status: s, q });
+          const tabQs = buildQuery({ status: s, q, source });
           const active = s === (status ?? "");
           return (
             <Link
@@ -149,6 +170,27 @@ export default async function AdminProsPage({ searchParams }: Props) {
             </Link>
           );
         })}
+      </div>
+
+      <div className="mb-4 -mt-2 flex gap-2 text-xs">
+        <Link
+          href={`/admin/pros?${buildQuery({ status, q })}`}
+          className={cn("rounded-full px-3 py-1 font-semibold", !source ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600")}
+        >
+          All sources
+        </Link>
+        <Link
+          href={`/admin/pros?${buildQuery({ status, q, source: "imported" })}`}
+          className={cn("rounded-full px-3 py-1 font-semibold", source === "imported" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600")}
+        >
+          Imported
+        </Link>
+        <Link
+          href={`/admin/pros?${buildQuery({ status, q, source: "become-a-pro" })}`}
+          className={cn("rounded-full px-3 py-1 font-semibold", source === "become-a-pro" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600")}
+        >
+          From /become-a-pro
+        </Link>
       </div>
 
       <div className="glass-card rounded-2xl overflow-hidden">
@@ -180,7 +222,12 @@ export default async function AdminProsPage({ searchParams }: Props) {
                 return (
                   <tr key={g.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-900">{g.name}</p>
+                      <p className="font-semibold text-gray-900">
+                        {g.name}
+                        {g.applicationSource === "imported" && (
+                          <span className="ml-1.5 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">Imported</span>
+                        )}
+                      </p>
                       <p className="text-xs text-gray-400">{g.phone}</p>
                     </td>
                     <td className="px-4 py-3">

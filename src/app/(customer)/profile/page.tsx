@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import LogoutButton from './LogoutButton';
 import type { Metadata } from 'next';
+import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = { title: 'My Profile' };
 export const revalidate = 0;
@@ -51,7 +52,7 @@ export default async function ProfilePage() {
   const profileComplete = !!(user?.name && hasPhone);
   const displayPhone = hasPhone ? user?.phone : user?.email ?? "Email login";
   const referralCode    = session.userId.slice(-8).toUpperCase();
-  const appUrl          = process.env.NEXT_PUBLIC_APP_URL ?? 'https://groomee.ng';
+  const appUrl          = SITE_URL;
   const whatsappMsg     = encodeURIComponent(
     `Book professional beauty services at home in Lagos! Use my code ${referralCode} for ₦2,000 off your first booking 💅🏿 → ${appUrl}/?ref=${referralCode}`
   );

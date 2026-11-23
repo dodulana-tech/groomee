@@ -3,7 +3,11 @@ services:
     name: groomee
     runtime: node
     plan: starter
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss && npm run sync:roles && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+    # No --accept-data-loss: a schema change that would drop a column/table or
+    # data (or add a unique constraint over duplicates) now FAILS the build
+    # instead of silently deleting production data. Apply such changes by hand
+    # after a backup (see docs/PRODUCTION_READINESS.md, "Schema changes").
+    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run sync:roles && npm run sync:reference && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
     startCommand: node .next/standalone/server.js
     healthCheckPath: /api/health
     envVars:
@@ -31,6 +35,10 @@ services:
         sync: false
       - key: ADMIN_PHONES
         sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: NEXT_PUBLIC_GROOMEE_WHATSAPP
+        value: "2348084296023"
       - key: NEXT_PUBLIC_APP_URL
         sync: false
       - key: SMTP_HOST
@@ -39,6 +47,12 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: ADMIN_SUPPORT_PHONE
+        sync: false
 
   - type: cron
     name: groomee-tick
@@ -46,7 +60,7 @@ services:
     schedule: "*/10 * * * *"
     buildCommand: echo "no build needed"
     startCommand: |
-      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/tick"
+      curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/tick"
     envVars:
       - key: CRON_SECRET
         fromService:
@@ -65,7 +79,7 @@ services:
     schedule: "0 6 * * *"
     buildCommand: echo "no build needed"
     startCommand: |
-      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/renew-subscriptions"
+      curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/renew-subscriptions"
     envVars:
       - key: CRON_SECRET
         fromService:
@@ -88,7 +102,28 @@ services:
     schedule: "0 2 * * *"
     buildCommand: echo "no build needed"
     startCommand: |
-      curl -s -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/benefits"
+      curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/benefits"
+    envVars:
+      - key: CRON_SECRET
+        fromService:
+          name: groomee
+          type: web
+          envVarKey: CRON_SECRET
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          name: groomee
+          type: web
+          property: url
+
+  # Weekly admin report — Mondays 06:00 UTC (07:00 WAT). Emails ADMIN_EMAILS,
+  # WhatsApps ADMIN_PHONES with last-7-days vs prior-7-days.
+  - type: cron
+    name: groomee-weekly-report
+    runtime: node
+    schedule: "0 6 * * 1"
+    buildCommand: echo "no build needed"
+    startCommand: |
+      curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$RENDER_EXTERNAL_URL/api/cron/weekly-report"
     envVars:
       - key: CRON_SECRET
         fromService:

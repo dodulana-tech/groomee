@@ -8,9 +8,12 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: "📊", exact: true, permission: "dashboard.view" },
+  { href: "/admin/growth", label: "Growth", icon: "🚀", permission: "analytics.view" },
   { href: "/admin/bookings", label: "Bookings", icon: "📋", permission: "bookings.view" },
+  { href: "/admin/bookings/new", label: "New booking", icon: "💬", permission: "bookings.manage" },
   { href: "/admin/calendar", label: "Calendar", icon: "📆", permission: "pros.view" },
   { href: "/admin/pros", label: "Beauty Pros", icon: "💇", permission: "pros.view" },
+  { href: "/admin/pros/applicants", label: "Pro applicants", icon: "📝", permission: "pros.view" },
   { href: "/admin/apprenticeships", label: "Apprenticeships", icon: "🎓", permission: "apprenticeships.view" },
   { href: "/admin/health", label: "Health & care", icon: "🩺", permission: "health.view" },
   { href: "/admin/cities", label: "Cities", icon: "🏙️", permission: "cities.view" },
@@ -33,10 +36,6 @@ const NAV = [
 ];
 
 function canAccess(permissions: string[], required: string): boolean {
-  // DEV BYPASS — mirror src/lib/auth.ts. In any non-production env, every
-  // admin sees every sidebar entry so gated pages stay testable without
-  // re-seeding role rows. Remove before relying on perm filtering in QA.
-  if (process.env.NODE_ENV !== "production") return true;
   return permissions.includes("*") || permissions.includes(required);
 }
 
@@ -79,7 +78,12 @@ export default function AdminSidebar({
       {visibleNav.map((item) => {
         const isActive = item.exact
           ? pathname === item.href
-          : pathname.startsWith(item.href) && item.href !== "/admin";
+          : pathname.startsWith(item.href) &&
+            item.href !== "/admin" &&
+            // A more specific nav entry (e.g. /admin/pros/applicants) wins.
+            !visibleNav.some(
+              (o) => o.href.length > item.href.length && o.href.startsWith(item.href) && pathname.startsWith(o.href),
+            );
         return (
           <Link
             key={item.href}

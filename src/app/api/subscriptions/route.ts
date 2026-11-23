@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site";
 import { getSession, requireSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Initialize payment
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = SITE_URL;
     const paystack = await initializeTransaction({
       email: paystackEmailFor(user),
       phone: user.phone,

@@ -46,18 +46,27 @@ export async function POST(req: NextRequest) {
 
     const { otp } = await createOtpByEmail(normalised);
 
-    // Send OTP via email (ZeptoMail) or log in dev
+    // Send OTP via email (Zoho SMTP) or log in dev. A failed send must not
+    // report success — otherwise the user waits for a code that never comes.
     if (process.env.NODE_ENV === "development") {
       console.log(`[DEV] Email OTP for ${email}: ${otp}`);
-    } else if (process.env.SMTP_USER) {
+    } else {
       const { sendEmail } = await import("@/lib/email");
       const { otpEmail } = await import("@/lib/email-templates");
       const { subject, html } = otpEmail(otp);
-      await sendEmail({ to: email, subject, html }).catch((err) =>
-        console.error("Email send error:", err),
-      );
-    } else {
-      console.warn(`[WARN] No SMTP_USER set — email OTP for ${email} not delivered`);
+      const sent = await sendEmail({ to: normalised, subject, html }).catch((err) => {
+        console.error("Email send error:", err);
+        return null;
+      });
+      if (!sent) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "We couldn't send the code to that email right now. Try signing in with your phone number.",
+          },
+          { status: 502 },
+        );
+      }
     }
 
     return NextResponse.json({

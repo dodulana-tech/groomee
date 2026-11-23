@@ -9,7 +9,7 @@ export const revalidate = 0;
 export default async function WalletMovementsPage() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
-    redirect("/auth?redirect=/admin/wallet/movements");
+    redirect("/admin/login?redirect=/admin/wallet/movements");
   }
   if (!hasPermission(session, "wallet.view")) {
     return (

@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#about", label: "Our story" },
   { href: "/#waitlist", label: "Abuja waitlist" },
-  { href: "/partner/login", label: "List your business" },
+  { href: "/become-a-pro", label: "Become a pro" },
   { href: "/subscriptions", label: "Subscriptions" },
   { href: "/gift", label: "Gift a service" },
 ];

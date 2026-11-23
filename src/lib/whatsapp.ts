@@ -1,4 +1,5 @@
 import { db } from './db';
+import { SITE_URL } from "@/lib/site";
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID!;
 const authToken  = process.env.TWILIO_AUTH_TOKEN!;
@@ -240,7 +241,7 @@ export async function notifyApprenticeInvited(phone: string, masterName: string,
 export async function notifyMasterInviteAccepted(masterPhone: string, apprenticeName: string) {
   return sendMessage(
     masterPhone,
-    `🎉 *${apprenticeName}* has accepted your apprenticeship invitation!\n\nThey are now in training under you. Track their progress, sign off on curriculum modules, and grow your team from the partner portal:\n\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
+    `🎉 *${apprenticeName}* has accepted your apprenticeship invitation!\n\nThey are now in training under you. Track their progress, sign off on curriculum modules, and grow your team from the partner portal:\n\n${SITE_URL}/partner/team`,
   );
 }
 
@@ -264,7 +265,7 @@ export async function notifyApprenticeModuleCompleted(
 ) {
   return sendMessage(
     apprenticePhone,
-    `📘 Your master signed off another module: *${moduleTitle}*.\n\nKeep going - every module brings you closer to independence and Freedom. Track progress in your portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner`,
+    `📘 Your master signed off another module: *${moduleTitle}*.\n\nKeep going - every module brings you closer to independence and Freedom. Track progress in your portal:\n${SITE_URL}/partner`,
   );
 }
 
@@ -284,7 +285,7 @@ export async function notifyMasterApprenticeReadyForFreedom(
 ) {
   return sendMessage(
     masterPhone,
-    `🎓 *${apprenticeName}* has met every Freedom requirement - curriculum complete, jobs and ratings on track.\n\nWhen you're ready, bestow Freedom from your partner portal:\n${process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng"}/partner/team`,
+    `🎓 *${apprenticeName}* has met every Freedom requirement - curriculum complete, jobs and ratings on track.\n\nWhen you're ready, bestow Freedom from your partner portal:\n${SITE_URL}/partner/team`,
   );
 }
 

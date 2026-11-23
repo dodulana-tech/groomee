@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
       const { sendMessage } = await import("@/lib/whatsapp");
       await sendMessage(
         adminPhones[0].trim(),
-        `💰 *Advance Request*\n\nPro: ${pro.name}\nAmount: ₦${amount.toLocaleString()}\nReason: ${reason}\n\nReview at admin.groomee.ng/admin/advances`,
+        `💰 *Advance Request*\n\nPro: ${pro.name}\nAmount: ₦${amount.toLocaleString()}\nReason: ${reason}\n\nReview at groomeeapp.com/admin/admin/advances`,
       );
     }
 

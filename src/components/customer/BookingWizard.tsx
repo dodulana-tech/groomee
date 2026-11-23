@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formatNaira } from "@/lib/utils";
 
+// Customers pick a wall-clock time in Lagos; send it with Lagos's offset
+// (WAT, UTC+1, no daylight saving) so the server reads the right instant.
+const lagosTime = (date: string, time: string) => `${date}T${time}:00+01:00`;
+
 interface Service {
   id: string;
   name: string;
@@ -100,17 +104,13 @@ export default function BookingWizard({
   async function loadPreview() {
     try {
       const [previewRes, pointsRes] = await Promise.all([
-        fetch("/api/payments/preview", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        fetch(
+          `/api/payments/preview?${new URLSearchParams({
             serviceId,
-            isAsap,
-            scheduledFor: isAsap
-              ? undefined
-              : `${scheduledDate}T${scheduledTime}:00`,
-          }),
-        }),
+            asap: String(isAsap),
+            ...(isAsap ? {} : { scheduledFor: lagosTime(scheduledDate, scheduledTime) }),
+          })}`,
+        ),
         fetch("/api/profile/points"),
       ]);
       const previewData = await previewRes.json();
@@ -138,7 +138,7 @@ export default function BookingWizard({
           isAsap,
           scheduledFor: isAsap
             ? undefined
-            : `${scheduledDate}T${scheduledTime}:00`,
+            : lagosTime(scheduledDate, scheduledTime),
           customerNotes: notes || undefined,
           redeemPoints: redeemPoints || undefined,
           giftCode: giftCode.trim() || undefined,

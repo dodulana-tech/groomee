@@ -12,6 +12,9 @@ export interface ResolvedService {
   basePrice: number;
   durationMins: number;
   customPrice: number | null;
+  /** Catalogue price band — bounds for an admin price override. */
+  minPrice: number;
+  maxPrice: number;
 }
 
 export interface ResolvedItems {
@@ -67,6 +70,8 @@ export async function resolveBookingServices(opts: {
         basePrice: s.basePrice,
         durationMins: s.durationMins,
         customPrice: overrideMap.get(s.id) ?? null,
+        minPrice: s.minPrice,
+        maxPrice: s.maxPrice,
       } satisfies ResolvedService,
     ]),
   );

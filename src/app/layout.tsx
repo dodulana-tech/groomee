@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
+import { SITE_URL } from "@/lib/site";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -69,7 +70,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_NG",
-    url: "https://groomee.ng",
+    url: SITE_URL,
     siteName: "Groomee",
     title: "Groomee - Your beauty pro, at your door, right now",
     description:
@@ -101,12 +102,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: "https://groomee.ng",
-  },
   category: "beauty",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng",
+    SITE_URL,
   ),
 };
 

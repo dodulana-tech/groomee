@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/site";
 import { db } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
 import { verifyTransaction } from "@/lib/paystack";
@@ -14,7 +15,7 @@ export async function GET(
 
   const { searchParams } = new URL(req.url);
   const ref = searchParams.get("ref");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = SITE_URL;
 
   if (!ref) return NextResponse.redirect(`${appUrl}/?error=gift_failed`);
 

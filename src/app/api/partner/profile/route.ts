@@ -46,13 +46,37 @@ export async function PATCH(request: Request) {
     const profileSchema = (await import("zod")).z.object({
       name: (await import("zod")).z.string().min(1).max(100).optional(),
       bio: (await import("zod")).z.string().max(500).optional(),
-      bankCode: (await import("zod")).z.string().max(20).optional(),
-      bankAccount: (await import("zod")).z.string().max(20).optional(),
-      bankName: (await import("zod")).z.string().max(100).optional(),
       availability: (await import("zod")).z.enum(["ONLINE", "BUSY", "OFFLINE"]).optional(),
     });
-    const validated = profileSchema.parse(body);
+    const parsed = profileSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.errors[0]?.message ?? "Invalid input" },
+        { status: 400 },
+      );
+    }
+    const validated = parsed.data;
 
+    // Going online with nothing to dispatch on just produces no-pro failures.
+    if (validated.availability === "ONLINE") {
+      const [svc, zones] = await Promise.all([
+        db.proService.count({ where: { proId: pro.id } }),
+        db.proZone.count({ where: { proId: pro.id } }),
+      ]);
+      if (svc === 0 || zones === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Add at least one service and one area on your Profile before going online.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Bank details change only through POST /api/partner/verify-bank, which
+    // resolves the account holder with Paystack. Accepting them here let a
+    // pro swap the account number under a previously verified bank code.
     await db.pro.update({
       where: { id: pro.id },
       data: validated,

@@ -12,7 +12,7 @@ const STEPS_IOS = [
     num: "1",
     icon: "🧭",
     title: "Open in Safari",
-    desc: "Make sure you're using Safari (not Chrome or another browser). Tap the link or type groomee.ng in the address bar.",
+    desc: "Make sure you're using Safari (not Chrome or another browser). Tap the link or type groomeeapp.com in the address bar.",
   },
   {
     num: "2",
@@ -39,7 +39,7 @@ const STEPS_ANDROID = [
     num: "1",
     icon: "🌐",
     title: "Open in Chrome",
-    desc: "Visit groomee.ng in Google Chrome. You might see an \"Install app\" banner at the bottom automatically.",
+    desc: "Visit groomeeapp.com in Google Chrome. You might see an \"Install app\" banner at the bottom automatically.",
   },
   {
     num: "2",

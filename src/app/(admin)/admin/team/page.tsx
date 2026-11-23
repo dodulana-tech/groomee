@@ -685,7 +685,7 @@ function InviteModal({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-500"
-            placeholder="amaka@groomee.ng"
+            placeholder="amaka@groomeeapp.com"
           />
         </div>
 

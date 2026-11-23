@@ -6,6 +6,7 @@ import { isValidNigerianPhone } from "@/lib/utils";
 import { DEFAULT_CURRICULUM, DEFAULT_MASTER_COMMISSION } from "@/lib/apprenticeships";
 import { notifyApprenticeInvited } from "@/lib/whatsapp";
 import { emailApprenticeInvitation } from "@/lib/email-notify";
+import { SITE_URL } from "@/lib/site";
 
 const inviteSchema = z.object({
   phone: z.string().min(10),
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
     });
 
     // Build accept URL — apprentice clicks this from WhatsApp/email.
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+    const appUrl = SITE_URL;
     const acceptUrl = `${appUrl}/partner/invitation/${apprenticeship.id}`;
 
     // Fire notifications. Don't block on WhatsApp failure — record was created.

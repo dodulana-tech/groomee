@@ -1,17 +1,37 @@
 import { db } from "@/lib/db";
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
+import { AREAS, SERVICES } from "@/lib/seo/content";
+
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://groomee.ng";
+  const now = new Date();
+  const page = (path: string, priority: number, changeFrequency: "daily" | "weekly" | "monthly" = "weekly") => ({
+    url: `${SITE_URL}${path}`,
+    lastModified: now,
+    changeFrequency,
+    priority,
+  });
 
-  // Static pages
   const staticPages = [
-    { url: baseUrl, lastModified: new Date(), changeFrequency: "daily" as const, priority: 1.0 },
-    { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: "daily" as const, priority: 0.9 },
-    { url: `${baseUrl}/subscriptions`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.7 },
-    { url: `${baseUrl}/gift`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
-    { url: `${baseUrl}/auth`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.3 },
-    { url: `${baseUrl}/partner/login`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.3 },
+    page("", 1.0, "daily"),
+    page("/lagos", 0.95),
+    page("/abuja", 0.9),
+    page("/prices", 0.9),
+    page("/detty-december", 0.9),
+    page("/faq", 0.8),
+    page("/search", 0.8, "daily"),
+    page("/become-a-pro", 0.7),
+    page("/subscriptions", 0.6),
+    page("/gift", 0.5, "monthly"),
+  ];
+
+  // Service x city and area landing pages
+  const landing = [
+    ...SERVICES.map((s) => page(`/lagos/${s.slug}`, 0.85)),
+    ...SERVICES.map((s) => page(`/abuja/${s.slug}`, 0.75)),
+    ...AREAS.map((a) => page(`/${a.city}/${a.slug}`, a.city === "lagos" ? 0.8 : 0.7)),
   ];
 
   // Dynamic pro profile pages
@@ -22,14 +42,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { id: true, updatedAt: true },
     });
     proPages = pros.map((pro) => ({
-      url: `${baseUrl}/pro/${pro.id}`,
+      url: `${SITE_URL}/pro/${pro.id}`,
       lastModified: pro.updatedAt,
       changeFrequency: "weekly" as const,
-      priority: 0.8,
+      priority: 0.6,
     }));
   } catch {
     // DB may not be available during build
   }
 
-  return [...staticPages, ...proPages];
+  return [...staticPages, ...landing, ...proPages];
 }

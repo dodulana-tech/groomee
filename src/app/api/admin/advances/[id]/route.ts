@@ -50,6 +50,7 @@ export async function POST(
             phone: true,
             bankAccount: true,
             bankName: true,
+            bankCode: true,
           },
         },
       },
@@ -121,7 +122,7 @@ export async function POST(
         const recipientCode = await createTransferRecipient({
           accountName: advance.pro.name,
           accountNumber: advance.pro.bankAccount,
-          bankCode: advance.pro.bankName,
+          bankCode: advance.pro.bankCode ?? advance.pro.bankName,
         });
         transferRef = `ADV-${id.slice(-8)}-${Date.now()}`;
         await initiateTransfer({

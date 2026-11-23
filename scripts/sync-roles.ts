@@ -3,7 +3,7 @@
  *
  * Run on every deploy. Reads DEFAULT_ROLES from src/lib/permissions.ts (the
  * source of truth) and refreshes the `permissions` array on each matching
- * admin_roles row.
+ * admin_roles row, then makes sure every env allow-listed admin has a role.
  *
  * Why we don't reuse the full seed on deploy:
  *   - seed.ts also creates zones, services, demo pros, etc. — we want NONE
@@ -14,6 +14,11 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { DEFAULT_ROLES } from "../src/lib/permissions";
+import {
+  ENV_ADMIN_ROLE_SLUG,
+  ensureEnvAdmin,
+  envAdminPhones,
+} from "../src/lib/admin-bootstrap";
 
 const prisma = new PrismaClient();
 
@@ -56,6 +61,35 @@ async function main() {
       DEFAULT_ROLES.length - synced - created
     } already in sync.`,
   );
+
+  // Env allow-listed admins (ADMIN_PHONES / ADMIN_EMAILS) must always have a
+  // role, otherwise they land on an empty dashboard and can't reach
+  // /admin/team to fix it. Never touches a role that's already assigned.
+  // Phones only: a stored email is self-asserted (anyone can type one into
+  // their profile), so email allow-listing happens only at email-OTP login.
+  const phones = envAdminPhones();
+  if (phones.length) {
+    const candidates = await prisma.user.findMany({
+      where: { phone: { in: phones } },
+      select: { id: true, phone: true, email: true, role: true, adminRoleId: true },
+    });
+    let promoted = 0;
+    for (const u of candidates) {
+      if (await ensureEnvAdmin(prisma, u)) {
+        promoted++;
+        console.log(`   👤 ${u.phone ?? u.email} → ADMIN (${ENV_ADMIN_ROLE_SLUG})`);
+      }
+    }
+    console.log(`✅ Allow-listed admins: ${candidates.length} found, ${promoted} fixed.`);
+  }
+
+  const roleless = await prisma.user.count({ where: { role: "ADMIN", adminRoleId: null } });
+  if (roleless > 0) {
+    console.warn(
+      `⚠  ${roleless} admin(s) have no role and will see an empty dashboard — assign one in /admin/team.`,
+    );
+  }
+
   await prisma.$disconnect();
 }
 

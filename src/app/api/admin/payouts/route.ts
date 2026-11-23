@@ -113,7 +113,9 @@ export async function POST(req: NextRequest) {
         recipientCode = await createTransferRecipient({
           accountName: pro.name,
           accountNumber: pro.bankAccount,
-          bankCode: pro.bankName, // assumes bankName stores code
+          // Prefer the Paystack code saved by the verified-bank flow; legacy rows
+          // stored the code in bankName.
+          bankCode: pro.bankCode ?? pro.bankName,
         });
 
         // ─── Advance repayment split ────────────────────────────────────

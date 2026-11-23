@@ -188,15 +188,18 @@ export async function handleProResponse(
     // Transactional accept — atomic booking + pro update + mobilization release.
     // The wallet mobilization sits inside the same tx so a partial accept (booking
     // updated, money post-failed) can never happen.
-    await db.$transaction(async (tx) => {
-      await tx.booking.update({
-        where: { id: booking.id },
+    // Conditional on the status we read: an admin assigning at the same
+    // moment must not leave two pros accepted (and both paid mobilization).
+    const won = await db.$transaction(async (tx) => {
+      const claimed = await tx.booking.updateMany({
+        where: { id: booking.id, status: "DISPATCHING" },
         data: {
           proId,
           status: "ACCEPTED",
           acceptedAt: new Date(),
         },
       });
+      if (claimed.count === 0) return false;
       // Only mark pro BUSY if they're still ONLINE (prevents double-booking)
       await tx.pro.update({
         where: { id: proId },
@@ -206,7 +209,9 @@ export async function handleProResponse(
       // transport/supplies before the job runs.
       const { releaseMobilization } = await import("./wallet-releases");
       await releaseMobilization(booking.id, tx);
+      return true;
     });
+    if (!won) return { found: true, accepted: false, bookingId: booking.id };
 
     // Fire-and-forget health care-notes email — only if the customer has
     // shareable conditions that actually apply to the chosen service set.

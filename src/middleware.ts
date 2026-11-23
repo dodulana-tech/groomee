@@ -2,21 +2,47 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequestEdge } from "@/lib/auth-edge";
 
 // Exact-match public paths
-const PUBLIC_EXACT = new Set(["/", "/search", "/auth", "/partner/login", "/partner/onboarding"]);
+const PUBLIC_EXACT = new Set([
+  "/",
+  "/search",
+  "/auth",
+  "/partner/login",
+  "/partner/onboarding",
+  "/abuja",
+  "/api/wa", // tracked WhatsApp CTA redirect
+  // Crawlers must reach these without a session.
+  "/robots.txt",
+  "/sitemap.xml",
+  "/opengraph-image",
+  "/464cb6d1b7ad2c38abfd2db9e4014216.txt", // IndexNow key file (Bing, which ChatGPT Search runs on)
+]);
 // Prefix-match public paths (these use startsWith)
 const PUBLIC_PREFIX = [
   "/pro/",      // /pro/[slug] pages — NOT /profile
   "/groomer/",  // legacy redirect to /pro/[slug]
   "/api/auth",
+  "/admin/login", // admin OTP sign-in (lives outside the admin layout)
   "/api/health",
   "/api/webhooks",
+  "/api/payments/verify", // Paystack return; verifies with Paystack itself, works signed out
   "/api/services",
   "/api/pros",
   "/api/zones",
   "/api/cities",
   "/api/surveys",
   "/api/waitlist",
+  "/api/cron/", // routes verify CRON_SECRET themselves
   "/cert/",   // public Freedom certificate verification pages
+  // SEO landing pages (service x city, areas, price list, FAQ)
+  "/lagos",
+  "/abuja/",
+  "/prices",
+  "/faq",
+  "/detty-december",
+  "/gift",
+  "/subscriptions",
+  "/become-a-pro",
+  "/llms.txt",
   "/favicon.ico",
   "/_next",
 ];
@@ -57,10 +83,12 @@ export async function middleware(request: NextRequest) {
         { status: 401 },
       );
     }
-    // Redirect partner paths to partner login
+    // Partner and admin paths have their own login pages
     const loginPath = PRO_PATHS.some((p) => pathname.startsWith(p))
       ? "/partner/login"
-      : "/auth";
+      : ADMIN_PATHS.some((p) => pathname.startsWith(p))
+        ? "/admin/login"
+        : "/auth";
     const url = new URL(loginPath, request.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
@@ -77,7 +105,9 @@ export async function middleware(request: NextRequest) {
         { status: 403 },
       );
     }
-    return NextResponse.redirect(new URL("/", request.url));
+    // Signed in, but not as an admin (e.g. a customer session): send them to
+    // the admin login so they can switch accounts instead of bouncing home.
+    return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
   // Pro/partner-only paths

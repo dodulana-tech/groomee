@@ -39,11 +39,14 @@ export async function POST(req: NextRequest) {
 
     // Fetch user to get actual phone (may be temp placeholder if registered via email)
     const user = await db.user.findUnique({ where: { id: result.userId } });
-    const token = await signUserToken({
-      id: result.userId,
-      phone: user?.phone ?? "",
-      role: user?.role ?? result.role,
-    });
+    const token = await signUserToken(
+      {
+        id: result.userId,
+        phone: user?.phone ?? "",
+        role: user?.role ?? result.role,
+      },
+      { verifiedEmail: email.toLowerCase().trim() },
+    );
     await setSessionCookie(token);
 
     // Refetch to get resolved role (signUserToken may upgrade CUSTOMER→PRO)

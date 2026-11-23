@@ -4,14 +4,7 @@ import { db } from "@/lib/db";
 import { notifyCustomerOtp } from "@/lib/whatsapp";
 import { isValidNigerianPhone } from "@/lib/utils";
 import { checkSendLimit } from "@/lib/rate-limit";
-
-function isAdminPhoneEnv(phone: string): boolean {
-  return (process.env.ADMIN_PHONES ?? "")
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .includes(phone);
-}
+import { isEnvAdminPhone } from "@/lib/admin-bootstrap";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +22,7 @@ export async function POST(req: NextRequest) {
     // (env list) or already attached to an existing admin user.
     if (purpose === "admin") {
       const allowed =
-        isAdminPhoneEnv(phone) ||
+        isEnvAdminPhone(phone) ||
         Boolean(
           await db.user.findFirst({
             where: { phone, role: "ADMIN" },

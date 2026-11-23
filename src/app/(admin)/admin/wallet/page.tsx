@@ -12,7 +12,7 @@ export const revalidate = 0;
 export default async function WalletOverviewPage() {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
-    redirect("/auth?redirect=/admin/wallet");
+    redirect("/admin/login?redirect=/admin/wallet");
   }
   if (!hasPermission(session, "wallet.view")) {
     return (

@@ -67,8 +67,10 @@ export default function AdminLoginPage() {
       }
       // Hard nav so the browser re-issues the request with the new session
       // cookie and the login form unmounts immediately instead of flashing
-      // during the SPA transition.
-      window.location.href = "/admin";
+      // during the SPA transition. Honour ?redirect= for deep links, but
+      // only within /admin.
+      const next = new URLSearchParams(window.location.search).get("redirect");
+      window.location.href = next?.startsWith("/admin") ? next : "/admin";
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -210,7 +212,7 @@ export default function AdminLoginPage() {
                   type="email"
                   className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium outline-none transition-all"
                   style={inputStyle}
-                  placeholder="admin@groomee.ng"
+                  placeholder="you@groomeeapp.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoFocus

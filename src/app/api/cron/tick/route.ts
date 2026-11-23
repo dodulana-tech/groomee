@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   const secret = (authHeader ?? "").replace("Bearer ", "");
   const expected = process.env.CRON_SECRET ?? "";
-  const isValid = secret.length === expected.length &&
+  const isValid = expected.length > 0 &&
+    secret.length === expected.length &&
     timingSafeEqual(Buffer.from(secret), Buffer.from(expected));
   if (!isValid) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -62,10 +63,20 @@ export async function GET(req: NextRequest) {
     console.error("[cron] savings maturity tick failed", err);
   }
 
+  // "Time to rebook?" WhatsApp nudges (10:00-19:00 Lagos, small batches)
+  let rebook: unknown = null;
+  try {
+    const { runRebookReminders } = await import("@/lib/rebook");
+    rebook = await runRebookReminders(now);
+  } catch (err) {
+    console.error("[cron] rebook reminders failed", err);
+  }
+
   return NextResponse.json({
     ok: true,
     autoConfirmed: staleCompleted.length,
     savings: savingsTick,
+    rebook,
     timestamp: now.toISOString(),
   });
 }

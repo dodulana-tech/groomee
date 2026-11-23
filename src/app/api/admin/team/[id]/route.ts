@@ -79,9 +79,9 @@ export async function PATCH(
       meta.fromRoleId = user.adminRoleId;
       meta.toRoleId = body.roleId;
       meta.toRoleName = role.name;
-      // Permission changes invalidate the user's existing JWT — their token
-      // carries the *old* permissions until it expires (up to 30 days).
-      update.sessionsValidFrom = new Date();
+      // No forced logout: admin permissions are re-read from the DB on each
+      // request (see resolveSession in lib/auth), so the cache drop below is
+      // enough for the new role to apply.
     }
 
     if (body.name && typeof body.name === "string") {
@@ -113,11 +113,9 @@ export async function PATCH(
       include: { adminRole: { select: { id: true, name: true } } },
     });
 
-    // If we revoked the session, drop the cache entry so the next request
-    // for that user picks up the new sessionsValidFrom immediately.
-    if (update.sessionsValidFrom) {
-      invalidateSessionCache(id);
-    }
+    // Drop the cached admin state so the next request for that user picks
+    // up the new role / revocation immediately.
+    invalidateSessionCache(id);
 
     await logAdminAction({
       adminId: session!.userId,
