@@ -7,7 +7,7 @@ services:
     # data (or add a unique constraint over duplicates) now FAILS the build
     # instead of silently deleting production data. Apply such changes by hand
     # after a backup (see docs/PRODUCTION_READINESS.md, "Schema changes").
-    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run sync:roles && npm run sync:reference && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
+    buildCommand: npm install && npx prisma generate && npx prisma db push && npm run sync:roles && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/
     startCommand: node .next/standalone/server.js
     healthCheckPath: /api/health
     envVars:
