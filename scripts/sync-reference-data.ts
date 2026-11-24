@@ -20,10 +20,9 @@ import { PrismaClient, type CityStatus } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const CITIES: { slug: string; name: string; status: CityStatus; sortOrder: number; tagline: string }[] = [
-  // Lagos already takes bookings; LIVE keeps today's behaviour.
-  { slug: "lagos", name: "Lagos", status: "LIVE", sortOrder: 0, tagline: "Vetted pros across the island and mainland." },
-  // Abuja is booked by the team over WhatsApp (WHATSAPP_CHANNEL_CITIES).
-  { slug: "abuja", name: "Abuja", status: "WAITLIST", sortOrder: 1, tagline: "Book on WhatsApp: our team matches you with a pro." },
+  // Abuja takes bookings (team books them over WhatsApp); Lagos is coming soon.
+  { slug: "abuja", name: "Abuja", status: "LIVE", sortOrder: 0, tagline: "Vetted pros who come to you, booked on WhatsApp." },
+  { slug: "lagos", name: "Lagos", status: "WAITLIST", sortOrder: 1, tagline: "Coming soon. Join the list and we'll tell you first." },
 ];
 
 const ZONES: { slug: string; name: string; city: "lagos" | "abuja" }[] = [
