@@ -503,6 +503,20 @@ function AuthPageContent() {
               >
                 {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
               </button>
+              {method === "phone" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMethod("email");
+                    setStep("email");
+                    setOtp("");
+                    setError("");
+                  }}
+                  className="w-full text-center text-sm font-semibold text-brand-600 underline"
+                >
+                  Didn&apos;t get a code? Use your email instead
+                </button>
+              )}
             </form>
           )}
 
@@ -584,6 +598,15 @@ function AuthPageContent() {
                   {loading ? (linkCodeSent ? "Checking…" : "Sending code…") : linkCodeSent ? "Verify and continue" : "Send me a code"}
                 </button>
               )}
+              {/* A phone isn't needed to book on WhatsApp; don't trap email
+                  sign-ups here if the text code is slow or doesn't arrive. */}
+              <button
+                type="button"
+                onClick={() => { setError(""); setStep("name"); }}
+                className="btn-ghost btn-md w-full"
+              >
+                Skip for now
+              </button>
             </form>
           )}
 
