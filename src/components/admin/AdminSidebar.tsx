@@ -26,12 +26,14 @@ const NAV = [
   { href: "/admin/benefits", label: "Benefits", icon: "🛡️", permission: "benefits.view" },
   { href: "/admin/subscriptions", label: "Subscriptions", icon: "🌿", permission: "subscriptions.view" },
   { href: "/admin/catalog", label: "Services", icon: "🗂️", permission: "catalog.view" },
+  { href: "/admin/prices", label: "Prices", icon: "🏷️", permission: "catalog.view" },
   { href: "/admin/products", label: "Products", icon: "🧴", permission: "products.view" },
   { href: "/admin/inventory", label: "Inventory", icon: "📦", permission: "inventory.view" },
   { href: "/admin/surveys", label: "Surveys", icon: "📊", permission: "analytics.view" },
   { href: "/admin/waitlist", label: "Waitlist", icon: "📋", permission: "analytics.view" },
   { href: "/admin/analytics", label: "Analytics", icon: "📈", permission: "analytics.view" },
   { href: "/admin/team", label: "Team", icon: "🔑", permission: "team.view" },
+  { href: "/admin/messaging", label: "Messaging", icon: "💬", permission: "settings.view" },
   { href: "/admin/settings", label: "Settings", icon: "⚙️", permission: "settings.view" },
 ];
 

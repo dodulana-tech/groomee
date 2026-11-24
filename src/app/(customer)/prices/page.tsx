@@ -6,6 +6,19 @@ import { CATEGORY_LABEL, SERVICES, type SeoService } from "@/lib/seo/content";
 import { WhatsAppButton, WhatsAppFab, duration, getPrices, priceRange } from "@/components/seo/blocks";
 import { getPublicCities } from "@/lib/cities";
 import Footer from "@/components/customer/Footer";
+import { db } from "@/lib/db";
+import { FEE_KEYS } from "@/lib/seo/price-research";
+import { formatNaira } from "@/lib/utils";
+
+async function getFees() {
+  try {
+    const rows = await db.setting.findMany({ where: { key: { in: Object.values(FEE_KEYS) } } });
+    const n = (k: string) => Number(rows.find((r) => r.key === k)?.value) || 0;
+    return { homeVisit: n(FEE_KEYS.homeVisit), early: n(FEE_KEYS.earlyMorning), deposit: n(FEE_KEYS.depositPercent) };
+  } catch {
+    return { homeVisit: 0, early: 0, deposit: 0 };
+  }
+}
 
 export const revalidate = 3600;
 
@@ -21,7 +34,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PricesPage() {
-  const [prices, cities] = await Promise.all([getPrices(), getPublicCities()]);
+  const [prices, cities, fees] = await Promise.all([getPrices(), getPublicCities(), getFees()]);
   const waHref = trackedWhatsAppHref("prices");
   const byCat = SERVICES.reduce<Record<string, SeoService[]>>((acc, s) => {
     (acc[s.category] ??= []).push(s);
@@ -56,6 +69,15 @@ export default async function PricesPage() {
             Typical prices in Abuja for a vetted pro who comes to you. Your pro confirms the final
             price before they set off, based on the exact style, length and extras.
           </p>
+          {(fees.homeVisit > 0 || fees.early > 0 || fees.deposit > 0) && (
+            <p className="mt-3 max-w-xl text-sm text-white/55">
+              {[
+                fees.homeVisit > 0 && `Home-visit fee ${formatNaira(fees.homeVisit)}`,
+                fees.early > 0 && `before 7am +${formatNaira(fees.early)}`,
+                fees.deposit > 0 && `${fees.deposit}% deposit confirms your booking`,
+              ].filter(Boolean).join(" · ")}.
+            </p>
+          )}
           <div className="mt-8">
             <WhatsAppButton href={waHref}>Get a quote on WhatsApp</WhatsAppButton>
           </div>
