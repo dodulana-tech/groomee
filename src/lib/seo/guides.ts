@@ -1,6 +1,6 @@
 /**
  * Answer-first price guides: the questions people type into Google and ask
- * ChatGPT ("how much are knotless braids in Lagos?"). Each guide quotes our
+ * ChatGPT ("how much are knotless braids in Abuja?"). Each guide quotes our
  * live catalogue range for its services, then explains what moves the
  * price. Copy states only what Groomee does or general, well-known facts
  * about the service; no invented statistics.
@@ -22,11 +22,11 @@ export interface Guide {
 
 export const GUIDES: Guide[] = [
   {
-    slug: "knotless-braids-price-lagos",
+    slug: "knotless-braids-price-abuja",
     services: ["knotless-braids"],
-    title: "How much do knotless braids cost in Lagos? (2026)",
-    question: "How much do knotless braids cost in Lagos?",
-    description: "Typical prices for knotless braids at home in Lagos, what changes the price (size, length, attachment) and how long they take.",
+    title: "How much do knotless braids cost in Abuja? (2026)",
+    question: "How much do knotless braids cost in Abuja?",
+    description: "Typical prices for knotless braids at home in Abuja, what changes the price (size, length, attachment) and how long they take.",
     intro: "Knotless braids are priced mainly by size and length: the smaller and longer the braids, the more hours they take, and time is what you pay for.",
     factors: [
       { name: "Size", detail: "Small and smedium braids take far longer than medium or large, so they cost more." },
@@ -47,11 +47,11 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "box-braids-price-lagos",
+    slug: "box-braids-price-abuja",
     services: ["box-braids"],
-    title: "How much do box braids cost in Lagos? (2026)",
-    question: "How much do box braids cost in Lagos?",
-    description: "Box braids prices at home in Lagos by size and length, what affects the cost, and how to get an accurate quote.",
+    title: "How much do box braids cost in Abuja? (2026)",
+    question: "How much do box braids cost in Abuja?",
+    description: "Box braids prices at home in Abuja by size and length, what affects the cost, and how to get an accurate quote.",
     intro: "Box braids cost less than knotless for the same size and length, and the price climbs as braids get smaller and longer.",
     factors: [
       { name: "Size", detail: "Jumbo and large braids are quickest; small braids take the longest." },
@@ -69,11 +69,11 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "bridal-makeup-price-lagos",
+    slug: "bridal-makeup-price-abuja",
     services: ["bridal-makeup"],
-    title: "How much does bridal makeup cost in Lagos? (2026)",
-    question: "How much does a bridal makeup artist cost in Lagos?",
-    description: "Bridal makeup prices in Lagos for traditional and white weddings, what is included, and how to budget for your bridal party.",
+    title: "How much does bridal makeup cost in Abuja? (2026)",
+    question: "How much does a bridal makeup artist cost in Abuja?",
+    description: "Bridal makeup prices in Abuja for traditional and white weddings, what is included, and how to budget for your bridal party.",
     intro: "Bridal makeup is priced per look and per person: the bride's face, any change of look between ceremonies, and the bridal party each add to the total.",
     factors: [
       { name: "Number of looks", detail: "A traditional and a white wedding on the same day often means two looks." },
@@ -93,12 +93,12 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "makeup-artist-price-lagos",
+    slug: "makeup-artist-price-abuja",
     services: ["full-glam-makeup", "natural-makeup"],
-    title: "How much does a makeup artist cost in Lagos? (2026)",
-    question: "How much does a makeup artist cost in Lagos for an event?",
-    description: "What a home service makeup artist costs in Lagos for owambe, parties and shoots, from soft natural looks to full glam.",
-    intro: "Event makeup in Lagos ranges from soft, natural looks to full glam with lashes. Full glam costs more because it takes longer and uses more product.",
+    title: "How much does a makeup artist cost in Abuja? (2026)",
+    question: "How much does a makeup artist cost in Abuja for an event?",
+    description: "What a home service makeup artist costs in Abuja for owambe, parties and shoots, from soft natural looks to full glam.",
+    intro: "Event makeup in Abuja ranges from soft, natural looks to full glam with lashes. Full glam costs more because it takes longer and uses more product.",
     factors: [
       { name: "Look", detail: "Natural makeup is quicker and cheaper; full glam with lashes and contour takes longer." },
       { name: "Lashes", detail: "Strip lashes are usually included in glam; ask if you want something specific." },
@@ -116,11 +116,11 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "gel-nails-price-lagos",
+    slug: "gel-nails-price-abuja",
     services: ["gel-nails", "acrylic-nails", "nail-art"],
-    title: "How much do gel and acrylic nails cost in Lagos? (2026)",
-    question: "How much do gel nails cost in Lagos?",
-    description: "Prices for gel manicures, acrylic extensions and nail art at home in Lagos, and what changes the price.",
+    title: "How much do gel and acrylic nails cost in Abuja? (2026)",
+    question: "How much do gel nails cost in Abuja?",
+    description: "Prices for gel manicures, acrylic extensions and nail art at home in Abuja, and what changes the price.",
     intro: "A plain gel manicure is the most affordable nail service; acrylic extensions and detailed nail art cost more because they take longer.",
     factors: [
       { name: "Service", detail: "Gel polish on natural nails is quickest; acrylic or gel extensions take longer." },
@@ -138,11 +138,11 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "lash-extensions-price-lagos",
+    slug: "lash-extensions-price-abuja",
     services: ["classic-lash-set", "volume-lashes", "lash-lift-tint"],
-    title: "How much do lash extensions cost in Lagos? (2026)",
-    question: "How much do eyelash extensions cost in Lagos?",
-    description: "Classic and volume lash extension prices at home in Lagos, lash lift costs, and how often you need a refill.",
+    title: "How much do lash extensions cost in Abuja? (2026)",
+    question: "How much do eyelash extensions cost in Abuja?",
+    description: "Classic and volume lash extension prices at home in Abuja, lash lift costs, and how often you need a refill.",
     intro: "Classic lashes are the entry price; volume sets cost more because each fan is made by hand. A lash lift is a cheaper option with no extensions.",
     factors: [
       { name: "Style", detail: "Classic is one extension per lash; volume uses handmade fans and takes longer." },
@@ -159,11 +159,11 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "home-barber-price-lagos",
+    slug: "home-barber-price-abuja",
     services: ["fade-shape-up", "classic-haircut", "beard-grooming"],
-    title: "How much does a home service barber cost in Lagos? (2026)",
-    question: "How much does a home service barber cost in Lagos?",
-    description: "Prices for a barber who comes to your home or office in Lagos: fades, haircuts, beard trims and kids' cuts.",
+    title: "How much does a home service barber cost in Abuja? (2026)",
+    question: "How much does a home service barber cost in Abuja?",
+    description: "Prices for a barber who comes to your home or office in Abuja: fades, haircuts, beard trims and kids' cuts.",
     intro: "A home service barber costs more than a walk-in shop because the barber travels to you, but you skip the queue and the traffic.",
     factors: [
       { name: "Cut", detail: "A simple clipper cut is quickest; skin fades and designs take longer." },
@@ -180,19 +180,19 @@ export const GUIDES: Guide[] = [
     ],
   },
   {
-    slug: "home-service-vs-salon-lagos",
+    slug: "home-service-vs-salon-abuja",
     services: ["knotless-braids", "full-glam-makeup", "gel-nails"],
-    title: "Home service or salon in Lagos: which is better value?",
-    question: "Is home service beauty in Lagos worth it compared to a salon?",
-    description: "Home service beauty vs going to a salon in Lagos: real costs, time saved in traffic, hygiene and when each makes sense.",
-    intro: "A home service visit usually costs a little more than the same service in a salon, but in Lagos the saving in travel time and traffic often outweighs the difference.",
+    title: "Home service or salon in Abuja: which is better value?",
+    question: "Is home service beauty in Abuja worth it compared to a salon?",
+    description: "Home service beauty vs going to a salon in Abuja: real costs, time saved in traffic, hygiene and when each makes sense.",
+    intro: "A home service visit usually costs a little more than the same service in a salon, but the time you save on travel and waiting often outweighs the difference.",
     factors: [
-      { name: "Travel and traffic", detail: "A salon trip across Lagos can add hours and transport costs both ways." },
+      { name: "Travel and traffic", detail: "A salon trip across Abuja adds travel time and transport costs both ways, plus waiting time at busy salons." },
       { name: "Waiting", detail: "At home there's no queue; the pro starts when they arrive." },
       { name: "Comfort", detail: "Long services like braids are easier at home, with your own food and TV." },
       { name: "Groups", detail: "For bridal parties and squads, one home visit for everyone saves the most." },
     ],
-    time: "You save the round trip, which in Lagos traffic can be one to three hours.",
+    time: "You save the round trip and the wait at the salon, often an hour or more.",
     tips: [
       "Home service is best for long services (braids, bridal) and groups.",
       "Prepare a well-lit spot near a socket for the pro's tools.",

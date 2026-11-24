@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Book a beauty pro at home | Groomee",
   description:
-    "Tell us what you need and when. Our team matches you with a vetted beauty pro in Lagos or Abuja and confirms on WhatsApp.",
+    "Tell us what you need and when. Our team matches you with a vetted beauty pro in Abuja and confirms on WhatsApp. Lagos is coming soon.",
   alternates: { canonical: "/book" },
   robots: { index: false, follow: true },
 };
@@ -61,7 +61,7 @@ export default async function BookPage({
         <BookRequestForm
           services={services}
           areas={AREAS.map((a) => ({ slug: a.slug, name: a.name, city: a.city }))}
-          initial={{ service, city: city ?? (area ? AREAS.find((a) => a.slug === area)!.city : "lagos"), area, when: sp.when === "asap" ? "asap" : null }}
+          initial={{ service, city: city ?? (area ? AREAS.find((a) => a.slug === area)!.city : "abuja"), area, when: sp.when === "asap" ? "asap" : null }}
         />
 
         <ul className="mt-8 grid gap-3 text-sm text-gray-600 sm:grid-cols-3">

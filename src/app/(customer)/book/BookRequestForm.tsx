@@ -93,12 +93,17 @@ export default function BookRequestForm({
       <div>
         <span className={label}>Where?</span>
         <div className="mb-3 flex gap-2">
-          {(["lagos", "abuja"] as const).map((c) => (
+          {(["abuja", "lagos"] as const).map((c) => (
             <button key={c} type="button" className={chip(city === c)} onClick={() => { setCity(c); setArea(""); }}>
-              {c === "lagos" ? "Lagos" : "Abuja"}
+              {c === "lagos" ? "Lagos · coming soon" : "Abuja"}
             </button>
           ))}
         </div>
+        {city === "lagos" && (
+          <p className="mb-3 rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-900">
+            We&apos;re launching in Lagos soon. Send your request and we&apos;ll add you to the launch list and message you first.
+          </p>
+        )}
         <select aria-label="Area" className={input} value={area} onChange={(e) => setArea(e.target.value)}>
           <option value="">Choose your area</option>
           {cityAreas.map((a) => (
@@ -152,7 +157,7 @@ export default function BookRequestForm({
         disabled={sending}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-4 text-base font-bold text-gray-950 transition-all hover:-translate-y-0.5 hover:bg-[#3be07a] hover:shadow-[0_8px_24px_rgba(37,211,102,0.35)] disabled:opacity-60"
       >
-        💬 {sending ? "Opening WhatsApp…" : "Send request on WhatsApp"}
+        💬 {sending ? "Opening WhatsApp…" : city === "lagos" ? "Join the Lagos list on WhatsApp" : "Send request on WhatsApp"}
       </button>
       <p className="-mt-3 text-center text-xs text-gray-500">Nothing is booked until you confirm and pay on WhatsApp.</p>
     </form>

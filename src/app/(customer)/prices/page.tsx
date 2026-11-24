@@ -9,9 +9,9 @@ import Footer from "@/components/customer/Footer";
 
 export const revalidate = 3600;
 
-const title = "Home Service Beauty Prices in Lagos & Abuja (2026) | Groomee";
+const title = "Home Service Beauty Prices in Abuja (2026) | Groomee";
 const description =
-  "Typical prices for braids, makeup, nails, lashes, barbing and facials at home in Lagos and Abuja, from vetted Groomee pros. Final price confirmed before your pro sets off.";
+  "Typical prices for braids, makeup, nails, lashes, barbing and facials at home in Abuja, from vetted Groomee pros. Final price confirmed before your pro sets off.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -35,7 +35,7 @@ export default async function PricesPage() {
     url: `${SITE_URL}/prices`,
     itemListElement: SERVICES.map((s) => ({
       "@type": "Offer",
-      itemOffered: { "@type": "Service", name: s.name, url: `${SITE_URL}/lagos/${s.slug}` },
+      itemOffered: { "@type": "Service", name: s.name, url: `${SITE_URL}/abuja/${s.slug}` },
       priceSpecification: {
         "@type": "PriceSpecification",
         priceCurrency: "NGN",
@@ -53,7 +53,7 @@ export default async function PricesPage() {
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#25D366]">Groomee · Price list</p>
           <h1 className="font-display text-3xl font-black text-white sm:text-5xl">Home service beauty prices</h1>
           <p className="mt-4 max-w-xl text-base text-white/65">
-            Typical prices in Lagos and Abuja for a vetted pro who comes to you. Your pro confirms the final
+            Typical prices in Abuja for a vetted pro who comes to you. Your pro confirms the final
             price before they set off, based on the exact style, length and extras.
           </p>
           <div className="mt-8">
@@ -79,7 +79,7 @@ export default async function PricesPage() {
                   {list.map((s) => (
                     <tr key={s.slug}>
                       <td className="px-4 py-3">
-                        <Link href={`/lagos/${s.slug}`} className="font-medium text-gray-900 hover:underline">
+                        <Link href={`/abuja/${s.slug}`} className="font-medium text-gray-900 hover:underline">
                           {s.name}
                         </Link>
                       </td>

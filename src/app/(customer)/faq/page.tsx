@@ -9,9 +9,9 @@ import Footer from "@/components/customer/Footer";
 
 export const revalidate = 3600;
 
-const title = "Groomee FAQ: Home Service Beauty in Lagos & Abuja";
+const title = "Groomee FAQ: Home Service Beauty in Abuja";
 const description =
-  "How Groomee works: booking a vetted beauty pro to your home on WhatsApp, prices, payment, areas covered in Lagos and Abuja, and becoming a pro.";
+  "How Groomee works: booking a vetted beauty pro to your home on WhatsApp, prices, payment, areas covered in Abuja, Lagos (coming soon), and becoming a pro.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -31,7 +31,7 @@ const FAQS = [
   ...COMMON_FAQS,
   {
     q: "Which areas do you cover?",
-    a: `In Lagos: ${lagosAreas.join(", ")} and nearby. In Abuja: ${abujaAreas.join(", ")} and nearby, booked by our team on WhatsApp.`,
+    a: `Abuja: ${abujaAreas.join(", ")} and nearby, booked by our team on WhatsApp. Lagos (${lagosAreas.slice(0, 4).join(", ")} and more) is coming soon; message us to join the launch list.`,
   },
   {
     q: "What services can I book?",
@@ -57,7 +57,7 @@ export default async function FaqPage() {
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#25D366]">Groomee · FAQ</p>
           <h1 className="font-display text-3xl font-black text-white sm:text-5xl">Questions, answered</h1>
           <p className="mt-4 max-w-xl text-base text-white/65">
-            Everything about booking a vetted beauty pro to your door in Lagos or Abuja. Can&apos;t find your
+            Everything about booking a vetted beauty pro to your door in Abuja (Lagos coming soon). Can&apos;t find your
             answer? Ask us on WhatsApp.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

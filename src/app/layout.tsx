@@ -27,25 +27,24 @@ const dmMono = DM_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Groomee - On-demand Beauty in Lagos",
+    default: "Groomee - On-demand Beauty in Abuja",
     template: "%s | Groomee",
   },
   description:
-    "Vetted hair, makeup, nails, lashes & barbing professionals delivered to your door in Lagos. No salon run. No traffic. Book in 60 seconds.",
+    "Vetted hair, makeup, nails, lashes & barbing professionals delivered to your door in Abuja. No salon run. No traffic. Book in 60 seconds.",
   keywords: [
-    "beauty Lagos",
-    "makeup artist Lagos",
-    "hair braiding at home Lagos",
-    "nail technician Lagos",
+    "home service beauty Abuja",
+    "makeup artist Abuja",
+    "home service braids Abuja",
+    "nail technician Abuja",
     "on-demand beauty Nigeria",
-    "beauty at home Lagos",
-    "barbing Lagos",
-    "lash extensions Lagos",
-    "mobile hairstylist Lagos",
-    "bridal makeup Lagos",
-    "knotless braids Lagos",
-    "gel nails at home",
-    "emergency beauty Lagos",
+    "beauty at home Abuja",
+    "home service barber Abuja",
+    "lash extensions Abuja",
+    "mobile hairstylist Abuja",
+    "bridal makeup Abuja",
+    "knotless braids Abuja",
+    "gel nails at home Abuja",
     "Groomee",
   ],
   authors: [{ name: "Groomee" }],
@@ -74,21 +73,21 @@ export const metadata: Metadata = {
     siteName: "Groomee",
     title: "Groomee - Your beauty pro, at your door, right now",
     description:
-      "Vetted beauty professionals delivered to your door in Lagos. Hair, makeup, nails, lashes & barbing. Book in 60 seconds.",
+      "Vetted beauty professionals delivered to your door in Abuja. Hair, makeup, nails, lashes & barbing. Book in 60 seconds.",
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Groomee - On-demand beauty professionals in Lagos",
+        alt: "Groomee - On-demand beauty professionals in Abuja",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Groomee - On-demand Beauty in Lagos",
+    title: "Groomee - On-demand Beauty in Abuja",
     description:
-      "Book a vetted beauty pro in 60 seconds. Delivered to your door in Lagos.",
+      "Book a vetted beauty pro in 60 seconds. Delivered to your door in Abuja.",
     images: ["/opengraph-image"],
   },
   robots: {

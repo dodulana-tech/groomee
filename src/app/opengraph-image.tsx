@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Groomee - On-demand beauty professionals in Lagos";
+export const alt = "Groomee - On-demand beauty professionals in Abuja";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -65,7 +65,7 @@ export default async function Image() {
             color: "rgba(255,255,255,0.7)",
           }}
         >
-          groomeeapp.com - Lagos & Abuja
+          groomeeapp.com - Abuja · Lagos soon
         </div>
       </div>
     ),

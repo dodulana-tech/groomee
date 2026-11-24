@@ -33,6 +33,10 @@ export interface SeoArea {
 
 export const CITY_NAME: Record<CitySlug, string> = { lagos: "Lagos", abuja: "Abuja" };
 
+/** Abuja takes bookings now; Lagos is coming soon (requests join a launch list). */
+export const LIVE_CITY: CitySlug = "abuja";
+export const COMING_SOON: Record<CitySlug, boolean> = { lagos: true, abuja: false };
+
 export const CATEGORY_LABEL: Record<string, string> = {
   HAIR: "Hair & braids",
   MAKEUP: "Makeup",

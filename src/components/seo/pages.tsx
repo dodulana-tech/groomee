@@ -13,6 +13,7 @@ import {
   type CitySlug,
   type SeoArea,
   type SeoService,
+  COMING_SOON,
 } from "@/lib/seo/content";
 import {
   Breadcrumbs,
@@ -31,8 +32,11 @@ import { serviceRating } from "@/lib/reviews";
 
 const BUSINESS_ID = `${SITE_URL}/#business`;
 
-// Lagos books online too; Abuja is WhatsApp-concierge only for now.
-const ONLINE_BOOKING: Record<CitySlug, boolean> = { lagos: true, abuja: false };
+// Booking is on WhatsApp in every city for now (lib/booking-mode).
+const ONLINE_BOOKING: Record<CitySlug, boolean> = { lagos: false, abuja: false };
+
+const SOON_NOTE = (cityName: string) =>
+  `Coming soon to ${cityName}. Message us on WhatsApp to join the launch list and we'll tell you first, or book now in Abuja.`;
 
 async function PageFooter() {
   const cities = await getPublicCities();
@@ -52,7 +56,9 @@ function Hero({
   waHref,
   waLabel,
   secondary,
+  notice,
 }: {
+  notice?: string;
   eyebrow: string;
   title: string;
   lead: string;
@@ -69,6 +75,11 @@ function Hero({
         <p className="mb-3 mt-8 text-xs font-bold uppercase tracking-widest text-[#25D366]">{eyebrow}</p>
         <h1 className="font-display text-3xl font-black text-white sm:text-5xl">{title}</h1>
         <p className="mt-4 max-w-xl text-base leading-relaxed text-white/65">{lead}</p>
+        {notice && (
+          <p className="mt-5 max-w-xl rounded-xl border border-[#D4A853]/40 bg-[#D4A853]/10 px-4 py-3 text-sm font-medium text-[#F3D99A]">
+            {notice}
+          </p>
+        )}
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <WhatsAppButton href={waHref}>{waLabel}</WhatsAppButton>
           {secondary && (
@@ -109,7 +120,9 @@ export function serviceMetadata(city: CitySlug, s: SeoService): Metadata {
   const cityName = CITY_NAME[city];
   const url = `${SITE_URL}/${city}/${s.slug}`;
   const title = `${s.headline} in ${cityName} | Groomee`;
-  const description = `${s.headline} in ${cityName} by vetted, rated pros who come to you. Typical price ${priceRange(s.fallback)}. Book on WhatsApp in minutes.`;
+  const description = COMING_SOON[city]
+    ? `${s.headline} in ${cityName} is coming soon on Groomee. Join the launch list on WhatsApp, or book vetted pros at home in Abuja now.`
+    : `${s.headline} in ${cityName} by vetted, rated pros who come to you. Book on WhatsApp in minutes.`;
   return {
     title: { absolute: title },
     description,
@@ -153,8 +166,9 @@ export async function ServiceCityPage({ city, service }: { city: CitySlug; servi
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {!COMING_SOON[city] && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
       <Hero
+        notice={COMING_SOON[city] ? SOON_NOTE(cityName) : undefined}
         eyebrow={`Groomee · ${cityName}`}
         title={`${service.headline} in ${cityName}`}
         lead={service.intro}
@@ -164,7 +178,7 @@ export async function ServiceCityPage({ city, service }: { city: CitySlug; servi
           { name: service.name, href: `/${city}/${service.slug}` },
         ]}
         waHref={waHref}
-        waLabel={`Book ${service.name.toLowerCase()} on WhatsApp`}
+        waLabel={COMING_SOON[city] ? `Join the ${cityName} list on WhatsApp` : `Book ${service.name.toLowerCase()} on WhatsApp`}
         secondary={ONLINE_BOOKING[city] ? { href: `/search?service=${service.slug}`, label: "Book online" } : undefined}
       />
 
@@ -280,7 +294,9 @@ export function areaMetadata(area: SeoArea): Metadata {
   const cityName = CITY_NAME[area.city];
   const url = `${SITE_URL}/${area.city}/${area.slug}`;
   const title = `Home Service Beauty in ${area.name}, ${cityName} | Hair, Makeup, Nails | Groomee`;
-  const description = `Vetted beauty pros who come to your home in ${area.name}, ${cityName}: braids, makeup, nails, lashes, barbing and facials. See prices and book on WhatsApp.`;
+  const description = COMING_SOON[area.city]
+    ? `Home service beauty in ${area.name}, ${cityName} is coming soon on Groomee. Join the launch list on WhatsApp.`
+    : `Vetted beauty pros who come to your home in ${area.name}, ${cityName}: braids, makeup, nails, lashes, barbing and facials. See prices and book on WhatsApp.`;
   return {
     title: { absolute: title },
     description,
@@ -323,18 +339,23 @@ export async function AreaPage({ area }: { area: SeoArea }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {!COMING_SOON[city] && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
       <Hero
+        notice={COMING_SOON[city] ? SOON_NOTE(cityName) : undefined}
         eyebrow={`Groomee · ${area.name}`}
         title={`Beauty pros at your door in ${area.name}`}
-        lead={`${area.blurb} Braids, makeup, nails, lashes, barbing and facials from vetted, rated pros.`}
+        lead={
+          COMING_SOON[city]
+            ? `Braids, makeup, nails, lashes, barbing and facials from vetted, rated pros who come to you in ${area.name}. We're launching in ${cityName} soon.`
+            : `${area.blurb} Braids, makeup, nails, lashes, barbing and facials from vetted, rated pros.`
+        }
         crumbs={[
           { name: "Home", href: "/" },
           { name: cityName, href: `/${city}` },
           { name: area.name, href: `/${city}/${area.slug}` },
         ]}
         waHref={waHref}
-        waLabel={`Book in ${area.name} on WhatsApp`}
+        waLabel={COMING_SOON[city] ? `Join the ${cityName} list on WhatsApp` : `Book in ${area.name} on WhatsApp`}
         secondary={ONLINE_BOOKING[city] ? { href: `/search?zone=${area.slug}`, label: "Book online" } : undefined}
       />
 
@@ -389,7 +410,9 @@ export function cityMetadata(city: CitySlug): Metadata {
   const cityName = CITY_NAME[city];
   const url = `${SITE_URL}/${city}`;
   const title = `Home Service Beauty in ${cityName}: Braids, Makeup, Nails & More | Groomee`;
-  const description = `Book vetted beauty professionals to your home anywhere in ${cityName}. Braids, makeup, nails, lashes, barbing and facials with clear prices. Message Groomee on WhatsApp.`;
+  const description = COMING_SOON[city]
+    ? `Groomee is launching home service beauty in ${cityName} soon. Join the list on WhatsApp, or book vetted pros at home in Abuja now.`
+    : `Book vetted beauty professionals to your home anywhere in ${cityName}. Braids, makeup, nails, lashes, barbing and facials with clear prices. Message Groomee on WhatsApp.`;
   return {
     title: { absolute: title },
     description,
@@ -405,15 +428,20 @@ export async function CityHub({ city }: { city: CitySlug }) {
   return (
     <>
       <Hero
+        notice={COMING_SOON[city] ? SOON_NOTE(cityName) : undefined}
         eyebrow={`Groomee · ${cityName}`}
         title={`Home service beauty in ${cityName}`}
-        lead={`Vetted hair, makeup, nail, lash, barbing and skincare pros who come to your home, hotel or office anywhere in ${cityName}. Clear prices, rated pros, booked in minutes on WhatsApp.`}
+        lead={
+          COMING_SOON[city]
+            ? `Vetted hair, makeup, nail, lash, barbing and skincare pros who come to your home, hotel or office. We're launching in ${cityName} soon.`
+            : `Vetted hair, makeup, nail, lash, barbing and skincare pros who come to your home, hotel or office anywhere in ${cityName}. Clear prices, rated pros, booked in minutes on WhatsApp.`
+        }
         crumbs={[
           { name: "Home", href: "/" },
           { name: cityName, href: `/${city}` },
         ]}
         waHref={waHref}
-        waLabel={`Book in ${cityName} on WhatsApp`}
+        waLabel={COMING_SOON[city] ? `Join the ${cityName} list on WhatsApp` : `Book in ${cityName} on WhatsApp`}
         secondary={ONLINE_BOOKING[city] ? { href: "/search", label: "Browse pros" } : undefined}
       />
 

@@ -49,7 +49,7 @@ export default async function GuidePage({ params }: Props) {
   const low = Math.min(...rows.map((r) => r.p.min));
   const high = Math.max(...rows.map((r) => r.p.max));
   const primary = rows[0];
-  const waHref = trackedWhatsAppHref(`guide-${g.slug}`, "lagos", { service: primary?.s.slug });
+  const waHref = trackedWhatsAppHref(`guide-${g.slug}`, "abuja", { service: primary?.s.slug });
   const answer = `${g.question.replace(/\?$/, "")}: typically ${formatNaira(low)} to ${formatNaira(high)} for a vetted pro at your home with Groomee. ${g.intro}`;
 
   const jsonLd = {
@@ -59,7 +59,7 @@ export default async function GuidePage({ params }: Props) {
     description: g.description,
     url: `${SITE_URL}/guides/${g.slug}`,
     publisher: { "@id": `${SITE_URL}/#business` },
-    about: rows.map((r) => ({ "@type": "Service", name: r.s.name, url: `${SITE_URL}/lagos/${r.s.slug}` })),
+    about: rows.map((r) => ({ "@type": "Service", name: r.s.name, url: `${SITE_URL}/abuja/${r.s.slug}` })),
     dateModified: new Date().toISOString().slice(0, 10),
   };
 
@@ -93,7 +93,7 @@ export default async function GuidePage({ params }: Props) {
                 <tbody className="divide-y divide-gray-100">
                   {rows.map((r) => (
                     <tr key={r.s.slug}>
-                      <td className="px-4 py-3"><Link href={`/lagos/${r.s.slug}`} className="font-medium text-gray-900 hover:underline">{r.s.name}</Link></td>
+                      <td className="px-4 py-3"><Link href={`/abuja/${r.s.slug}`} className="font-medium text-gray-900 hover:underline">{r.s.name}</Link></td>
                       <td className="px-4 py-3 font-mono text-gray-700">{priceRange(r.p)}</td>
                       <td className="px-4 py-3 text-gray-500">{duration(r.p.mins)}</td>
                     </tr>
