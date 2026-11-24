@@ -14,6 +14,7 @@ const SERVICES = [
 const COMPANY = [
   { href: "/#about", label: "Our story" },
   { href: "/prices", label: "Prices" },
+  { href: "/guides", label: "Price guides" },
   { href: "/faq", label: "FAQ" },
   { href: "/become-a-pro", label: "Become a pro" },
   // Waitlist entries are appended at render time from props.waitlistCities.

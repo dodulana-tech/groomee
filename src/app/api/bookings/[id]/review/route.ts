@@ -44,27 +44,9 @@ export async function POST(
         { status: 400 },
       );
 
-    const review = await db.review.create({
-      data: { bookingId: booking.id, rating, text: comment ?? null },
-    });
+    const { submitReview } = await import("@/lib/reviews");
+    const { review } = await submitReview({ bookingId: booking.id, rating, comment });
 
-    // Recalculate pro avg rating from all reviews via bookings
-    const agg = await db.review.aggregate({
-      where: { booking: { proId: booking.proId } },
-      _avg: { rating: true },
-      _count: { id: true },
-    });
-
-    await db.pro.update({
-      where: { id: booking.proId },
-      data: {
-        avgRating: agg._avg.rating ?? rating,
-        reviewCount: agg._count.id,
-      },
-    });
-
-    // Award points for leaving a review
-    await awardPoints(session.userId, POINTS.LEAVE_REVIEW, "Left a review", review.id).catch(() => {});
 
     // Send thank you email (fire-and-forget)
     const pro = await db.pro.findUnique({ where: { id: booking.proId! }, select: { name: true } });

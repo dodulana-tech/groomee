@@ -1,5 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionFromRequestEdge } from "@/lib/auth-edge";
+import {
+  ATTRIBUTION_MAX_AGE,
+  FIRST_TOUCH_COOKIE,
+  LAST_TOUCH_COOKIE,
+  encodeTouch,
+  touchFromRequest,
+} from "@/lib/attribution";
 
 // Exact-match public paths
 const PUBLIC_EXACT = new Set([
@@ -38,6 +45,9 @@ const PUBLIC_PREFIX = [
   "/abuja/",
   "/prices",
   "/faq",
+  "/guides",
+  "/review/", // one-tap review links (signed token, no sign-in)
+  "/api/reviews/",
   "/detty-december",
   "/gift",
   "/subscriptions",
@@ -57,6 +67,20 @@ const REDIRECTS: Record<string, string> = {
   "/api/groomer": "/api/pro",
 };
 
+// Remember which channel brought the visitor (first touch kept 90 days,
+// last touch refreshed) so WhatsApp enquiries can be credited to Google,
+// ChatGPT, Instagram, referrals... See lib/attribution.
+function recordTouch(request: NextRequest, res: NextResponse) {
+  const url = request.nextUrl;
+  const touch = touchFromRequest(url, request.headers.get("referer"), url.hostname);
+  const hasFirst = request.cookies.has(FIRST_TOUCH_COOKIE);
+  if (!touch && hasFirst) return;
+  const value = encodeTouch(touch ?? { channel: "direct", detail: "" }, url.pathname);
+  const opts = { maxAge: ATTRIBUTION_MAX_AGE, path: "/", sameSite: "lax" as const, secure: url.protocol === "https:", httpOnly: true };
+  if (!hasFirst) res.cookies.set(FIRST_TOUCH_COOKIE, value, opts);
+  if (touch || !request.cookies.has(LAST_TOUCH_COOKIE)) res.cookies.set(LAST_TOUCH_COOKIE, value, opts);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -70,7 +94,9 @@ export async function middleware(request: NextRequest) {
 
   // Allow public paths (exact match or prefix match)
   if (PUBLIC_EXACT.has(pathname) || PUBLIC_PREFIX.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    if (request.method === "GET" && !pathname.startsWith("/api/")) recordTouch(request, res);
+    return res;
   }
 
   const session = await getSessionFromRequestEdge(request);
