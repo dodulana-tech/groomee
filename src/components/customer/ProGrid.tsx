@@ -226,7 +226,7 @@ export default function ProGrid({ pros, searchParams }: Props) {
                     {pro.name}
                   </h3>
                   <p style={{ fontSize: "0.78rem", color: "#7a9a7c", display: "flex", alignItems: "center", gap: 4 }}>
-                    📍 {pro.zones[0]?.zone.name ?? "Lagos"}
+                    📍 {pro.zones[0]?.zone.name ?? "Abuja"}
                   </p>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>

@@ -14,7 +14,7 @@ import {
   WhatsAppFab,
   duration,
   getPrices,
-  priceRange,
+  fromPrice,
 } from "@/components/seo/blocks";
 import { formatNaira } from "@/lib/utils";
 
@@ -84,17 +84,17 @@ export default async function GuidePage({ params }: Props) {
       <section className="bg-white px-4 py-12">
         <div className="container max-w-3xl space-y-10">
           <div>
-            <h2 className="font-display text-2xl font-black text-gray-950">Typical prices at home</h2>
+            <h2 className="font-display text-2xl font-black text-gray-950">Prices at home</h2>
             <div className="mt-4 overflow-x-auto rounded-2xl border border-gray-200">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
-                  <tr><th className="px-4 py-3">Service</th><th className="px-4 py-3">Typical price</th><th className="px-4 py-3">Time</th></tr>
+                  <tr><th className="px-4 py-3">Service</th><th className="px-4 py-3">Price</th><th className="px-4 py-3">Time</th></tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {rows.map((r) => (
                     <tr key={r.s.slug}>
                       <td className="px-4 py-3"><Link href={`/abuja/${r.s.slug}`} className="font-medium text-gray-900 hover:underline">{r.s.name}</Link></td>
-                      <td className="px-4 py-3 font-mono text-gray-700">{priceRange(r.p)}</td>
+                      <td className="px-4 py-3 font-mono text-gray-700">{fromPrice(r.p)}</td>
                       <td className="px-4 py-3 text-gray-500">{duration(r.p.mins)}</td>
                     </tr>
                   ))}
@@ -149,7 +149,7 @@ export default async function GuidePage({ params }: Props) {
 
       <section className="bg-gray-950 px-4 py-12 text-center">
         <h2 className="font-display text-2xl font-black text-white">Want an exact price?</h2>
-        <p className="mt-2 text-sm text-white/60">Send us a photo of the style and your area. We&apos;ll reply with a quote, usually within the hour.</p>
+        <p className="mt-2 text-sm text-white/60">Send us a photo of the style and your area. We&apos;ll reply with a quote.</p>
         <div className="mt-6"><WhatsAppButton href={waHref}>Message us on WhatsApp</WhatsAppButton></div>
       </section>
 

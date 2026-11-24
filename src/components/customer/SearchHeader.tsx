@@ -13,7 +13,7 @@ export default function SearchHeader({ total, isAsap }: Props) {
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
-          {isAsap ? "⚡ Available now" : "Beauty pros in Lagos"}
+          {isAsap ? "⚡ Available now" : "Beauty pros in Abuja"}
         </h1>
         <p className="mt-0.5 text-sm text-gray-500">
           {total} {total === 1 ? "pro" : "pros"} found

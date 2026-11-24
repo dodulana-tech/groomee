@@ -1,29 +1,30 @@
 import Link from "next/link";
+import { bookHref } from "@/lib/booking-mode";
 
 const STEPS = [
   {
     num: "01",
-    icon: "🔍",
-    title: "Pick your service",
-    desc: "Hair, nails, makeup, barbing, or lashes. Filter by zone and availability.",
+    icon: "💬",
+    title: "Tell us what you want",
+    desc: "Pick a service, your area and a time, or just send us a photo of the style on WhatsApp.",
   },
   {
     num: "02",
     icon: "📍",
-    title: "Set your location",
-    desc: "Enter your address. We cover VI, Lekki, Ikoyi, Yaba, Ikeja, Surulere and more.",
+    title: "We match a vetted pro",
+    desc: "Across Abuja: Maitama, Wuse, Asokoro, Garki, Jabi, Gwarinpa and more. You see the pro and the price before anything is booked.",
   },
   {
     num: "03",
     icon: "💳",
     title: "Pay securely",
-    desc: "Card, transfer, or USSD via Paystack. Funds held until you confirm.",
+    desc: "Card or transfer through a secure Groomee payment link. Never into a stranger's account.",
   },
   {
     num: "04",
     icon: "✨",
-    title: "Get glammed",
-    desc: "Your pro arrives and delivers. Confirm, rate, and rebook in one tap.",
+    title: "Get glammed at home",
+    desc: "Your pro comes to your home, hotel or office. Rate them after, and rebook on WhatsApp any time.",
   },
 ];
 
@@ -47,11 +48,11 @@ export default function HowItWorks() {
             How it works
           </p>
           <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
-            Booked in 60 seconds
+            Booked on WhatsApp in minutes
           </h2>
           <p className="mt-4 text-base leading-relaxed text-white/50">
-            No calls, no DMs, no haggling. Book a vetted beauty pro as easily as
-            ordering a ride.
+            No haggling, no chasing strangers in the DMs. Tell us what you want
+            and we handle the rest.
           </p>
         </div>
 
@@ -61,9 +62,9 @@ export default function HowItWorks() {
             {/* Connecting line */}
             <div className="absolute top-4 left-[calc(12.5%)] right-[calc(12.5%)] h-px bg-green-400/30" />
             {[
-              { num: "1", label: "Pick" },
-              { num: "2", label: "Book" },
-              { num: "3", label: "Pro arrives" },
+              { num: "1", label: "Ask" },
+              { num: "2", label: "Match" },
+              { num: "3", label: "Pay" },
               { num: "4", label: "Glow" },
             ].map((s) => (
               <div key={s.num} className="relative z-10 flex flex-1 flex-col items-center gap-2">
@@ -118,22 +119,22 @@ export default function HowItWorks() {
           <div className="flex flex-col items-start gap-6 p-8 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-green-400">
-                <span>⚡</span> Emergency bookings 24/7
+                <span>⚡</span> Same-day bookings
               </p>
               <h3 className="font-display text-xl font-bold text-white sm:text-2xl">
-                Last-minute event? We&apos;ve got you.
+                Last-minute event? Message us.
               </h3>
               <p className="mt-1 text-sm text-white/45">
-                Owambe tonight? Morning interview? A vetted pro at your door
-                within the hour.
+                Owambe tonight? Early interview? Tell us the time and we&apos;ll
+                find a vetted pro who can make it.
               </p>
             </div>
             <Link
-              href="/search?asap=true"
+              href={bookHref({ city: "abuja", asap: true })}
               className="group shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#53eb64] px-6 py-3.5 text-sm font-bold text-[#0a0a0a] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(83,235,100,0.3)] active:scale-[0.97]"
             >
               <span className="transition-transform group-hover:scale-110">⚡</span>
-              Book emergency pro
+              Book a same-day pro
             </Link>
           </div>
         </div>

@@ -25,7 +25,7 @@ import {
   WhatsAppFab,
   duration,
   getPrices,
-  priceRange,
+  fromPrice,
 } from "./blocks";
 
 import { serviceRating } from "@/lib/reviews";
@@ -185,8 +185,8 @@ export async function ServiceCityPage({ city, service }: { city: CitySlug; servi
       <section className="bg-white px-4 py-12">
         <div className="container grid max-w-4xl gap-6 sm:grid-cols-3">
           <div className="rounded-2xl border border-gray-200 bg-white/80 p-5 backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Typical price</p>
-            <p className="mt-1 font-mono text-lg font-bold text-gray-900">{priceRange(price)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Price at your home</p>
+            <p className="mt-1 font-mono text-lg font-bold text-gray-900">{fromPrice(price)}</p>
             <p className="mt-1 text-xs text-gray-500">Confirmed before your pro sets off</p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white/80 p-5 backdrop-blur">
@@ -362,7 +362,7 @@ export async function AreaPage({ area }: { area: SeoArea }) {
       <section className="bg-white px-4 py-12">
         <div className="container max-w-4xl">
           <h2 className="font-display text-2xl font-black text-gray-950">Services and prices in {area.name}</h2>
-          <p className="mt-2 text-sm text-gray-500">Typical price ranges. Your pro confirms the final price before they set off.</p>
+          <p className="mt-2 text-sm text-gray-500">Home-service starting prices: your pro comes to you. The final price depends on length, size and style, and your pro confirms it before they set off.</p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {Object.entries(byCat).map(([cat, list]) => (
               <div key={cat} className="rounded-2xl border border-gray-200 bg-white/80 p-5 backdrop-blur">
@@ -373,7 +373,7 @@ export async function AreaPage({ area }: { area: SeoArea }) {
                       <Link href={`/${city}/${s.slug}`} className="text-gray-700 hover:text-gray-950 hover:underline">
                         {s.name}
                       </Link>
-                      <span className="shrink-0 font-mono text-gray-500">{priceRange(prices[s.slug])}</span>
+                      <span className="shrink-0 font-mono text-gray-500">{fromPrice(prices[s.slug])}</span>
                     </li>
                   ))}
                 </ul>

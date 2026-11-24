@@ -11,9 +11,9 @@ const CUSTOMER_QUESTIONS = [
   {
     label: "1. Where are you based?",
     options: [
+      "Abuja",
       "Lagos - Island (Lekki, VI, Ikoyi)",
       "Lagos - Mainland (Yaba, Surulere, Ikeja)",
-      "Abuja",
       "Other city",
     ],
   },
@@ -60,9 +60,9 @@ const VENDOR_QUESTIONS = [
   {
     label: "1. Where is your business based?",
     options: [
+      "Abuja",
       "Lagos - Island (Lekki, VI, Ikoyi)",
       "Lagos - Mainland (Yaba, Surulere, Ikeja)",
-      "Abuja",
       "Other city",
     ],
   },

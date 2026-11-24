@@ -53,7 +53,7 @@ export default function AboutSection() {
             </h2>
             <p className="text-base text-gray-600 leading-relaxed mb-4">
               Groomee was built for the moments when time runs out and opportunity
-              is on the line. In a city like Lagos, a last-minute cancellation or
+              is on the line. In cities like Abuja and Lagos, a last-minute cancellation or
               a fully-booked salon can cost more than convenience. For many women,
               showing up put-together is not vanity. It is confidence, visibility,
               and access.

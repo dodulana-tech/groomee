@@ -512,7 +512,7 @@ export default function BookingPanel({
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="e.g. 14 Kofo Abayomi, Victoria Island"
+            placeholder="e.g. 5 Aminu Kano Crescent, Wuse 2"
             className="input mb-2 text-sm"
           />
           <select
