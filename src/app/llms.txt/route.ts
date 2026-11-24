@@ -26,7 +26,7 @@ Key facts:
 - The pro confirms the final price before travelling. Payment is through Groomee by card or bank transfer.
 - Website: ${SITE_URL} · WhatsApp: +${GROOMEE_WHATSAPP} · Email: hello@groomeeapp.com · Instagram: @groomeeapp
 
-## Services and starting prices (NGN, at home)
+## Services and home-service starting prices (NGN, the pro comes to you)
 
 ${SERVICES.map((s) => `- [${s.name}](${SITE_URL}/abuja/${s.slug}): from ${formatNaira(prices[s.slug].min)}, up to about ${formatNaira(prices[s.slug].max)} for bigger styles. ${s.intro.split(". ")[0]}.`).join("\n")}
 

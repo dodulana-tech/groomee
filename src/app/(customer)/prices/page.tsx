@@ -24,7 +24,7 @@ export const revalidate = 3600;
 
 const title = "Home Service Beauty Prices in Abuja (2026) | Groomee";
 const description =
-  "Starting prices for braids, makeup, nails, lashes, barbing and facials at home in Abuja, from vetted Groomee pros. Final price confirmed before your pro sets off.";
+  "Home-service starting prices for braids, makeup, nails, lashes, barbing and facials at home in Abuja, from vetted Groomee pros. Final price confirmed before your pro sets off.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -66,7 +66,7 @@ export default async function PricesPage() {
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#25D366]">Groomee · Price list</p>
           <h1 className="font-display text-3xl font-black text-white sm:text-5xl">Home service beauty prices</h1>
           <p className="mt-4 max-w-xl text-base text-white/65">
-            Starting prices in Abuja for a vetted pro who comes to you. Your pro confirms the final
+            Home-service starting prices in Abuja: a vetted pro comes to your home, hotel or office. Your pro confirms the final
             price before they set off, based on the exact style, length and extras.
           </p>
           {(fees.homeVisit > 0 || fees.early > 0 || fees.deposit > 0) && (

@@ -131,7 +131,7 @@ export default function PriceReview({
       <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">How prices show</h2>
         <p className="mt-1 text-xs text-gray-500">
-          Customers see the lowest price as &ldquo;From ₦…&rdquo;. Keep it the true starting price, and set the highest wide enough
+          These are home-service prices (the pro travels to the customer), so price in the trip. Customers see the lowest price as &ldquo;From ₦…&rdquo;. Keep it the true starting price, and set the highest wide enough
           to cover long, small or premium versions so pros can quote real jobs.
         </p>
         {canEdit && pending.length > 0 && (
@@ -143,7 +143,7 @@ export default function PriceReview({
       </section>
       <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">Fees and deposit</h2>
-        <p className="mt-1 text-xs text-gray-500">Leave blank or 0 if you don&apos;t charge it. The home-visit fee and deposit show on the price list.</p>
+        <p className="mt-1 text-xs text-gray-500">Prices already include the trip, so leave the home-visit fee blank unless you add it on top. The home-visit fee and deposit show on the price list.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {([["homeVisit", "Home-visit fee (₦)"], ["earlyMorning", "Early-morning fee, before 7am (₦)"], ["depositPercent", "Deposit to confirm (%)"]] as const).map(([k, label]) => (
             <label key={k} className="grid gap-1 text-xs font-semibold text-gray-500">
