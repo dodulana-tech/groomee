@@ -3,12 +3,12 @@ import { LOGO_TEAL_BASE64 } from "@/lib/logo";
 import { trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 
 const SERVICES = [
-  { href: "/lagos/knotless-braids", label: "Braids" },
-  { href: "/lagos/full-glam-makeup", label: "Makeup" },
-  { href: "/lagos/gel-nails", label: "Nails" },
-  { href: "/lagos/fade-shape-up", label: "Barbing" },
-  { href: "/lagos/classic-lash-set", label: "Lashes" },
-  { href: "/lagos/facial-treatment", label: "Skincare" },
+  { href: "/abuja/knotless-braids", label: "Braids" },
+  { href: "/abuja/full-glam-makeup", label: "Makeup" },
+  { href: "/abuja/gel-nails", label: "Nails" },
+  { href: "/abuja/fade-shape-up", label: "Barbing" },
+  { href: "/abuja/classic-lash-set", label: "Lashes" },
+  { href: "/abuja/facial-treatment", label: "Skincare" },
 ];
 
 const COMPANY = [

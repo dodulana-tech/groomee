@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 
 export async function GET(req: NextRequest) {
+  // WhatsApp mode: no public pro list until the vendor list is live.
+  if (await isWhatsAppMode()) return NextResponse.json({ success: true, data: [], mode: "whatsapp" });
   const { searchParams } = new URL(req.url);
   const serviceSlug = searchParams.get("service");
   const zoneSlug = searchParams.get("zone");

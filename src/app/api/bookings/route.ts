@@ -11,6 +11,7 @@ import { getBookingPaymentLink } from "@/lib/booking-payment";
 import { CityNotLiveError, requireLiveCityForZone } from "@/lib/cities";
 import { checkContraindications, highestLevel } from "@/lib/health";
 import { z } from "zod";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 
 const createBookingSchema = z.object({
   serviceId: z.string().min(1),
@@ -72,6 +73,14 @@ export async function POST(req: NextRequest) {
         { success: false, error: "Unauthorized" },
         { status: 401 },
       );
+    // WhatsApp mode: bookings are made by the team (concierge flow), so the
+    // in-app checkout can't reach a pro that isn't really live yet.
+    if (await isWhatsAppMode()) {
+      return NextResponse.json(
+        { success: false, code: "WHATSAPP_MODE", error: "Bookings are taken on WhatsApp right now.", bookUrl: "/book" },
+        { status: 409 },
+      );
+    }
     const body = await req.json();
     const input = createBookingSchema.parse(body);
 

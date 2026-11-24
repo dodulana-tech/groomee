@@ -9,8 +9,8 @@ import { Breadcrumbs, WhatsAppFab } from "@/components/seo/blocks";
 
 export const revalidate = 3600;
 
-const title = "Beauty Price Guides for Lagos & Abuja (2026) | Groomee";
-const description = "What braids, makeup, nails, lashes and barbing cost at home in Lagos and Abuja, what changes the price, and how long each takes.";
+const title = "Beauty Price Guides in Abuja (2026) | Groomee";
+const description = "What braids, makeup, nails, lashes and barbing cost at home in Abuja, what changes the price, and how long each takes.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -27,7 +27,7 @@ export default async function GuidesIndex() {
         <div className="container max-w-3xl">
           <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Guides", href: "/guides" }]} />
           <h1 className="mt-8 font-display text-3xl font-black text-white sm:text-5xl">Beauty price guides</h1>
-          <p className="mt-4 max-w-xl text-white/65">Straight answers on what home service beauty costs in Lagos and Abuja, from our live price list.</p>
+          <p className="mt-4 max-w-xl text-white/65">Straight answers on what home service beauty costs in Abuja, from our live price list.</p>
         </div>
       </section>
       <section className="bg-white px-4 py-12">

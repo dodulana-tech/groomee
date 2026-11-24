@@ -15,6 +15,12 @@ const SETTING_META: Record<
     type: "number" | "percent" | "boolean" | "text";
   }
 > = {
+  WHATSAPP_BOOKING_MODE: {
+    label: "Book on WhatsApp mode",
+    description:
+      "On: customers see no pro listings and every Book button opens a request form that sends the request to our WhatsApp. The team books it from Bookings → New. Turn off once real pros are live to bring back in-app booking.",
+    type: "boolean",
+  },
   EMERGENCY_THRESHOLD_MINUTES: {
     label: "Emergency threshold (minutes)",
     description:
@@ -111,6 +117,8 @@ export default function AdminSettingsPage() {
         (d.data ?? []).forEach((s: Setting) => {
           map[s.key] = s.value;
         });
+        // Book on WhatsApp mode is on until someone turns it off.
+        if (map.WHATSAPP_BOOKING_MODE === undefined) map.WHATSAPP_BOOKING_MODE = "true";
         setEdits(map);
       });
   }, []);

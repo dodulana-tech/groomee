@@ -16,13 +16,15 @@ import Link from "next/link";
 import { GROOMEE_WHATSAPP, trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 import { AREAS, SERVICES } from "@/lib/seo/content";
 import { WhatsAppFab } from "@/components/seo/blocks";
+import ServiceMenu from "@/components/customer/ServiceMenu";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 
 export const revalidate = 300;
 
 // Only the homepage is canonical to the root; other pages set their own.
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-async function getHomeData() {
+async function getHomeData(whatsappMode: boolean) {
   // Apprenticeship gating (Slice 5): apprentices who haven't earned
   // independence don't appear in the top-pros section. Same filter as
   // /api/pros — see comment there.
@@ -53,7 +55,7 @@ async function getHomeData() {
       where: { isActive: true },
       orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
     }),
-    db.pro.findMany({
+    whatsappMode ? Promise.resolve([]) : db.pro.findMany({
       where: {
         AND: [
           { status: "ACTIVE", avgRating: { gte: 4.0 } },
@@ -110,11 +112,11 @@ function buildJsonLd(liveCityNames: string[]) {
     image: `${SITE_URL}/opengraph-image`,
     address: {
       "@type": "PostalAddress",
-      addressLocality: liveCityNames[0] ?? "Lagos",
+      addressLocality: liveCityNames[0] ?? "Abuja",
       addressCountry: "NG",
     },
-    // Lagos is served online, Abuja via the WhatsApp concierge.
-    areaServed: Array.from(new Set([...liveCityNames, "Lagos", "Abuja"])).map((name) => ({ "@type": "City", name })),
+    // Abuja is live (booked on WhatsApp); Lagos is coming soon, so not claimed.
+    areaServed: Array.from(new Set([...liveCityNames, "Abuja"])).map((name) => ({ "@type": "City", name })),
     serviceType: ["Hair Styling", "Makeup", "Nail Care", "Barbing", "Lash Extensions"],
     priceRange: "₦₦",
     openingHoursSpecification: {
@@ -127,7 +129,8 @@ function buildJsonLd(liveCityNames: string[]) {
 }
 
 export default async function HomePage() {
-  const { services, pros, cities, areasFor } = await getHomeData();
+  const whatsappMode = await isWhatsAppMode();
+  const { services, pros, cities, areasFor } = await getHomeData(whatsappMode);
   const liveCities = cities.filter((c) => c.status === "LIVE");
   const waitlistCities = cities.filter((c) => c.status === "WAITLIST");
   const jsonLd = buildJsonLd(liveCities.map((c) => c.name));
@@ -149,9 +152,13 @@ export default async function HomePage() {
         }
       />
       <CityRolloutBanner liveCities={liveCities} waitlistCities={waitlistCities} />
-      <Suspense fallback={<div className="h-64" />}>
-        <Browse services={services} pros={pros} />
-      </Suspense>
+      {whatsappMode ? (
+        <ServiceMenu />
+      ) : (
+        <Suspense fallback={<div className="h-64" />}>
+          <Browse services={services} pros={pros} />
+        </Suspense>
+      )}
       <HowItWorks />
       <SurveySection />
       <AboutSection />
@@ -164,17 +171,17 @@ export default async function HomePage() {
       ))}
       <section className="bg-gray-50 px-4 py-12">
         <div className="container max-w-5xl">
-          <h2 className="font-display text-2xl font-black text-gray-950">Popular in Lagos</h2>
+          <h2 className="font-display text-2xl font-black text-gray-950">Popular in Abuja</h2>
           <div className="mt-5 flex flex-wrap gap-2">
             {SERVICES.map((s) => (
-              <Link key={s.slug} href={`/lagos/${s.slug}`} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 hover:border-[#25D366]/60">
+              <Link key={s.slug} href={`/abuja/${s.slug}`} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 hover:border-[#25D366]/60">
                 {s.headline}
               </Link>
             ))}
           </div>
           <h3 className="mt-8 text-sm font-bold uppercase tracking-wider text-gray-400">Areas</h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            {AREAS.map((a) => (
+            {[...AREAS].sort((a, b) => (a.city === "abuja" ? 0 : 1) - (b.city === "abuja" ? 0 : 1)).map((a) => (
               <Link key={`${a.city}-${a.slug}`} href={`/${a.city}/${a.slug}`} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 hover:border-[#25D366]/60">
                 {a.name}
               </Link>
@@ -185,8 +192,8 @@ export default async function HomePage() {
             <Link href="/prices" className="font-semibold underline">Price list</Link> ·{" "}
             <Link href="/guides" className="font-semibold underline">Price guides</Link> ·{" "}
             <Link href="/faq" className="font-semibold underline">FAQ</Link> ·{" "}
-            <Link href="/lagos" className="font-semibold underline">Lagos</Link> ·{" "}
-            <Link href="/abuja" className="font-semibold underline">Abuja</Link>
+            <Link href="/abuja" className="font-semibold underline">Abuja</Link> ·{" "}
+            <Link href="/lagos" className="font-semibold underline">Lagos (coming soon)</Link>
           </p>
         </div>
       </section>

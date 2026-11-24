@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { getSession, hasPermission } from "@/lib/auth";
 import { AREAS, serviceBySlug } from "@/lib/seo/content";
 import { AI_CHANNELS, CHANNEL_LABEL, type Channel } from "@/lib/attribution";
+import Link from "next/link";
+import { isWhatsAppMode } from "@/lib/booking-mode";
 
 export const metadata: Metadata = { title: "Growth | Admin" };
 export const revalidate = 0;
@@ -26,6 +28,7 @@ function sourceLabel(src: string): string {
     faq: "FAQ",
     "become-a-pro": "Become a pro",
     rebook: "Rebooking reminders",
+    "book-form": "Booking request form",
   };
   return named[src] ?? src;
 }
@@ -73,8 +76,10 @@ export default async function GrowthPage() {
   const clicks = await db.whatsAppClick.findMany({
     where: { createdAt: { gte: since } },
     orderBy: { createdAt: "desc" },
-    select: { source: true, city: true, service: true, area: true, channel: true, firstChannel: true, createdAt: true },
+    select: { source: true, city: true, service: true, area: true, channel: true, firstChannel: true, details: true, createdAt: true },
   });
+  const whatsappMode = await isWhatsAppMode();
+  const requests = clicks.filter((c) => c.source === "book-form").slice(0, 15);
 
   // Daily series, oldest first, including empty days.
   const days: { key: string; label: string; count: number }[] = [];
@@ -121,6 +126,16 @@ export default async function GrowthPage() {
           WhatsApp enquiries from the website: every tap on a WhatsApp button that opened a chat with us.
           Target {TARGET_PER_DAY} a day. Days in Lagos time.
         </p>
+      </div>
+
+      <div className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4 text-sm ${whatsappMode ? "border-green-200 bg-green-50 text-green-900" : "border-gray-200 bg-white text-gray-700"}`}>
+        <p>
+          <b>{whatsappMode ? "Book on WhatsApp mode is ON." : "In-app booking is ON."}</b>{" "}
+          {whatsappMode
+            ? "Customers see no pro listings; every Book button opens the request form and sends the request to our WhatsApp. Book each one from Bookings → New so the customer pays through Groomee."
+            : "Customers can browse pros and book in the app. WhatsApp buttons still work."}
+        </p>
+        <Link href="/admin/settings" className="shrink-0 font-semibold underline">Change</Link>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -202,6 +217,33 @@ export default async function GrowthPage() {
         <Ranked title="Services asked about" rows={byService} empty="No service-page taps yet" />
         <Ranked title="Areas asked about" rows={byArea} empty="No area-page taps yet" />
         <Ranked title="City" rows={byCity} empty="No taps yet" />
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-900">Latest booking requests</h2>
+          <Link href="/admin/bookings/new" className="text-xs font-semibold text-brand-600 underline">New concierge booking</Link>
+        </div>
+        <p className="mt-1 text-xs text-gray-500">From the request form. The same details arrive as the customer&apos;s first WhatsApp message.</p>
+        {requests.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-400">No form requests yet.</p>
+        ) : (
+          <ul className="mt-3 divide-y divide-gray-100 text-sm">
+            {requests.map((r, i) => (
+              <li key={i} className="flex flex-wrap gap-x-3 gap-y-1 py-2.5">
+                <span className="w-28 shrink-0 text-gray-400">
+                  {r.createdAt.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" })}
+                </span>
+                <span className="font-semibold text-gray-900">{r.service ? serviceBySlug(r.service)?.name ?? r.service : "Any service"}</span>
+                <span className="text-gray-600">
+                  {[r.area ? AREAS.find((a) => a.slug === r.area)?.name ?? r.area : null, r.city ? r.city.charAt(0).toUpperCase() + r.city.slice(1) : null].filter(Boolean).join(", ")}
+                </span>
+                {r.details && <span className="text-gray-500">{r.details}</span>}
+                {r.channel && <span className="rounded-full bg-gray-100 px-2 text-xs text-gray-500">{channelName(r.channel)}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <p className="mt-6 text-xs text-gray-400">

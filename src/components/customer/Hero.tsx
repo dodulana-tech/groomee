@@ -116,7 +116,7 @@ export default function Hero({ services, liveCity, waitlistCity }: Props) {
               style={{ animation: "fadeUp 0.7s ease 0.16s forwards" }}
             >
               Vetted hair, makeup, nails, lashes &amp; barbing professionals
-              delivered to you in Lagos. Late nights, early mornings,
+              delivered to you in {liveCity?.name ?? "Abuja"}. Late nights, early mornings,
               last-minute, we&apos;ve got you.
             </p>
 

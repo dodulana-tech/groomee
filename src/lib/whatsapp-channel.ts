@@ -21,6 +21,10 @@ export function whatsappGreeting(
 ): string {
   const what = opts.serviceName ? opts.serviceName.toLowerCase() : "a beauty pro";
   const where = [opts.areaName, cityName].filter(Boolean).join(", ");
+  // Lagos is coming soon: the request joins the launch list.
+  if (cityName?.toLowerCase() === "lagos") {
+    return `Hi Groomee! I'm in ${where} and I'd like ${what} at home. Please add me to the Lagos launch list.`;
+  }
   return where
     ? `Hi Groomee! I'd like to book ${what} at home in ${where}.`
     : `Hi Groomee! I'd like to book ${what}.`;

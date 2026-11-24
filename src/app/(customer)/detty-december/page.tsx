@@ -15,14 +15,14 @@ import {
   getPrices,
 } from "@/components/seo/blocks";
 
-// Seasonal page for December in Lagos (and Abuja): parties, owambe, weddings
+// Seasonal page for December in Abuja: parties, owambe, weddings
 // and visitors flying home. Published early so search and assistants have
 // it indexed before the rush.
 export const revalidate = 3600;
 
-const title = "Detty December Glam in Lagos & Abuja: Makeup, Braids & Nails at Home | Groomee";
+const title = "Detty December Glam in Abuja: Makeup, Braids & Nails at Home | Groomee";
 const description =
-  "Owambe, wedding guest and party-ready glam at your home, hotel or Airbnb in Lagos and Abuja this December. Vetted makeup artists, braiders and nail techs. December fills fast: book ahead on WhatsApp.";
+  "Owambe, wedding guest and party-ready glam at your home, hotel or Airbnb in Abuja this December. Vetted makeup artists, braiders and nail techs. December fills fast: book ahead on WhatsApp.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -35,7 +35,7 @@ const FEATURED = ["full-glam-makeup", "bridal-makeup", "knotless-braids", "gel-n
 
 const FAQS = [
   {
-    q: "How early should I book for December in Lagos?",
+    q: "How early should I book for December in Abuja?",
     a: "As early as you can. Weekends from mid-December to New Year are the busiest days of the year for makeup artists and braiders. Message us your dates now and we will hold a pro for you.",
   },
   {
@@ -68,7 +68,7 @@ export default async function DettyDecemberPage() {
     url: `${SITE_URL}/detty-december`,
     provider: { "@id": `${SITE_URL}/#business` },
     areaServed: [
-      { "@type": "City", name: "Lagos" },
+      
       { "@type": "City", name: "Abuja" },
     ],
     serviceType: ["Makeup", "Hair braiding", "Nails", "Lash extensions", "Barbing"],
@@ -81,7 +81,7 @@ export default async function DettyDecemberPage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_20%_40%,rgba(255,254,161,0.16),transparent_60%),radial-gradient(ellipse_50%_70%_at_85%_30%,rgba(37,211,102,0.2),transparent_55%)]" />
         <div className="container relative z-10 max-w-3xl">
           <Breadcrumbs items={[{ name: "Home", href: "/" }, { name: "Detty December", href: "/detty-december" }]} />
-          <p className="mb-3 mt-8 text-xs font-bold uppercase tracking-widest text-[#fffea1]">Detty December · Lagos &amp; Abuja</p>
+          <p className="mb-3 mt-8 text-xs font-bold uppercase tracking-widest text-[#fffea1]">Detty December · Abuja</p>
           <h1 className="font-display text-3xl font-black text-white sm:text-5xl">
             December-ready glam, at your door.
           </h1>
@@ -120,7 +120,7 @@ export default async function DettyDecemberPage() {
           <h2 className="font-display text-2xl font-black text-gray-950">Most booked in December</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((s) => (
-              <ServiceCard key={s.slug} service={s} price={prices[s.slug]} href={`/lagos/${s.slug}`} />
+              <ServiceCard key={s.slug} service={s} price={prices[s.slug]} href={`/abuja/${s.slug}`} />
             ))}
           </div>
         </div>
