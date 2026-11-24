@@ -149,7 +149,7 @@ export default async function GuidePage({ params }: Props) {
 
       <section className="bg-gray-950 px-4 py-12 text-center">
         <h2 className="font-display text-2xl font-black text-white">Want an exact price?</h2>
-        <p className="mt-2 text-sm text-white/60">Send us a photo of the style and your area. We&apos;ll reply with a quote, usually within the hour.</p>
+        <p className="mt-2 text-sm text-white/60">Send us a photo of the style and your area. We&apos;ll reply with a quote.</p>
         <div className="mt-6"><WhatsAppButton href={waHref}>Message us on WhatsApp</WhatsAppButton></div>
       </section>
 

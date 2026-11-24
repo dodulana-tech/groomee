@@ -152,7 +152,7 @@ export function Faqs({ faqs, title = "Questions people ask" }: { faqs: { q: stri
 export function HowItWorks() {
   const steps = [
     { t: "Message us", d: "Tell us the service, your area and when. A photo of the style helps." },
-    { t: "Get matched", d: "We confirm a vetted pro near you and the price, usually within the hour." },
+    { t: "Get matched", d: "We confirm a vetted pro near you and the price before anything is booked." },
     { t: "They come to you", d: "Your pro arrives with their tools. You rate them after." },
   ];
   return (

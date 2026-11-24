@@ -337,7 +337,7 @@ export default function BookingWizard({
               <textarea
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g. 15 Admiralty Way, Lekki Phase 1"
+                placeholder="e.g. 12 Mississippi Street, Maitama"
                 className="input min-h-[80px] resize-none"
                 required
               />

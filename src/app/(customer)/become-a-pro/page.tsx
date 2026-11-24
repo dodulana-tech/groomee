@@ -14,12 +14,12 @@ const APPLY_HREF = "/partner/onboarding?src=become-a-pro";
 const PRO_SHARE = 0.8;
 
 export const metadata: Metadata = {
-  title: "Become a Beauty Professional in Lagos — Join Groomee",
+  title: "Become a Beauty Professional in Abuja — Join Groomee",
   description:
-    "Hair stylists, makeup artists, nail techs, lash techs and barbers in Lagos: get home-service bookings in Lekki, VI, Ikoyi, Yaba and Surulere. Keep 80% of every booking, get paid fast, and grow with free business tools.",
+    "Hair stylists, makeup artists, nail techs, lash techs and barbers in Abuja: get home-service bookings in Maitama, Wuse, Asokoro, Garki, Jabi and Gwarinpa. Lagos pros can join ahead of launch. Keep 80% of every booking, get paid fast, and grow with free business tools.",
   alternates: { canonical: "/become-a-pro" },
   openGraph: {
-    title: "Join Groomee as a beauty professional in Lagos",
+    title: "Join Groomee as a beauty professional in Abuja",
     description:
       "Keep 80% of every booking. Transport money up front. Free wallet, savings, health cover and apprenticeships.",
     url: `${APP_URL}/become-a-pro`,
@@ -127,10 +127,10 @@ export default async function BecomeAProPage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_15%_30%,rgba(83,235,100,0.25),transparent_60%),radial-gradient(ellipse_40%_60%_at_90%_20%,rgba(255,254,161,0.14),transparent_55%)]" />
         <div className="container relative z-10 max-w-3xl text-center">
           <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={{ color: "#53eb64" }}>
-            For beauty professionals · Lagos
+            For beauty professionals · Abuja · Lagos soon
           </p>
           <h1 className="font-display text-3xl font-black text-white sm:text-5xl">
-            Join Groomee as a beauty professional in Lagos
+            Join Groomee as a beauty professional in Abuja
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/70">
             Hair, makeup, nails, lashes, barbing and skincare pros: get home-service bookings near you,
