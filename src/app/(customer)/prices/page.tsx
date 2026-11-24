@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
 import { trackedWhatsAppHref } from "@/lib/whatsapp-channel";
 import { CATEGORY_LABEL, SERVICES, type SeoService } from "@/lib/seo/content";
-import { WhatsAppButton, WhatsAppFab, duration, getPrices, priceRange } from "@/components/seo/blocks";
+import { WhatsAppButton, WhatsAppFab, duration, fromPrice, getPrices } from "@/components/seo/blocks";
 import { getPublicCities } from "@/lib/cities";
 import Footer from "@/components/customer/Footer";
 import { db } from "@/lib/db";
@@ -24,7 +24,7 @@ export const revalidate = 3600;
 
 const title = "Home Service Beauty Prices in Abuja (2026) | Groomee";
 const description =
-  "Typical prices for braids, makeup, nails, lashes, barbing and facials at home in Abuja, from vetted Groomee pros. Final price confirmed before your pro sets off.";
+  "Starting prices for braids, makeup, nails, lashes, barbing and facials at home in Abuja, from vetted Groomee pros. Final price confirmed before your pro sets off.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
@@ -66,7 +66,7 @@ export default async function PricesPage() {
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#25D366]">Groomee · Price list</p>
           <h1 className="font-display text-3xl font-black text-white sm:text-5xl">Home service beauty prices</h1>
           <p className="mt-4 max-w-xl text-base text-white/65">
-            Typical prices in Abuja for a vetted pro who comes to you. Your pro confirms the final
+            Starting prices in Abuja for a vetted pro who comes to you. Your pro confirms the final
             price before they set off, based on the exact style, length and extras.
           </p>
           {(fees.homeVisit > 0 || fees.early > 0 || fees.deposit > 0) && (
@@ -93,7 +93,7 @@ export default async function PricesPage() {
                 <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
                   <tr>
                     <th className="px-4 py-3">Service</th>
-                    <th className="px-4 py-3">Typical price</th>
+                    <th className="px-4 py-3">Price</th>
                     <th className="hidden px-4 py-3 sm:table-cell">Time</th>
                   </tr>
                 </thead>
@@ -105,7 +105,7 @@ export default async function PricesPage() {
                           {s.name}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 font-mono text-gray-700">{priceRange(prices[s.slug])}</td>
+                      <td className="px-4 py-3 font-mono text-gray-700">{fromPrice(prices[s.slug])}</td>
                       <td className="hidden px-4 py-3 text-gray-500 sm:table-cell">{duration(prices[s.slug].mins)}</td>
                     </tr>
                   ))}

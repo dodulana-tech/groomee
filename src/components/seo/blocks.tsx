@@ -4,13 +4,17 @@ import { SITE_URL } from "@/lib/site";
 import { formatNaira } from "@/lib/utils";
 import { GROOMEE_WHATSAPP } from "@/lib/whatsapp-channel";
 import { SERVICES, type SeoService } from "@/lib/seo/content";
+import { PRICE_RESEARCH } from "@/lib/seo/price-research";
 
 export type LivePrice = { min: number; max: number; mins: number };
 
-/** Live catalogue prices by slug, falling back to the curated ranges. */
+/** Live catalogue prices by slug, falling back to the researched ranges. */
 export async function getPrices(): Promise<Record<string, LivePrice>> {
   const out: Record<string, LivePrice> = Object.fromEntries(
-    SERVICES.map((s) => [s.slug, s.fallback]),
+    SERVICES.map((s) => {
+      const r = PRICE_RESEARCH[s.slug];
+      return [s.slug, r ? { min: r.min, max: r.max, mins: s.fallback.mins } : s.fallback];
+    }),
   );
   try {
     const rows = await db.service.findMany({
@@ -26,8 +30,14 @@ export async function getPrices(): Promise<Record<string, LivePrice>> {
   return out;
 }
 
+/** Full range, for machine-readable places (llms.txt, JSON-LD). */
 export function priceRange(p: LivePrice) {
   return `${formatNaira(p.min)} – ${formatNaira(p.max)}`;
+}
+
+/** What customers see: the starting price. */
+export function fromPrice(p: LivePrice) {
+  return `From ${formatNaira(p.min)}`;
 }
 
 export function duration(mins: number) {
@@ -170,7 +180,7 @@ export function ServiceCard({ service, price, href }: { service: SeoService; pri
       className="block rounded-2xl border border-gray-200 bg-white/80 p-5 backdrop-blur transition hover:-translate-y-0.5 hover:border-[#25D366]/60 hover:shadow-md"
     >
       <h3 className="font-bold text-gray-900">{service.name}</h3>
-      <p className="mt-1 font-mono text-sm text-gray-500">{priceRange(price)}</p>
+      <p className="mt-1 font-mono text-sm text-gray-500">{fromPrice(price)}</p>
       <p className="mt-2 line-clamp-2 text-sm text-gray-600">{service.intro}</p>
     </Link>
   );

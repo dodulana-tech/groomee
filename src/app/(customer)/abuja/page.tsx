@@ -124,7 +124,7 @@ export default async function AbujaPage() {
       <section className="bg-gray-50 px-4 py-12">
         <div className="container max-w-4xl">
           <h2 className="font-display text-2xl font-black text-gray-950">Home services &amp; prices</h2>
-          <p className="mt-2 text-sm text-gray-500">Typical price ranges. Your pro confirms the final price before they set off.</p>
+          <p className="mt-2 text-sm text-gray-500">Starting prices. The final price depends on length, size and style, and your pro confirms it before they set off.</p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {Object.entries(byCategory).map(([cat, list]) => (
               <div key={cat} className="rounded-2xl border border-gray-200 bg-white/80 p-5 backdrop-blur">
@@ -134,7 +134,7 @@ export default async function AbujaPage() {
                     <li key={s.name} className="flex justify-between gap-3 text-sm">
                       <span className="text-gray-700">{s.name}</span>
                       <span className="shrink-0 font-mono text-gray-500">
-                        {formatNaira(s.minPrice)}–{formatNaira(s.maxPrice)}
+                        From {formatNaira(s.minPrice)}
                       </span>
                     </li>
                   ))}

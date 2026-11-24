@@ -87,7 +87,7 @@ export default function BookRequestForm({
             </optgroup>
           ))}
         </select>
-        {chosen && <p className="mt-2 text-xs text-gray-500">Typical price: <b className="text-gray-900">{chosen.price}</b>. The team confirms the exact price before booking.</p>}
+        {chosen && <p className="mt-2 text-xs text-gray-500">Price: <b className="text-gray-900">{chosen.price}</b>. The team confirms the exact price before booking.</p>}
       </div>
 
       <div>

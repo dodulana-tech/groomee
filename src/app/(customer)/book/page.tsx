@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { AREAS, CATEGORY_LABEL, SERVICES, serviceBySlug } from "@/lib/seo/content";
-import { getPrices, priceRange, WHATSAPP_DISPLAY } from "@/components/seo/blocks";
+import { getPrices, fromPrice, WHATSAPP_DISPLAY } from "@/components/seo/blocks";
 import BookRequestForm from "./BookRequestForm";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +41,7 @@ export default async function BookPage({
     slug: s.slug,
     name: s.name,
     group: CATEGORY_LABEL[s.category] ?? "More",
-    price: priceRange(prices[s.slug]),
+    price: fromPrice(prices[s.slug]),
   }));
 
   return (

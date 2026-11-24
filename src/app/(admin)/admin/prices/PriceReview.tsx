@@ -53,6 +53,7 @@ function Row({ s, canEdit }: { s: Svc; canEdit: boolean }) {
       <div>
         <p className="text-xs uppercase tracking-wide text-gray-400">On the website</p>
         <p className="font-mono text-sm font-semibold text-gray-900">{cur ? `${naira(cur.min)} – ${naira(cur.max)}` : "Not set"}</p>
+        {cur && <p className="text-xs text-gray-400">Customers see &ldquo;From {naira(cur.min)}&rdquo;</p>}
       </div>
       <div>
         <p className="text-xs uppercase tracking-wide text-gray-400">Suggested</p>
@@ -90,6 +91,26 @@ export default function PriceReview({
   fees: { homeVisit: string; earlyMorning: string; depositPercent: string };
 }) {
   const groups = [...new Set(services.map((s) => s.group))];
+  const pending = services.filter(
+    (s) => s.id && s.suggested && (!s.current || s.current.min !== s.suggested.min || s.current.max !== s.suggested.max),
+  );
+  const [bulk, setBulk] = useState<{ busy: boolean; text: string | null; ok: boolean }>({ busy: false, text: null, ok: true });
+
+  async function applyAll() {
+    if (!confirm(`Update ${pending.length} services to the suggested prices? They go live on the website straight away.`)) return;
+    setBulk({ busy: true, text: null, ok: true });
+    const failed: string[] = [];
+    for (const s of pending) {
+      const res = await fetch(`/api/admin/catalog/${s.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ minPrice: s.suggested!.min, maxPrice: s.suggested!.max }),
+      }).catch(() => null);
+      if (!res?.ok) failed.push(s.name);
+    }
+    if (failed.length) setBulk({ busy: false, ok: false, text: `Couldn't save: ${failed.join(", ")}. The rest are live.` });
+    else window.location.reload();
+  }
   const [f, setF] = useState(fees);
   const [feeMsg, setFeeMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -107,6 +128,19 @@ export default function PriceReview({
 
   return (
     <div className="max-w-5xl space-y-8">
+      <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-900">How prices show</h2>
+        <p className="mt-1 text-xs text-gray-500">
+          Customers see the lowest price as &ldquo;From ₦…&rdquo;. Keep it the true starting price, and set the highest wide enough
+          to cover long, small or premium versions so pros can quote real jobs.
+        </p>
+        {canEdit && pending.length > 0 && (
+          <button disabled={bulk.busy} onClick={applyAll} className="mt-3 rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+            {bulk.busy ? "Saving…" : `Use all suggested prices (${pending.length})`}
+          </button>
+        )}
+        {bulk.text && <p className={`mt-2 text-xs font-medium ${bulk.ok ? "text-green-700" : "text-red-600"}`}>{bulk.text}</p>}
+      </section>
       <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-900">Fees and deposit</h2>
         <p className="mt-1 text-xs text-gray-500">Leave blank or 0 if you don&apos;t charge it. The home-visit fee and deposit show on the price list.</p>

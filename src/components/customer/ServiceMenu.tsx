@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CATEGORY_LABEL, SERVICES } from "@/lib/seo/content";
-import { getPrices, priceRange } from "@/components/seo/blocks";
+import { getPrices, fromPrice } from "@/components/seo/blocks";
 import { bookHref } from "@/lib/booking-mode";
 
 const ICON: Record<string, string> = {
@@ -46,7 +46,7 @@ export default async function ServiceMenu() {
                     >
                       <span>
                         <span className="block text-sm font-semibold text-gray-900 group-hover:text-brand-700">{s.name}</span>
-                        <span className="block text-xs text-gray-500">{priceRange(prices[s.slug])}</span>
+                        <span className="block text-xs text-gray-500">{fromPrice(prices[s.slug])}</span>
                       </span>
                       <span className="shrink-0 rounded-full bg-[#25D366]/15 px-3 py-1 text-xs font-bold text-[#128C4A] group-hover:bg-[#25D366] group-hover:text-gray-950">
                         Book
